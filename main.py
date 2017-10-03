@@ -3,8 +3,12 @@
 
 from reader import Reader
 from writer import Writer
-
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
+
+import sys
+if sys.version_info[0] < 3:
+    raise "Must be using Python 3"
+
 
 class Main(object):
 
