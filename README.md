@@ -66,16 +66,68 @@ CH data types
 Date number of days since 1970-01-01
 DateTime Unix timestamp
 Enum8 or Enum16. A set of enumerated string values that are stored as Int8 or Int16. The numeric values must be within -128..127 for Enum8 and -32768..32767 for Enum16
-FixedString(N) string of N bytes (not characters or code points)
 Float32, Float64
+
 Int8	-128	127
-Int16	-32768	32767
-Int32	-2147483648	2147483647
-Int64	-9223372036854775808	9223372036854775807
 UInt8	0	255
+
+Int16	-32768	32767
 UInt16	0	65535
+
+Int32	-2147483648	2147483647
 UInt32	0	4294967295
+
+Int64	-9223372036854775808	9223372036854775807
 UInt64	0	18446744073709551615
+
+FixedString(N) string of N bytes (not characters or code points)
 String The length is not limited. The value can contain an arbitrary set of bytes, including null bytes
 
 
+==========================
+MySQL -> CH data types mapping
+
+Numeric Types
+
+BIT  -> UInt8
+TINYINT -> Int8 UInt8
+BOOL, BOOLEAN -> UInt8
+SMALLINT  -> Int16 UInt16
+MEDIUMINT -> Int32 UInt32
+INT, INTEGER -> Int32 UInt32
+BIGINT -> Int64 UInt64
+
+SERIAL -> UInt64
+DEC, DECIMAL, FIXED, NUMERIC -> ???? (possibly String?)
+FLOAT -> Float32
+DOUBLE, REAL -> Float64
+
+
+Date and Time Types
+
+DATE -> Date (for valid values) or String (Date Allows storing values from just after the beginning of the Unix Epoch to the upper threshold defined by a constant at the compilation stage (currently, this is until the year 2038, but it may be expanded to 2106))
+DATETIME -> DateTime (for valid values) or String
+TIMESTAMP -> DateTime
+TIME -> ????? (possibly String?)
+YEAR  -> UInt16
+
+
+String Types
+
+CHAR -> FixedString
+VARCHAR -> String
+BINARY -> String
+VARBINARY -> String
+TINYBLOB -> String
+TINYTEXT -> String
+BLOB -> String
+TEXT -> String
+MEDIUMBLOB -> String
+MEDIUMTEXT -> String
+LONGBLOB -> String
+LONGTEXT -> String
+
+ENUM -> Enum8 Enum16
+SET -> Array(Int8)
+
+JSON -> ?????? (possibly String?)
