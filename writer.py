@@ -22,6 +22,7 @@ class Writer(object):
             table,
             ', '.join(map(lambda column: '`%s`' % column,  values[0].keys()))
         )
+        print('-------------------------')
         print(sql)
         print(values)
         self.client.execute(sql, values)

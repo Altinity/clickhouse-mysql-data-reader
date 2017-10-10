@@ -89,7 +89,7 @@ MySQL -> CH data types mapping
 
 Numeric Types
 
-BIT  -> UInt8...UInt64
+BIT  -> ??? (possibly String?)
 TINYINT -> Int8 UInt8
 BOOL, BOOLEAN -> UInt8
 SMALLINT  -> Int16 UInt16
@@ -288,8 +288,8 @@ INSERT INTO datatypes SET
     real_1   = -1.7976931348623157E+308, -- REAL          COMMENT 'alias for          DOUBLE i.e. -1.7976931348623157E+308 to -2.2250738585072014E-308, 0, and 2.2250738585072014E-308 to 1.7976931348623157E+308',
     u_real_1 = 0,                        -- REAL UNSIGNED COMMENT 'alias for UNSIGNED DOUBLE i.e.                                                       0, and 2.2250738585072014E-308 to 1.7976931348623157E+308',
 
-    date_1      = '1000-01-01',          -- DATE      COMMENT '1000-01-01 to 9999-12-31',
-    datetime_1  = '1000-01-01 00:00:00', -- DATETIME  COMMENT '1000-01-01 00:00:00 to 9999-12-31 23:59:59',
+    date_1      = '1970-01-01',          -- DATE      COMMENT '1000-01-01 to 9999-12-31',
+    datetime_1  = '1970-01-01 00:00:00', -- DATETIME  COMMENT '1000-01-01 00:00:00 to 9999-12-31 23:59:59',
     timestamp_1 = '1970-01-01 00:00:01', -- TIMESTAMP COMMENT '1970-01-01 00:00:01 UTC to 2038-01-19 03:14:07 UTC',
     time_1      = '-838:59:59',          -- TIME      COMMENT '-838:59:59 to 838:59:59',
     year_1      = 1901,                  -- YEAR      COMMENT '1901 to 2155, and 0000',
@@ -384,8 +384,8 @@ INSERT INTO datatypes SET
     real_1   = 1.7976931348623157E+308, -- REAL          COMMENT 'alias for          DOUBLE i.e. -1.7976931348623157E+308 to -2.2250738585072014E-308, 0, and 2.2250738585072014E-308 to 1.7976931348623157E+308',
     u_real_1 = 1.7976931348623157E+308, -- REAL UNSIGNED COMMENT 'alias for UNSIGNED DOUBLE i.e.                                                       0, and 2.2250738585072014E-308 to 1.7976931348623157E+308',
 
-    date_1      = '9999-12-31',          -- DATE      COMMENT '1000-01-01 to 9999-12-31',
-    datetime_1  = '9999-12-31 23:59:59', -- DATETIME  COMMENT '1000-01-01 00:00:00 to 9999-12-31 23:59:59',
+    date_1      = '2149-06-01',          -- DATE      COMMENT '1000-01-01 to 9999-12-31',
+    datetime_1  = '2106-02-01 23:59:59', -- DATETIME  COMMENT '1000-01-01 00:00:00 to 9999-12-31 23:59:59',
     timestamp_1 = '2038-01-19 03:14:07', -- TIMESTAMP COMMENT '1970-01-01 00:00:01 UTC to 2038-01-19 03:14:07 UTC',
     time_1      = '838:59:59',           -- TIME      COMMENT '-838:59:59 to 838:59:59',
     year_1      = 2155,                  -- YEAR      COMMENT '1901 to 2155, and 0000',
@@ -440,8 +440,8 @@ INSERT INTO long_varbinary_datatypes SET
 ===========================
 
 CREATE TABLE datatypes(
-    bit_1 UInt8,    -- bit_1 BIT(1),
-    bit_2 UInt64,   -- bit_2 BIT(64),
+    bit_1 String, -- bit_1 BIT(1),
+    bit_2 String, -- bit_2 BIT(64),
 
     tinyint_1   Int8,  -- tinyint_1   TINYINT          COMMENT '-128 to 127',
     u_tinyint_1 UInt8, -- u_tinyint_1 TINYINT UNSIGNED COMMENT '0 to 255',
@@ -449,14 +449,14 @@ CREATE TABLE datatypes(
     bool_1 UInt8, -- bool_1 BOOL,
     bool_2 UInt8, -- bool_2 BOOLEAN,
 
-    smallint_1 Int16,    -- smallint_1   SMALLINT           COMMENT '-32768 to 32767',
+    smallint_1   Int16,  -- smallint_1   SMALLINT           COMMENT '-32768 to 32767',
     u_smallint_1 UInt16, -- u_smallint_1 SMALLINT UNSIGNED  COMMENT '0 to 65535',
 
-    mediumint_1 Int32,    -- mediumint_1   MEDIUMINT          COMMENT '-8388608 to 8388607',
+    mediumint_1   Int32,  -- mediumint_1   MEDIUMINT          COMMENT '-8388608 to 8388607',
     u_mediumint_1 UInt32, -- u_mediumint_1 MEDIUMINT UNSIGNED COMMENT '0 to 16777215',
 
-    int_1   Int32,  -- int_1    INT          COMMENT '-2147483648 to 2147483647',
-    u_int_1 UInt32, --  u_int_1 INT UNSIGNED COMMENT '0 to 4294967295',
+    int_1   Int32,  -- int_1   INT          COMMENT '-2147483648 to 2147483647',
+    u_int_1 UInt32, -- u_int_1 INT UNSIGNED COMMENT '0 to 4294967295',
 
     integer_1   Int32,  -- integer_1   INTEGER          COMMENT '-2147483648 to 2147483647',
     u_integer_1 UInt32, -- u_integer_1 INTEGER UNSIGNED COMMENT '0 to 4294967295',

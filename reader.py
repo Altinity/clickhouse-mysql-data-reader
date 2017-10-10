@@ -67,7 +67,7 @@ class Reader(object):
             log_pos=self.log_pos,
             freeze_schema=True, # If true do not support ALTER TABLE. It's faster.
             blocking=True,
-#            resume_stream=True,
+            resume_stream=True,
         )
 
         # fetch events
