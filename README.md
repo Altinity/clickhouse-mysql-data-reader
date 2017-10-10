@@ -209,15 +209,37 @@ CREATE TABLE datatypes(
     mediumtext_1 MEDIUMTEXT COMMENT 'maximum length of 16,777,215 (2^24 ? 1) characters',
 
     longblob_1 LONGBLOB COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) bytes',
-    longtext_1 LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters',
+    longtext_1 LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters'
+)
+;
 
-    enum_1 ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements',
+CREATE TABLE enum_datatypes(
+    enum_1 ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements'
+)
+;
 
-    set_1 SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT ' can have a maximum of 64 distinct members',
+CREATE TABLE set_datatypes(
+    set_1 SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT ' can have a maximum of 64 distinct members'
+)
+;
 
+CREATE TABLE json_datatypes(
     json_1 JSON
 )
 ;
+
+ERROR 1118 (42000): Row size too large. The maximum row size for the used table type, not counting BLOBs, is 65535. This includes storage overhead, check the manual. You have to change some columns to TEXT or BLOBs
+
+CREATE TABLE long_varchar_datatypes(
+    varchar_2 VARCHAR(65532)
+)
+;
+
+CREATE TABLE long_varbinary_datatypes(
+    varbinary_2 VARBINARY(65532) COMMENT 'similar to VARCHAR'
+)
+;
+
 
 
 -- in order to be able to set timestamp = '1970-01-01 00:00:01'
@@ -296,13 +318,27 @@ INSERT INTO datatypes SET
     mediumtext_1 = '', -- MEDIUMTEXT COMMENT 'maximum length of 16,777,215 (2^24 ? 1) characters',
 
     longblob_1 = '', -- LONGBLOB COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) bytes',
-    longtext_1 = '', -- LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters',
+    longtext_1 = '' -- LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters'
+;
 
-    enum_1 = NULL, -- ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements',
+INSERT INTO enum_datatypes SET
+    enum_1 = NULL -- ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements'
+;
 
-    set_1 = '', -- SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 64 distinct members',
+INSERT INTO set_datatypes SET
+    set_1 = '' -- SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 64 distinct members'
+;
 
+INSERT INTO json_datatypes SET
     json_1 = '{}' -- JSON
+;
+
+INSERT INTO long_varchar_datatypes SET
+    varchar_2 = ""
+;
+
+INSERT INTO long_varbinary_datatypes SET
+    varbinary_2 = ""
 ;
 
 -- MAX values
@@ -378,26 +414,27 @@ INSERT INTO datatypes SET
     mediumtext_1 = 'a', -- MEDIUMTEXT COMMENT 'maximum length of 16,777,215 (2^24 ? 1) characters',
 
     longblob_1 = 'a', -- LONGBLOB COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) bytes',
-    longtext_1 = 'a', -- LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters',
+    longtext_1 = 'a'  -- LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters'
+;
 
-    enum_1 = 'a', -- ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements',
+INSERT INTO enum_datatypes SET
+    enum_1 = 'a' -- ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements'
+;
 
-    set_1 = 'a,b,c', -- SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 64 distinct members',
+INSERT INTO set_datatypes SET
+    set_1 = 'a,b,c' -- SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 64 distinct members',
+;
 
+INSERT INTO json_datatypes SET
     json_1 = '{"a":1, "b":2, "c":3}' -- JSON
 ;
 
-
-ERROR 1118 (42000): Row size too large. The maximum row size for the used table type, not counting BLOBs, is 65535. This includes storage overhead, check the manual. You have to change some columns to TEXT or BLOBs
-
-CREATE TABLE long_varchar_datatypes(
-    varchar_2 VARCHAR(65532)
-)
+INSERT INTO long_varchar_datatypes SET
+    varchar_2 = "abc"
 ;
 
-CREATE TABLE long_varbinary_datatypes(
-    varbinary_2 VARBINARY(65532) COMMENT 'similar to VARCHAR'
-)
+INSERT INTO long_varbinary_datatypes SET
+    varbinary_2 = "abc"
 ;
 
 ===========================
@@ -473,14 +510,23 @@ CREATE TABLE datatypes(
     mediumtext_1 String, -- mediumtext_1 MEDIUMTEXT COMMENT 'maximum length of 16,777,215 (2^24 ? 1) characters',
 
     longblob_1 String, -- longblob_1 LONGBLOB COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) bytes',
-    longtext_1 String, -- longtext_1 LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters',
+    longtext_1 String  -- longtext_1 LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters',
 
-    enum_1 Enum16('a'=1, 'b'=2, 'c'=3, 'd'=4, 'e'=5, 'f'=6), -- enum_1 ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements',
+) ENGINE = Memory
+;
 
-    set_1 Array(Enum16('a'=1, 'b'=2, 'c'=3, 'd'=4, 'e'=5, 'f'=6)), -- set_1 SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT ' can have a maximum of 64 distinct members',
+CREATE TABLE enum_datatypes(
+    enum_1 Enum16('a'=1, 'b'=2, 'c'=3, 'd'=4, 'e'=5, 'f'=6) -- enum_1 ENUM('a', 'b', 'c', 'd', 'e', 'f') COMMENT 'can have a maximum of 65,535 distinct elements',
+) ENGINE = Memory
+;
 
+CREATE TABLE set_datatypes(
+    set_1 Array(Enum16('a'=1, 'b'=2, 'c'=3, 'd'=4, 'e'=5, 'f'=6)) -- set_1 SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT ' can have a maximum of 64 distinct members',
+) ENGINE = Memory
+;
+
+CREATE TABLE json_datatypes(
     json_1 String -- json_1 JSON
-
 ) ENGINE = Memory
 ;
 
