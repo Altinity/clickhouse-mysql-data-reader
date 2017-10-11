@@ -1,14 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from jsonschema._utils import types_msg
 
-from reader import Reader
-from writer import Writer
-from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
-
+from pumper import Pumper
 import sys
-import datetime
-import decimal
+
+
+import argparse
+
 
 if sys.version_info[0] < 3:
     raise "Must be using Python 3"
@@ -16,71 +14,145 @@ if sys.version_info[0] < 3:
 
 class Main(object):
 
-    reader = None
-    writer = None
-
     def __init__(self):
-        connection_settings = {
-            'host': '127.0.0.1',
-            'port': 3306,
-            'user': 'reader',
-            'passwd': 'qwerty',
-        }
-        server_id = 1
+        self.options = self.parse_options()
 
-        self.reader = Reader(
-            connection_settings=connection_settings,
-            server_id=server_id,
-            callbacks={
-                'WriteRowsEvent': self.write_rows_event,
-                'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
-            }
+    @staticmethod
+    def parse_options():
+        """
+        parse CLI options into options dict
+        :return: dict
+        """
+        argparser = argparse.ArgumentParser(
+            description='ClickHouse data reader',
+            epilog='==============='
         )
 
-        connection_settings = {
-            'host': '192.168.74.230',
-            'port': 9000,
-            'user': 'default',
-            'passwd': '',
-        }
-
-        self.writer = Writer(
-            connection_settings=connection_settings,
+        argparser.add_argument(
+            '--config-file',
+            type=str,
+            default='',
+            help='Path to config file. Default - not specified'
         )
 
-    def run(self):
-        self.reader.read()
+        argparser.add_argument(
+            '--dry',
+            action='store_true',
+            help='Dry mode - do not do anything that can harm. '
+            'Useful for debugging. '
+        )
 
-    def write_rows_event(self, binlog_event=None):
-#        binlog_event.dump()
-        pass
+        argparser.add_argument(
+            '--src-server-id',
+            type=int,
+            default=1,
+            help='server_id to be used when reading from src'
+        )
+        argparser.add_argument(
+            '--src-host',
+            type=str,
+            default='127.0.0.1',
+            help='host to be used when reading from src'
+        )
+        argparser.add_argument(
+            '--src-port',
+            type=int,
+            default=3306,
+            help='port to be used when reading from src'
+        )
+        argparser.add_argument(
+            '--src-user',
+            type=str,
+            default='root',
+            help='username to be used when reading from src'
+        )
+        argparser.add_argument(
+            '--src-password',
+            type=str,
+            default='',
+            help='password to be used when reading from src'
+        )
+        argparser.add_argument(
+            '--src-only-schemas',
+            type=str,
+            default='',
+            help='comma-separated list of schemas to be used when reading from src'
+        )
+        argparser.add_argument(
+            '--src-only-tables',
+            type=str,
+            default='',
+            help='comma-separated list of tables to be used when reading from src'
+        )
+        argparser.add_argument(
+            '--src-wait',
+            action='store_true',
+            help='Wait for new records to come'
+        )
+        argparser.add_argument(
+            '--src-resume',
+            action='store_true',
+            help='Resume reading from previous position'
+        )
 
-    def write_rows_event_each_row(self, binlog_event=None, row=None):
-        values = {}
-        for column_name in row['values']:
-#            print(column_name, row['values'][column_name], type(row['values'][column_name]))
+        argparser.add_argument(
+            '--dst-host',
+            type=str,
+            default='192.168.74.230',
+            help='host to be used when writing to dst'
+        )
+        argparser.add_argument(
+            '--dst-port',
+            type=int,
+            default=9000,
+            help='port to be used when writing to dst'
+        )
+        argparser.add_argument(
+            '--dst-user',
+            type=str,
+            default='default',
+            help='username to be used when writing to dst'
+        )
+        argparser.add_argument(
+            '--dst-password',
+            type=str,
+            default='',
+            help='password to be used when writing to dst'
+        )
 
-            if row['values'][column_name] is None:
-                print("Skip None value for column", column_name)
-                continue
+        args = argparser.parse_args()
 
-            types_to_convert = [
-                datetime.timedelta,
-                bytes,
-                decimal.Decimal,
-            ]
-            for t in types_to_convert:
-                if isinstance(row['values'][column_name], t):
-                    print("Converting column", column_name, "of type", type(row['values'][column_name]))
-                    values[column_name] = str(row['values'][column_name])
-                    break
-            else:
-                print("Using asis column", column_name, "of type", type(row['values'][column_name]))
-                values[column_name] = row['values'][column_name]
+        # build options
+        return {
+            'app-config': {
+                'config-file': args.config_file,
+                'dry': args.dry,
+            },
 
-        self.writer.insert(binlog_event.schema, binlog_event.table, values)
+            'reader-config': {
+                'connection_settings': {
+                    'host': args.src_host,
+                    'port': args.src_port,
+                    'user': args.src_user,
+                    'passwd': args.src_password,
+                },
+                'server_id': args.src_server_id,
+                'only_schemas': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
+                'only_tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+                'blocking': args.src_wait,
+                'resume_stream': args.src_resume,
+            },
+
+            'writer-config': {
+                'host': args.dst_host,
+                'port': args.dst_port,
+                'user': args.dst_user,
+                'password': args.dst_password,
+            },
+        }
 
 
 if __name__ == '__main__':
     main = Main()
-    main.run()
+    pumper = Pumper(reader_config=main.options['reader-config'], writer_config=main.options['writer-config'])
+    pumper.run()

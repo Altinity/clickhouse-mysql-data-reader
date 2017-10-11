@@ -14,6 +14,8 @@ class Reader(object):
     log_pos = None
     only_schemas = None
     only_tables = None
+    blocking = None
+    resume_stream = None
     callbacks = {
         # called on each WriteRowsEvent
         'WriteRowsEvent': [],
@@ -30,6 +32,8 @@ class Reader(object):
             log_pos=None,
             only_schemas=None,
             only_tables=None,
+            blocking=None,
+            resume_stream=None,
             callbacks={},
     ):
         self.connection_settings = connection_settings
@@ -38,6 +42,8 @@ class Reader(object):
         self.log_pos = log_pos
         self.only_schemas = only_schemas
         self.only_tables = only_tables
+        self.blocking = blocking
+        self.resume_stream = resume_stream
         self.subscribe(callbacks)
 
     def subscribe(self, callbacks):
@@ -66,8 +72,8 @@ class Reader(object):
             log_file=self.log_file,
             log_pos=self.log_pos,
             freeze_schema=True, # If true do not support ALTER TABLE. It's faster.
-            blocking=True,
-            resume_stream=True,
+            blocking=self.blocking,
+            resume_stream=self.resume_stream,
         )
 
         # fetch events
