@@ -8,8 +8,8 @@ class Writer(object):
 
     client = None
 
-    def __init__(self, connection_settings):
-        self.client = Client(connection_settings['host'])
+    def __init__(self, *args, **kwargs):
+        self.client = Client(*args, **kwargs)
 
     def insert(self, schema, table, values):
 
