@@ -525,6 +525,12 @@ CREATE TABLE set_datatypes(
 ) ENGINE = Memory
 ;
 
+CREATE TABLE set_datatypes(
+    set_1 String -- set_1 SET('a', 'b', 'c', 'd', 'e', 'f') COMMENT ' can have a maximum of 64 distinct members',
+) ENGINE = Memory
+;
+
+
 CREATE TABLE json_datatypes(
     json_1 String -- json_1 JSON
 ) ENGINE = Memory
