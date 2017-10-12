@@ -6,6 +6,7 @@ from writer import Writer
 
 import datetime
 import decimal
+import json
 
 
 class Pumper(object):
@@ -44,11 +45,21 @@ class Pumper(object):
                 datetime.timedelta,
                 bytes,
                 decimal.Decimal,
+
+                # jsonify
+                object,
+                dict,
+                list,
+
+                # set - how to migrate MySQL's `set` type and tell it from `json` type - both of which are presented as `dict`?
+                set,
             ]
             for t in types_to_convert:
                 if isinstance(row['values'][column_name], t):
-                    print("Converting column", column_name, "of type", type(row['values'][column_name]))
+                    print("Converting column", column_name, "of type", type(row['values'][column_name]), row['values'][column_name])
                     values[column_name] = str(row['values'][column_name])
+#                    values[column_name] = json.dumps(row['values'][column_name])
+                    print("res", values[column_name])
                     break
             else:
                 print("Using asis column", column_name, "of type", type(row['values'][column_name]))
