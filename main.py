@@ -151,8 +151,14 @@ class Main(object):
             },
         }
 
+    def run(self):
+        pumper = Pumper(
+            reader_config=self.options['reader-config'],
+            writer_config=self.options['writer-config']
+        )
+        pumper.run()
+
 
 if __name__ == '__main__':
     main = Main()
-    pumper = Pumper(reader_config=main.options['reader-config'], writer_config=main.options['writer-config'])
-    pumper.run()
+    main.run()
