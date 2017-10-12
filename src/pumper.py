@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from reader import Reader
-from writer import Writer
+from .reader import Reader
+from .writer import Writer
 
 import datetime
 import decimal
