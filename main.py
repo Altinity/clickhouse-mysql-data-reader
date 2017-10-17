@@ -18,12 +18,13 @@ class Main(Daemon):
     def __init__(self):
         cliopts = CLIOpts()
         self.config = cliopts.options
-        print(self.config)
         super().__init__(pidfile=self.config['app-config']['pid_file'])
-        if self.config['app-config']['daemon']:
-            self.background()
 
     def run(self):
+        if self.config['app-config']['daemon']:
+            print("Going background")
+            self.background()
+            
         pumper = Pumper(
             reader_config=self.config['reader-config'],
             writer_config=self.config['writer-config']
