@@ -41,7 +41,7 @@ class Daemon(object):
         # worker
 
         # handle pid file
-        atexit.register(self.delete_pidfile())
+        atexit.register(self.delete_pidfile)
         self.write_pidfile()
 
         # handle streams
