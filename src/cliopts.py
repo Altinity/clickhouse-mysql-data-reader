@@ -28,12 +28,22 @@ class CLIOpts(object):
             default='',
             help='Path to config file. Default - not specified'
         )
-
         argparser.add_argument(
             '--dry',
             action='store_true',
             help='Dry mode - do not do anything that can harm. '
             'Useful for debugging. '
+        )
+        argparser.add_argument(
+            '--daemon',
+            action='store_true',
+            help='Daemon mode - go to background. '
+        )
+        argparser.add_argument(
+            '--pid-file',
+            type=str,
+            default='/tmp/reader.pid',
+            help='pid file to be used by app in daemon mode'
         )
 
         argparser.add_argument(
@@ -121,6 +131,8 @@ class CLIOpts(object):
             'app-config': {
                 'config-file': args.config_file,
                 'dry': args.dry,
+                'daemon': args.daemon,
+                'pid_file': args.pid_file,
             },
 
             'reader-config': {
