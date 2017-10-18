@@ -16,7 +16,6 @@ class Daemon(object):
         self.root = root
 
     def background(self):
-
         # first fork
         # root process waits for the child in order not to have zombies in the system
         pid = os.fork()
@@ -39,6 +38,8 @@ class Daemon(object):
             sys.exit(0)
 
         # worker
+        signal.signal(signal.SIGINT, self.shutdown)
+        signal.signal(signal.SIGTERM, self.shutdown)
 
         # handle pid file
         atexit.register(self.delete_pidfile)
@@ -46,6 +47,10 @@ class Daemon(object):
 
         # handle streams
         self.redirect_std_streams()
+
+    def shutdown(self):
+        self.delete_pidfile()
+        sys.exit(0)
 
     def redirect_std_streams(self):
         sys.stdout.flush()

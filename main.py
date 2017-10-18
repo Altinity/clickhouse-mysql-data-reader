@@ -21,17 +21,20 @@ class Main(Daemon):
         super().__init__(pidfile=self.config['app-config']['pid_file'])
 
     def run(self):
-        if self.config['app-config']['daemon']:
-            print("Going background")
-            self.background()
-            
         pumper = Pumper(
             reader_config=self.config['reader-config'],
             writer_config=self.config['writer-config']
         )
         pumper.run()
 
+    def start(self):
+        if self.config['app-config']['daemon']:
+            if not super().start():
+                print("Error going background. The process already running?")
+        else:
+            self.run()
+
 
 if __name__ == '__main__':
     main = Main()
-    main.run()
+    main.start()
