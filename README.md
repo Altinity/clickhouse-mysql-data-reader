@@ -13,6 +13,13 @@ flush privileges;
 https://github.com/noplay/python-mysql-replication
 https://github.com/mymarilyn/clickhouse-driver
 
+[mysqld]
+server-id		 = 1
+log_bin			 = /var/log/mysql/mysql-bin.log
+expire_logs_days = 10
+max_binlog_size  = 100M
+binlog-format    = row #Very important if you want to receive write, update and delete row events
+
 =======
 MySQL data types
 
@@ -545,3 +552,140 @@ CREATE TABLE long_varbinary_datatypes(
     varbinary_2 String
 ) ENGINE = Memory
 ;
+
+MySQL section
+
+mysqlimport --ignore-lines=1 \
+            --fields-terminated-by=, \
+            --fields-enclosed-by=\" \
+            --local -u root \
+            -p Database \
+             TableName.csv
+
+
+for file in *.csv; do
+    echo "importing $file"
+    cp -f $file ontime
+    mysqlimport --ignore-lines=1 --fields-terminated-by=, --fields-enclosed-by=\" --local -u root airline ontime
+    rm ontime
+done
+
+ load data local infile 'file.csv' into table table
+ fields terminated by ','
+ enclosed by '"'
+ lines terminated by '\n'
+ (column1, column2, column3,...)
+
+
+CREATE DATABASE IF NOT EXISTS `airline`;
+CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
+  `Year`                 SMALLINT UNSIGNED, -- UInt16,
+  `Quarter`              TINYINT UNSIGNED, -- UInt8,
+  `Month`                TINYINT UNSIGNED, -- UInt8,
+  `DayofMonth`           TINYINT UNSIGNED, -- UInt8,
+  `DayOfWeek`            TINYINT UNSIGNED, -- UInt8,
+  `FlightDate`           DATE, -- Date,
+  `UniqueCarrier`        LONGTEXT, -- String,
+  `AirlineID`            INTEGER UNSIGNED, -- UInt32,
+  `Carrier`              LONGTEXT, -- String,
+  `TailNum`              LONGTEXT, -- String,
+  `FlightNum`            LONGTEXT, -- String,
+  `OriginAirportID`      INTEGER UNSIGNED, -- UInt32,
+  `OriginAirportSeqID`   INTEGER UNSIGNED, -- UInt32,
+  `OriginCityMarketID`   INTEGER UNSIGNED, -- UInt32,
+  `Origin`               LONGTEXT, -- String,
+  `OriginCityName`       LONGTEXT, -- String,
+  `OriginState`          LONGTEXT, -- String,
+  `OriginStateFips`      LONGTEXT, -- String,
+  `OriginStateName`      LONGTEXT, -- String,
+  `OriginWac`            INTEGER UNSIGNED, -- UInt32,
+  `DestAirportID`        INTEGER UNSIGNED, -- UInt32,
+  `DestAirportSeqID`     INTEGER UNSIGNED, -- UInt32,
+  `DestCityMarketID`     INTEGER UNSIGNED, -- UInt32,
+  `Dest`                 LONGTEXT, -- String,
+  `DestCityName`         LONGTEXT, -- String,
+  `DestState`            LONGTEXT, -- String,
+  `DestStateFips`        LONGTEXT, -- String,
+  `DestStateName`        LONGTEXT, -- String,
+  `DestWac`              INTEGER UNSIGNED, -- UInt32,
+  `CRSDepTime`           INTEGER UNSIGNED, -- UInt32,
+  `DepTime`              INTEGER UNSIGNED, -- UInt32,
+  `DepDelay`             FLOAT, -- Float32,
+  `DepDelayMinutes`      FLOAT, -- Float32,
+  `DepDel15`             FLOAT, -- Float32,
+  `DepartureDelayGroups` INTEGER, -- Int32,
+  `DepTimeBlk`           LONGTEXT, -- String,
+  `TaxiOut`              FLOAT, -- Float32,
+  `WheelsOff`            INTEGER UNSIGNED, -- UInt32,
+  `WheelsOn`             INTEGER UNSIGNED, -- UInt32,
+  `TaxiIn`               FLOAT, -- Float32,
+  `CRSArrTime`           INTEGER UNSIGNED, -- UInt32,
+  `ArrTime`              INTEGER UNSIGNED, -- UInt32,
+  `ArrDelay`             FLOAT, -- Float32,
+  `ArrDelayMinutes`      FLOAT, -- Float32,
+  `ArrDel15`             FLOAT, -- Float32,
+  `ArrivalDelayGroups`   INTEGER, -- Int32,
+  `ArrTimeBlk`           LONGTEXT, -- String,
+  `Cancelled`            FLOAT, -- Float32,
+  `CancellationCode`     LONGTEXT, -- String,
+  `Diverted`             FLOAT, -- Float32,
+  `CRSElapsedTime`       FLOAT, -- Float32,
+  `ActualElapsedTime`    FLOAT, -- Float32,
+  `AirTime`              FLOAT, -- Float32,
+  `Flights`              FLOAT, -- Float32,
+  `Distance`             FLOAT, -- Float32,
+  `DistanceGroup`        FLOAT, -- Float32,
+  `CarrierDelay`         FLOAT, -- Float32,
+  `WeatherDelay`         FLOAT, -- Float32,
+  `NASDelay`             FLOAT, -- Float32,
+  `SecurityDelay`        FLOAT, -- Float32,
+  `LateAircraftDelay`    FLOAT, -- Float32,
+  `FirstDepTime`         LONGTEXT, -- String,
+  `TotalAddGTime`        LONGTEXT, -- String,
+  `LongestAddGTime`      LONGTEXT, -- String,
+  `DivAirportLandings`   LONGTEXT, -- String,
+  `DivReachedDest`       LONGTEXT, -- String,
+  `DivActualElapsedTime` LONGTEXT, -- String,
+  `DivArrDelay`          LONGTEXT, -- String,
+  `DivDistance`          LONGTEXT, -- String,
+  `Div1Airport`          LONGTEXT, -- String,
+  `Div1AirportID`        INTEGER UNSIGNED, -- UInt32,
+  `Div1AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
+  `Div1WheelsOn`         LONGTEXT, -- String,
+  `Div1TotalGTime`       LONGTEXT, -- String,
+  `Div1LongestGTime`     LONGTEXT, -- String,
+  `Div1WheelsOff`        LONGTEXT, -- String,
+  `Div1TailNum`          LONGTEXT, -- String,
+  `Div2Airport`          LONGTEXT, -- String,
+  `Div2AirportID`        INTEGER UNSIGNED, -- UInt32,
+  `Div2AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
+  `Div2WheelsOn`         LONGTEXT, -- String,
+  `Div2TotalGTime`       LONGTEXT, -- String,
+  `Div2LongestGTime`     LONGTEXT, -- String,
+  `Div2WheelsOff`        LONGTEXT, -- String,
+  `Div2TailNum`          LONGTEXT, -- String,
+  `Div3Airport`          LONGTEXT, -- String,
+  `Div3AirportID`        INTEGER UNSIGNED, -- UInt32,
+  `Div3AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
+  `Div3WheelsOn`         LONGTEXT, -- String,
+  `Div3TotalGTime`       LONGTEXT, -- String,
+  `Div3LongestGTime`     LONGTEXT, -- String,
+  `Div3WheelsOff`        LONGTEXT, -- String,
+  `Div3TailNum`          LONGTEXT, -- String,
+  `Div4Airport`          LONGTEXT, -- String,
+  `Div4AirportID`        INTEGER UNSIGNED, -- UInt32,
+  `Div4AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
+  `Div4WheelsOn`         LONGTEXT, -- String,
+  `Div4TotalGTime`       LONGTEXT, -- String,
+  `Div4LongestGTime`     LONGTEXT, -- String,
+  `Div4WheelsOff`        LONGTEXT, -- String,
+  `Div4TailNum`          LONGTEXT, -- String,
+  `Div5Airport`          LONGTEXT, -- String,
+  `Div5AirportID`        INTEGER UNSIGNED, -- UInt32,
+  `Div5AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
+  `Div5WheelsOn`         LONGTEXT, -- String,
+  `Div5TotalGTime`       LONGTEXT, -- String,
+  `Div5LongestGTime`     LONGTEXT, -- String,
+  `Div5WheelsOff`        LONGTEXT, -- String,
+  `Div5TailNum`          LONGTEXT  -- String
+);
