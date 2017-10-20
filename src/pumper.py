@@ -1,9 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .reader import Reader
-from .writer import Writer
-
 import datetime
 import decimal
 import json
@@ -13,17 +10,18 @@ class Pumper(object):
 
     reader = None
     writer = None
+    skip_empty = True
 
-    def __init__(self, reader_config, writer_config):
+    def __init__(self, reader=None, writer=None, skip_empty=True):
 
-        # append callbacks section for being expanded
-        reader_config['callbacks'] =  {
-            'WriteRowsEvent': self.write_rows_event,
-            'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
-        }
-
-        self.reader = Reader(**reader_config)
-        self.writer = Writer(**writer_config)
+        self.reader = reader
+        if self.reader:
+            self.reader.subscribe({
+                'WriteRowsEvent': self.write_rows_event,
+                'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
+            })
+        self.writer = writer
+        self.skip_empty = skip_empty
 
     def run(self):
         self.reader.read()
@@ -37,7 +35,7 @@ class Pumper(object):
         for column_name in row['values']:
 #            print(column_name, row['values'][column_name], type(row['values'][column_name]))
 
-            if row['values'][column_name] is None:
+            if self.skip_empty and row(['values'][column_name] is None):
                 print("Skip None value for column", column_name)
                 continue
 
@@ -47,7 +45,7 @@ class Pumper(object):
                 decimal.Decimal,
 
                 # jsonify
-                object,
+                #object,
                 dict,
                 list,
 

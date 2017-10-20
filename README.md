@@ -6,7 +6,17 @@ pip install mysql-replication
 
 you need (at least one of) the SUPER, REPLICATION CLIENT privilege(s) for this operation
 
+CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
+CREATE USER 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
+CREATE USER 'reader'@'*' IDENTIFIED BY 'qwerty';
+grant replication client, replication slave, super on *.* to 'reader'@'localhost';
+grant replication client, replication slave, super on *.* to 'reader'@'127.0.0.1';
+grant replication client, replication slave, super on *.* to 'reader'@'*';
+flush privileges;
+
 grant replication client, replication slave, super on *.* to 'reader'@'localhost' identified by 'qwerty';
+grant replication client, replication slave, super on *.* to 'reader'@'127.0.0.1' identified by 'qwerty';
+grant replication client, replication slave, super on *.* to 'reader'@'*'         identified by 'qwerty';
 flush privileges;
 
 
@@ -563,12 +573,18 @@ mysqlimport --ignore-lines=1 \
              TableName.csv
 
 
-for file in *.csv; do
-    echo "importing $file"
+ls|sort|head -n 100
+i=1
+for file in $(ls *.csv|sort|head -n 100); do
+    echo "$i. Copy $file"
     cp -f $file ontime
+    echo "$i. Import $file"
     mysqlimport --ignore-lines=1 --fields-terminated-by=, --fields-enclosed-by=\" --local -u root airline ontime
-    rm ontime
+    rm -f ontime
+    i=$((i+1))
 done
+
+
 
  load data local infile 'file.csv' into table table
  fields terminated by ','

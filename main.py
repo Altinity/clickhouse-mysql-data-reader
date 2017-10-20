@@ -1,9 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from src.pumper import Pumper
 from src.cliopts import CLIOpts
+from src.pumper import Pumper
 from src.daemon import Daemon
+from src.reader import Reader
+from src.writer.chwriter import CHWriter
+from src.writer.csvwriter import CSVWriter
+
 import sys
 
 
@@ -18,12 +22,17 @@ class Main(Daemon):
     def __init__(self):
         cliopts = CLIOpts()
         self.config = cliopts.options
+        print('---')
+        print(self.config)
+        print('---')
         super().__init__(pidfile=self.config['app-config']['pid_file'])
 
     def run(self):
         pumper = Pumper(
-            reader_config=self.config['reader-config'],
-            writer_config=self.config['writer-config']
+            reader=Reader(**self.config['reader-config']),
+#            writer=CHWriter(**self.config['writer-config']['clickhouse'])
+            writer = CSVWriter(**self.config['writer-config']['file']),
+            skip_empty=False
         )
         pumper.run()
 
