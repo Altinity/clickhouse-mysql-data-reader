@@ -2,16 +2,17 @@
 # -*- coding: utf-8 -*-
 
 from clickhouse_driver.client import Client
+from .writer import Writer
 
 
-class Writer(object):
+class CHWriter(Writer):
 
     client = None
 
     def __init__(self, *args, **kwargs):
         self.client = Client(*args, **kwargs)
 
-    def insert(self, schema, table, values):
+    def insert(self, schema=None, table=None, values=None):
 
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
         # ensure values is a list
@@ -35,8 +36,5 @@ if __name__ == '__main__':
         'passwd': '',
     }
 
-    writer = Writer(
-        connection_settings=connection_settings,
-    )
-
+    writer = CHWriter(connection_settings=connection_settings)
     writer.insert()

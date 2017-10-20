@@ -43,50 +43,50 @@ class CLIOpts(object):
             '--pid-file',
             type=str,
             default='/tmp/reader.pid',
-            help='pid file to be used by app in daemon mode'
+            help='Pid file to be used by app in daemon mode'
         )
 
         argparser.add_argument(
             '--src-server-id',
             type=int,
             default=1,
-            help='server_id to be used when reading from src'
+            help='Set server_id to be used when reading from src'
         )
         argparser.add_argument(
             '--src-host',
             type=str,
             default='127.0.0.1',
-            help='host to be used when reading from src'
+            help='Host to be used when reading from src'
         )
         argparser.add_argument(
             '--src-port',
             type=int,
             default=3306,
-            help='port to be used when reading from src'
+            help='Port to be used when reading from src'
         )
         argparser.add_argument(
             '--src-user',
             type=str,
             default='root',
-            help='username to be used when reading from src'
+            help='Username to be used when reading from src'
         )
         argparser.add_argument(
             '--src-password',
             type=str,
             default='',
-            help='password to be used when reading from src'
+            help='Password to be used when reading from src'
         )
         argparser.add_argument(
             '--src-only-schemas',
             type=str,
             default='',
-            help='comma-separated list of schemas to be used when reading from src'
+            help='Comma-separated list of schemas to be used when reading from src'
         )
         argparser.add_argument(
             '--src-only-tables',
             type=str,
             default='',
-            help='comma-separated list of tables to be used when reading from src'
+            help='Comma-separated list of tables to be used when reading from src'
         )
         argparser.add_argument(
             '--src-wait',
@@ -100,28 +100,34 @@ class CLIOpts(object):
         )
 
         argparser.add_argument(
+            '--dst-file',
+            type=str,
+            default='data.csv',
+            help='Target file to be used when writing data'
+        )
+        argparser.add_argument(
             '--dst-host',
             type=str,
-            default='192.168.74.230',
-            help='host to be used when writing to dst'
+            default='127.0.0.1',
+            help='Host to be used when writing to dst'
         )
         argparser.add_argument(
             '--dst-port',
             type=int,
             default=9000,
-            help='port to be used when writing to dst'
+            help='Port to be used when writing to dst'
         )
         argparser.add_argument(
             '--dst-user',
             type=str,
             default='default',
-            help='username to be used when writing to dst'
+            help='Username to be used when writing to dst'
         )
         argparser.add_argument(
             '--dst-password',
             type=str,
             default='',
-            help='password to be used when writing to dst'
+            help='Password to be used when writing to dst'
         )
 
         args = argparser.parse_args()
@@ -150,9 +156,14 @@ class CLIOpts(object):
             },
 
             'writer-config': {
-                'host': args.dst_host,
-                'port': args.dst_port,
-                'user': args.dst_user,
-                'password': args.dst_password,
+                'clickhouse': {
+                    'host': args.dst_host,
+                    'port': args.dst_port,
+                    'user': args.dst_user,
+                    'password': args.dst_password,
+                },
+                'file': {
+                    'csv_file_path': args.dst_file,
+                },
             },
         }
