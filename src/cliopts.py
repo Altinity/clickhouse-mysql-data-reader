@@ -98,6 +98,12 @@ class CLIOpts(object):
             action='store_true',
             help='Resume reading from previous position'
         )
+        argparser.add_argument(
+            '--src-file',
+            type=str,
+            default='data.csv',
+            help='Source file tp read data from'
+        )
 
         argparser.add_argument(
             '--dst-file',
@@ -142,17 +148,22 @@ class CLIOpts(object):
             },
 
             'reader-config': {
-                'connection_settings': {
-                    'host': args.src_host,
-                    'port': args.src_port,
-                    'user': args.src_user,
-                    'passwd': args.src_password,
+                'mysql': {
+                    'connection_settings': {
+                        'host': args.src_host,
+                        'port': args.src_port,
+                        'user': args.src_user,
+                        'passwd': args.src_password,
+                    },
+                    'server_id': args.src_server_id,
+                    'only_schemas': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
+                    'only_tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+                    'blocking': args.src_wait,
+                    'resume_stream': args.src_resume,
                 },
-                'server_id': args.src_server_id,
-                'only_schemas': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
-                'only_tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
-                'blocking': args.src_wait,
-                'resume_stream': args.src_resume,
+                'file': {
+                    'csv_file_path': args.src_file,
+                },
             },
 
             'writer-config': {

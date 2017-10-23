@@ -4,7 +4,8 @@
 from src.cliopts import CLIOpts
 from src.pumper import Pumper
 from src.daemon import Daemon
-from src.reader import Reader
+from src.reader.mysqlreader import MySQLReader
+from src.reader.csvreader import CSVReader
 from src.writer.chwriter import CHWriter
 from src.writer.csvwriter import CSVWriter
 
@@ -29,7 +30,8 @@ class Main(Daemon):
 
     def run(self):
         pumper = Pumper(
-            reader=Reader(**self.config['reader-config']),
+#            reader=MySQLReader(**self.config['reader-config']['mysql']),
+            reader=CSVReader(**self.config['reader-config']['file']),
 #            writer=CHWriter(**self.config['writer-config']['clickhouse'])
             writer = CSVWriter(**self.config['writer-config']['file']),
             skip_empty=False

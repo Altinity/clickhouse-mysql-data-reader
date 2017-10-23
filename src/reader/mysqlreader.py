@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from .reader import Reader
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
 #from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
 
-class Reader(object):
-
+class MySQLReader(Reader):
     connection_settings = None
     server_id = None
     log_file = None
@@ -16,13 +16,6 @@ class Reader(object):
     only_tables = None
     blocking = None
     resume_stream = None
-    callbacks = {
-        # called on each WriteRowsEvent
-        'WriteRowsEvent': [],
-
-        # called on each row inside WriteRowsEvent (thus can be called multiple times per WriteRowsEvent)
-        'WriteRowsEvent.EachRow': [],
-    }
 
     def __init__(
             self,
@@ -36,6 +29,8 @@ class Reader(object):
             resume_stream=None,
             callbacks={},
     ):
+        super().__init__(callbacks=callbacks)
+
         self.connection_settings = connection_settings
         self.server_id = server_id
         self.log_file = log_file,
@@ -44,16 +39,6 @@ class Reader(object):
         self.only_tables = only_tables
         self.blocking = blocking
         self.resume_stream = resume_stream
-        self.subscribe(callbacks)
-
-    def subscribe(self, callbacks):
-        for callback_name in callbacks:
-            if callback_name in self.callbacks:
-                self.callbacks[callback_name].append(callbacks[callback_name])
-
-    def fire(self, event, **attrs):
-        for callback in self.callbacks[event]:
-            callback(**attrs)
 
     def read(self):
         binlog_stream = BinLogStreamReader(
@@ -88,7 +73,6 @@ class Reader(object):
                     pass
         except KeyboardInterrupt:
             pass
-
 
         binlog_stream.close()
 
