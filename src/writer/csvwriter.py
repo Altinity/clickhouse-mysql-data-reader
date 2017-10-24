@@ -26,7 +26,23 @@ class CSVWriter(Writer):
 
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
         # ensure values is a list
-        values = [event.row_converted] if isinstance(event.row_converted, dict) else event.row_converted
+        values = [event.row] if isinstance(event.row, dict) else event.row
+
+        if not self.opened():
+            self.open()
+
+        if not self.writer:
+            self.writer = csv.DictWriter(self.file, fieldnames=values[0].keys())
+            self.writer.writeheader()
+
+        for row in values:
+            self.writer.writerow(row)
+
+    def batch(self, events):
+        values = []
+
+        for event in events:
+            values.append(event.row)
 
         if not self.opened():
             self.open()

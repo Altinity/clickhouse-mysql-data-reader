@@ -31,19 +31,30 @@ class CLIOpts(object):
         argparser.add_argument(
             '--dry',
             action='store_true',
-            help='Dry mode - do not do anything that can harm. '
-            'Useful for debugging. '
+            help='Dry mode - do not do anything that can harm.'
+            'Useful for debugging.'
         )
         argparser.add_argument(
             '--daemon',
             action='store_true',
-            help='Daemon mode - go to background. '
+            help='Daemon mode - go to background.'
         )
         argparser.add_argument(
             '--pid-file',
             type=str,
             default='/tmp/reader.pid',
             help='Pid file to be used by app in daemon mode'
+        )
+        argparser.add_argument(
+            '--mempool',
+            action='store_true',
+            help='Cache data in mem.'
+        )
+        argparser.add_argument(
+            '--mempool-max-events-num',
+            type=int,
+            default=1000,
+            help='max events num to pool before batch write'
         )
 
         argparser.add_argument(
@@ -101,14 +112,14 @@ class CLIOpts(object):
         argparser.add_argument(
             '--src-file',
             type=str,
-            default='data.csv',
+            default=None,
             help='Source file tp read data from'
         )
 
         argparser.add_argument(
             '--dst-file',
             type=str,
-            default='data.csv',
+            default=None,
             help='Target file to be used when writing data'
         )
         argparser.add_argument(
@@ -135,6 +146,18 @@ class CLIOpts(object):
             default='',
             help='Password to be used when writing to dst'
         )
+        argparser.add_argument(
+            '--dst-db',
+            type=str,
+            default=None,
+            help='Database to be used when writing to dst'
+        )
+        argparser.add_argument(
+            '--dst-table',
+            type=str,
+            default=None,
+            help='Table to be used when writing to dst'
+        )
 
         args = argparser.parse_args()
 
@@ -145,6 +168,8 @@ class CLIOpts(object):
                 'dry': args.dry,
                 'daemon': args.daemon,
                 'pid_file': args.pid_file,
+                'mempool': args.mempool,
+                'mempool-max-events-num': args.mempool_max_events_num,
             },
 
             'reader-config': {
@@ -168,10 +193,14 @@ class CLIOpts(object):
 
             'writer-config': {
                 'clickhouse': {
-                    'host': args.dst_host,
-                    'port': args.dst_port,
-                    'user': args.dst_user,
-                    'password': args.dst_password,
+                    'connection_settings': {
+                        'host': args.dst_host,
+                        'port': args.dst_port,
+                        'user': args.dst_user,
+                        'password': args.dst_password,
+                    },
+                    'dst_db': args.dst_db,
+                    'dst_table': args.dst_table,
                 },
                 'file': {
                     'csv_file_path': args.dst_file,
