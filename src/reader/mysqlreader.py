@@ -67,7 +67,6 @@ class MySQLReader(Reader):
             for mysql_event in binlog_stream:
                 if isinstance(mysql_event, WriteRowsEvent):
                     event = Event()
-                    event.rows = mysql_event.rows
                     event.schema = mysql_event.schema
                     event.table = mysql_event.table
                     self.fire('WriteRowsEvent', event=event)

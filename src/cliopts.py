@@ -31,19 +31,30 @@ class CLIOpts(object):
         argparser.add_argument(
             '--dry',
             action='store_true',
-            help='Dry mode - do not do anything that can harm. '
-            'Useful for debugging. '
+            help='Dry mode - do not do anything that can harm.'
+            'Useful for debugging.'
         )
         argparser.add_argument(
             '--daemon',
             action='store_true',
-            help='Daemon mode - go to background. '
+            help='Daemon mode - go to background.'
         )
         argparser.add_argument(
             '--pid-file',
             type=str,
             default='/tmp/reader.pid',
             help='Pid file to be used by app in daemon mode'
+        )
+        argparser.add_argument(
+            '--mempool',
+            action='store_true',
+            help='Cache data in mem.'
+        )
+        argparser.add_argument(
+            '--mempool-max-events-num',
+            type=int,
+            default=1000,
+            help='max events num to pool before batch write'
         )
 
         argparser.add_argument(
@@ -157,6 +168,8 @@ class CLIOpts(object):
                 'dry': args.dry,
                 'daemon': args.daemon,
                 'pid_file': args.pid_file,
+                'mempool': args.mempool,
+                'mempool-max-events-num': args.mempool_max_events_num,
             },
 
             'reader-config': {

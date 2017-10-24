@@ -8,6 +8,7 @@ from src.reader.mysqlreader import MySQLReader
 from src.reader.csvreader import CSVReader
 from src.writer.chwriter import CHWriter
 from src.writer.csvwriter import CSVWriter
+from src.writer.poolwriter import PoolWriter
 
 import sys
 
@@ -34,11 +35,17 @@ class Main(Daemon):
         else:
             return MySQLReader(**self.config['reader-config']['mysql'])
 
-    def writer(self):
+    def material(self):
         if self.config['writer-config']['file']['csv_file_path']:
             return CSVWriter(**self.config['writer-config']['file'])
         else:
             return CHWriter(**self.config['writer-config']['clickhouse'])
+
+    def writer(self):
+        if self.config['app-config']['mempool']:
+            return PoolWriter(writer=self.material(), max_pool_size=self.config['app-config']['mempool-max-events-num'])
+        else:
+            return self.material()
 
     def run(self):
         pumper = Pumper(

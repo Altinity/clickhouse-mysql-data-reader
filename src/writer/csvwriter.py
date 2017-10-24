@@ -38,6 +38,22 @@ class CSVWriter(Writer):
         for row in values:
             self.writer.writerow(row)
 
+    def batch(self, events):
+        values = []
+
+        for event in events:
+            values.append(event.row)
+
+        if not self.opened():
+            self.open()
+
+        if not self.writer:
+            self.writer = csv.DictWriter(self.file, fieldnames=values[0].keys())
+            self.writer.writeheader()
+
+        for row in values:
+            self.writer.writerow(row)
+
     def close(self):
         if self.opened():
             self.file.close()

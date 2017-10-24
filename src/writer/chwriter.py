@@ -26,7 +26,6 @@ class CHWriter(Writer):
             event.table = self.dst_table
 
         converter = CHDataTypeConverter()
-        converter.delete_empty_columns = True
         event = converter.convert(event)
 
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
@@ -36,12 +35,31 @@ class CHWriter(Writer):
         sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
             event.schema,
             event.table,
-            ', '.join(map(lambda column: '`%s`' % column,  values[0].keys()))
+            ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
         )
         print('-------------------------')
         print(sql)
         print(values)
         self.client.execute(sql, values)
+
+    def batch(self, events):
+        values = []
+        converter = CHDataTypeConverter()
+
+        for event in events:
+            ev = converter.convert(event)
+            values.append(ev.row)
+
+        schema = self.dst_db if self.dst_db else ev.schema
+        table = self.dst_table if self.dst_table else ev.table
+
+        sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
+            schema,
+            table,
+            ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
+        )
+        self.client.execute(sql, values)
+
 
 if __name__ == '__main__':
     connection_settings = {
