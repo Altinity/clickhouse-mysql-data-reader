@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .writer import Writer
+from ..event.event import Event
 import csv
 
 
@@ -21,11 +22,11 @@ class CSVWriter(Writer):
         if not self.opened():
             self.file = open(self.path, 'w')
 
-    def insert(self, schema=None, table=None, values=None):
+    def insert(self, event):
 
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
         # ensure values is a list
-        values = [values] if isinstance(values, dict) else values
+        values = [event.row_converted] if isinstance(event.row_converted, dict) else event.row_converted
 
         if not self.opened():
             self.open()
@@ -48,16 +49,19 @@ if __name__ == '__main__':
 
     writer = CSVWriter(path)
     writer.open()
-    writer.insert(values={
+    event = Event()
+    event.row_converted={
         'a': 123,
         'b': 456,
         'c': 'qwe',
         'd': 'rty',
-    })
-    writer.insert(values={
+    }
+    writer.insert(event)
+    event.row_converted={
         'a': 789,
         'b': 987,
         'c': 'asd',
         'd': 'fgh',
-    })
+    }
+    writer.insert(event)
     writer.close()

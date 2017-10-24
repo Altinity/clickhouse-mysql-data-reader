@@ -10,7 +10,7 @@ class Writer(object):
     def open(self):
         pass
 
-    def insert(self, schema=None, table=None, values=None):
+    def insert(self, event=None):
         pass
 
     def close(self):

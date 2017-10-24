@@ -20,8 +20,8 @@ class Reader(object):
             if callback_name in self.callbacks:
                 self.callbacks[callback_name].append(callbacks[callback_name])
 
-    def fire(self, event, **attrs):
-        for callback in self.callbacks[event]:
+    def fire(self, event_name, **attrs):
+        for callback in self.callbacks[event_name]:
             callback(**attrs)
 
     def read(self):

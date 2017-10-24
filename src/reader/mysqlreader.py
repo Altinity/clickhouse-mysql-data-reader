@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .reader import Reader
+from ..event.event import Event
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
 #from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
@@ -63,11 +64,16 @@ class MySQLReader(Reader):
 
         # fetch events
         try:
-            for event in binlog_stream:
-                if isinstance(event, WriteRowsEvent):
-                    self.fire('WriteRowsEvent', binlog_event=event)
-                    for row in event.rows:
-                        self.fire('WriteRowsEvent.EachRow', binlog_event=event, row=row)
+            for mysql_event in binlog_stream:
+                if isinstance(mysql_event, WriteRowsEvent):
+                    event = Event()
+                    event.rows = mysql_event.rows
+                    event.schema = mysql_event.schema
+                    event.table = mysql_event.table
+                    self.fire('WriteRowsEvent', event=event)
+                    for row in mysql_event.rows:
+                        event.row = row['values']
+                        self.fire('WriteRowsEvent.EachRow', event=event)
                 else:
                     # skip non-insert events
                     pass
