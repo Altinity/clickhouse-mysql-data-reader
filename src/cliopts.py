@@ -101,14 +101,14 @@ class CLIOpts(object):
         argparser.add_argument(
             '--src-file',
             type=str,
-            default='data.csv',
+            default=None,
             help='Source file tp read data from'
         )
 
         argparser.add_argument(
             '--dst-file',
             type=str,
-            default='data.csv',
+            default=None,
             help='Target file to be used when writing data'
         )
         argparser.add_argument(

@@ -28,12 +28,22 @@ class Main(Daemon):
         print('---')
         super().__init__(pidfile=self.config['app-config']['pid_file'])
 
+    def reader(self):
+        if self.config['reader-config']['file']['csv_file_path']:
+            return CSVReader(**self.config['reader-config']['file'])
+        else:
+            return MySQLReader(**self.config['reader-config']['mysql'])
+
+    def writer(self):
+        if self.config['writer-config']['file']['csv_file_path']:
+            return CSVWriter(**self.config['writer-config']['file'])
+        else:
+            return CHWriter(**self.config['writer-config']['clickhouse'])
+
     def run(self):
         pumper = Pumper(
-            reader=MySQLReader(**self.config['reader-config']['mysql']),
-#            reader=CSVReader(**self.config['reader-config']['file']),
-#            writer=CHWriter(**self.config['writer-config']['clickhouse'])
-            writer = CSVWriter(**self.config['writer-config']['file']),
+            reader=self.reader(),
+            writer=self.writer(),
             skip_empty=False
         )
         pumper.run()
