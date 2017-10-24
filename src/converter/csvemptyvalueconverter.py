@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from .converter import Converter
+import ast
 
 
 class CSVEmptyValueConverter(Converter):
@@ -10,4 +11,9 @@ class CSVEmptyValueConverter(Converter):
         for column in event.row:
             if event.row[column] == '':
                 event.row[column] = None
+#            else:
+#                try:
+#                    event.row[column] = ast.literal_eval(event.row[column])
+#                except:
+#                    pass
         return event

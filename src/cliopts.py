@@ -135,6 +135,18 @@ class CLIOpts(object):
             default='',
             help='Password to be used when writing to dst'
         )
+        argparser.add_argument(
+            '--dst-db',
+            type=str,
+            default=None,
+            help='Database to be used when writing to dst'
+        )
+        argparser.add_argument(
+            '--dst-table',
+            type=str,
+            default=None,
+            help='Table to be used when writing to dst'
+        )
 
         args = argparser.parse_args()
 
@@ -168,10 +180,14 @@ class CLIOpts(object):
 
             'writer-config': {
                 'clickhouse': {
-                    'host': args.dst_host,
-                    'port': args.dst_port,
-                    'user': args.dst_user,
-                    'password': args.dst_password,
+                    'connection_settings': {
+                        'host': args.dst_host,
+                        'port': args.dst_port,
+                        'user': args.dst_user,
+                        'password': args.dst_password,
+                    },
+                    'dst_db': args.dst_db,
+                    'dst_table': args.dst_table,
                 },
                 'file': {
                     'csv_file_path': args.dst_file,

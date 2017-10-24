@@ -5,11 +5,12 @@ from .reader import Reader
 from ..event.event import Event
 from ..converter.csvemptyvalueconverter import CSVEmptyValueConverter
 import csv
+import os
 
 
 class CSVReader(Reader):
 
-    filename = None
+    csv_file_path = None
     csvfile = None
     sniffer = None
     dialect = None
@@ -19,7 +20,8 @@ class CSVReader(Reader):
     def __init__(self, csv_file_path, callbacks={}):
         super().__init__(callbacks=callbacks)
 
-        self.csvfile = open(csv_file_path)
+        self.csv_file_path = csv_file_path
+        self.csvfile = open(self.csv_file_path)
         self.sniffer = csv.Sniffer()
         self.dialect = self.sniffer.sniff(self.csvfile.read(1024))
         self.csvfile.seek(0)
@@ -38,6 +40,7 @@ class CSVReader(Reader):
         # fetch events
         try:
             event = Event()
+            event.table = os.path.splitext(self.csv_file_path)[0]
             self.fire('WriteRowsEvent', event=event)
             for row in self.reader:
                 event.row = row

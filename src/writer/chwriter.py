@@ -10,13 +10,23 @@ from ..converter.chdatatypeconverter import CHDataTypeConverter
 class CHWriter(Writer):
 
     client = None
+    dst_db = None
+    dst_table = None
 
-    def __init__(self, *args, **kwargs):
-        self.client = Client(*args, **kwargs)
+    def __init__(self, connection_settings, dst_db, dst_table):
+        self.client = Client(**connection_settings)
+        self.dst_db = dst_db
+        self.dst_table = dst_table
 
     def insert(self, event=None):
 
+        if self.dst_db:
+            event.schema = self.dst_db
+        if self.dst_table:
+            event.table = self.dst_table
+
         converter = CHDataTypeConverter()
+        converter.delete_empty_columns = True
         event = converter.convert(event)
 
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
