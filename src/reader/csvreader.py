@@ -2,6 +2,8 @@
 # -*- coding: utf-8 -*-
 
 from .reader import Reader
+from ..event.event import Event
+from ..converter.csvemptyvalueconverter import CSVEmptyValueConverter
 import csv
 
 
@@ -35,18 +37,17 @@ class CSVReader(Reader):
     def read(self):
         # fetch events
         try:
-            #                    self.fire('WriteRowsEvent', binlog_event=event)
+            event = Event()
+            self.fire('WriteRowsEvent', event=event)
             for row in self.reader:
-                for column in row:
-                    if row[column] == '':
-                        row[column] = None
-                print(row)
-#                        self.fire('WriteRowsEvent.EachRow', binlog_event=event, row=row)
+                event.row = row
+                converter = CSVEmptyValueConverter()
+                self.fire('WriteRowsEvent.EachRow', event=converter.convert(event))
         except KeyboardInterrupt:
             pass
 
         self.csvfile.close()
 
 if __name__ == '__main__':
-    reader = CSVReader(fileame='data.csv')
+    reader = CSVReader(filename='data.csv')
     reader.read()

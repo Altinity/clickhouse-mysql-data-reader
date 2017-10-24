@@ -15,6 +15,3 @@ class Event(object):
 
     # [{'id':1, 'col1':1}, {'id':2, 'col1':2}]
     rows = None
-
-    # row converted to target type set
-    row_converted = None

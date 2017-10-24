@@ -26,7 +26,7 @@ class CSVWriter(Writer):
 
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
         # ensure values is a list
-        values = [event.row_converted] if isinstance(event.row_converted, dict) else event.row_converted
+        values = [event.row] if isinstance(event.row, dict) else event.row
 
         if not self.opened():
             self.open()

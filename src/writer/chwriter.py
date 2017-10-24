@@ -4,6 +4,7 @@
 from clickhouse_driver.client import Client
 from .writer import Writer
 from ..event.event import Event
+from ..converter.chdatatypeconverter import CHDataTypeConverter
 
 
 class CHWriter(Writer):
@@ -15,9 +16,12 @@ class CHWriter(Writer):
 
     def insert(self, event=None):
 
+        converter = CHDataTypeConverter()
+        event = converter.convert(event)
+
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
         # ensure values is a list
-        values = [event.row_converted] if isinstance(event.row_converted, dict) else event.row_converted
+        values = [event.row] if isinstance(event.row, dict) else event.row
 
         sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
             event.schema,

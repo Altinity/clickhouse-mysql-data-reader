@@ -44,7 +44,6 @@ class Main(Daemon):
         pumper = Pumper(
             reader=self.reader(),
             writer=self.writer(),
-            skip_empty=False
         )
         pumper.run()
 
