@@ -26,16 +26,16 @@ class Pumper(object):
     def run(self):
         self.reader.read()
 
-    def write_rows_event(self, binlog_event=None):
+    def write_rows_event(self, event=None):
 #        binlog_event.dump()
         pass
 
-    def write_rows_event_each_row(self, binlog_event=None, row=None):
-        values = {}
-        for column_name in row['values']:
+    def write_rows_event_each_row(self, event=None):
+        event.row_converted = {}
+        for column_name in event.row:
 #            print(column_name, row['values'][column_name], type(row['values'][column_name]))
 
-            if self.skip_empty and row(['values'][column_name] is None):
+            if self.skip_empty and (event.row[column_name] is None):
                 print("Skip None value for column", column_name)
                 continue
 
@@ -53,17 +53,16 @@ class Pumper(object):
                 set,
             ]
             for t in types_to_convert:
-                if isinstance(row['values'][column_name], t):
-                    print("Converting column", column_name, "of type", type(row['values'][column_name]), row['values'][column_name])
-                    values[column_name] = str(row['values'][column_name])
-#                    values[column_name] = json.dumps(row['values'][column_name])
-                    print("res", values[column_name])
+                if isinstance(event.row[column_name], t):
+                    print("Converting column", column_name, "of type", type(event.row[column_name]), event.row[column_name])
+                    event.row_converted[column_name] = str(event.row[column_name])
+                    print("res", event.row_converted[column_name])
                     break
             else:
-                print("Using asis column", column_name, "of type", type(row['values'][column_name]))
-                values[column_name] = row['values'][column_name]
+                print("Using asis column", column_name, "of type", type(event.row[column_name]))
+                event.row_converted[column_name] = event.row[column_name]
 
-        self.writer.insert(binlog_event.schema, binlog_event.table, values)
+        self.writer.insert(event)
 
 
 if __name__ == '__main__':

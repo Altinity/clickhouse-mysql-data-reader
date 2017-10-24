@@ -30,8 +30,8 @@ class Main(Daemon):
 
     def run(self):
         pumper = Pumper(
-#            reader=MySQLReader(**self.config['reader-config']['mysql']),
-            reader=CSVReader(**self.config['reader-config']['file']),
+            reader=MySQLReader(**self.config['reader-config']['mysql']),
+#            reader=CSVReader(**self.config['reader-config']['file']),
 #            writer=CHWriter(**self.config['writer-config']['clickhouse'])
             writer = CSVWriter(**self.config['writer-config']['file']),
             skip_empty=False

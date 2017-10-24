@@ -3,6 +3,7 @@
 
 from clickhouse_driver.client import Client
 from .writer import Writer
+from ..event.event import Event
 
 
 class CHWriter(Writer):
@@ -12,15 +13,15 @@ class CHWriter(Writer):
     def __init__(self, *args, **kwargs):
         self.client = Client(*args, **kwargs)
 
-    def insert(self, schema=None, table=None, values=None):
+    def insert(self, event=None):
 
         # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
         # ensure values is a list
-        values = [values] if isinstance(values, dict) else values
+        values = [event.row_converted] if isinstance(event.row_converted, dict) else event.row_converted
 
         sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
-            schema,
-            table,
+            event.schema,
+            event.table,
             ', '.join(map(lambda column: '`%s`' % column,  values[0].keys()))
         )
         print('-------------------------')
