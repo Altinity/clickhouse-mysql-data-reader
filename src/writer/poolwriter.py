@@ -21,7 +21,7 @@ class PoolWriter(Writer):
         if key not in pool:
             pool[key] = []
         pool[key].append(event)
-        print(pool)
+        print('total:', len(pool), 'len(pool[', key, '])=', len(pool[key]))
         if len(pool[key]) > self.max_pool_size:
             self.writer.batch(pool[key])
             pool.pop(key)
