@@ -85,11 +85,15 @@ class MySQLReader(Reader):
 
                 # blocking
                 self.fire('ReaderIdleEvent')
+                time.sleep(1)
 
         except KeyboardInterrupt:
             pass
 
-        self.binlog_stream.close()
+        try:
+            self.binlog_stream.close()
+        except:
+            pass
         end_timestamp = int(time.time())
 
         print('start', start_timestamp)
