@@ -529,7 +529,7 @@ CREATE TABLE datatypes(
     longblob_1 Nullable(String), -- longblob_1 LONGBLOB COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) bytes',
     longtext_1 Nullable(String)  -- longtext_1 LONGTEXT COMMENT 'maximum length of 4,294,967,295 or 4GB (2^32 ? 1) characters',
 
-) ENGINE = Memory
+) ENGINE = Log
 ;
 
 CREATE TABLE enum_datatypes(

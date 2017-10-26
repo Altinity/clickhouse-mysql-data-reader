@@ -2,17 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from .config import Config
 
 
 class CLIOpts(object):
 
-    options = None
-
-    def __init__(self):
-        self.options = self.parse_options()
-
     @staticmethod
-    def parse_options():
+    def config():
         """
         parse CLI options into options dict
         :return: dict
@@ -162,7 +158,7 @@ class CLIOpts(object):
         args = argparser.parse_args()
 
         # build options
-        return {
+        return Config ({
             'app-config': {
                 'config-file': args.config_file,
                 'dry': args.dry,
@@ -206,4 +202,4 @@ class CLIOpts(object):
                     'csv_file_path': args.dst_file,
                 },
             },
-        }
+        })
