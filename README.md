@@ -594,6 +594,7 @@ done
 
 
 CREATE DATABASE IF NOT EXISTS `airline`;
+
 CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
   `Year`                 SMALLINT UNSIGNED, -- UInt16,
   `Quarter`              TINYINT UNSIGNED, -- UInt8,
@@ -705,3 +706,4 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
   `Div5WheelsOff`        LONGTEXT, -- String,
   `Div5TailNum`          LONGTEXT  -- String
 );
+
