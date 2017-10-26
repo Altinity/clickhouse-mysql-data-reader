@@ -3,28 +3,35 @@
 
 from .writer import Writer
 from ..event.event import Event
-
-pool = {}
+from ..pool import Pool
 
 
 class PoolWriter(Writer):
 
-    writer = None
+    writer_class = None
+    writer_params = None
     max_pool_size = None
+    pool = None
 
-    def __init__(self, writer, max_pool_size=500000):
-        self.writer = writer
+    def __init__(
+            self,
+            writer_class=None,
+            writer_params={},
+            max_pool_size=10000,
+            max_flush_interval=60
+    ):
+        self.writer_class = writer_class
+        self.writer_params = writer_params
         self.max_pool_size = max_pool_size
+        self.max_flush_interval = max_flush_interval
+
+        self.pool = Pool(self.writer_class, self.writer_params, self.max_pool_size, self.max_flush_interval)
 
     def insert(self, event):
-        key = str(event.schema) + '_' + str(event.table)
-        if key not in pool:
-            pool[key] = []
-        pool[key].append(event)
-        print(pool)
-        if len(pool[key]) > self.max_pool_size:
-            self.writer.batch(pool[key])
-            pool.pop(key)
+        self.pool.insert(event)
+
+    def flush(self):
+        self.pool.flush()
 
 if __name__ == '__main__':
     path = 'file.csv'

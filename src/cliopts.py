@@ -2,17 +2,13 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from .config import Config
 
 
 class CLIOpts(object):
 
-    options = None
-
-    def __init__(self):
-        self.options = self.parse_options()
-
     @staticmethod
-    def parse_options():
+    def config():
         """
         parse CLI options into options dict
         :return: dict
@@ -55,6 +51,12 @@ class CLIOpts(object):
             type=int,
             default=1000,
             help='max events num to pool before batch write'
+        )
+        argparser.add_argument(
+            '--mempool-max-flush-interval',
+            type=int,
+            default=60,
+            help='max seconds num between flushes'
         )
 
         argparser.add_argument(
@@ -162,7 +164,7 @@ class CLIOpts(object):
         args = argparser.parse_args()
 
         # build options
-        return {
+        return Config ({
             'app-config': {
                 'config-file': args.config_file,
                 'dry': args.dry,
@@ -170,6 +172,7 @@ class CLIOpts(object):
                 'pid_file': args.pid_file,
                 'mempool': args.mempool,
                 'mempool-max-events-num': args.mempool_max_events_num,
+                'mempool-max-flush-interval': args.mempool_max_flush_interval,
             },
 
             'reader-config': {
@@ -206,4 +209,4 @@ class CLIOpts(object):
                     'csv_file_path': args.dst_file,
                 },
             },
-        }
+        })

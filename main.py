@@ -4,11 +4,6 @@
 from src.cliopts import CLIOpts
 from src.pumper import Pumper
 from src.daemon import Daemon
-from src.reader.mysqlreader import MySQLReader
-from src.reader.csvreader import CSVReader
-from src.writer.chwriter import CHWriter
-from src.writer.csvwriter import CSVWriter
-from src.writer.poolwriter import PoolWriter
 
 import sys
 
@@ -22,40 +17,22 @@ class Main(Daemon):
     config = None
 
     def __init__(self):
-        cliopts = CLIOpts()
-        self.config = cliopts.options
+        self.config = CLIOpts.config()
+        super().__init__(pidfile=self.config.pid_file())
+
         print('---')
         print(self.config)
         print('---')
-        super().__init__(pidfile=self.config['app-config']['pid_file'])
-
-    def reader(self):
-        if self.config['reader-config']['file']['csv_file_path']:
-            return CSVReader(**self.config['reader-config']['file'])
-        else:
-            return MySQLReader(**self.config['reader-config']['mysql'])
-
-    def material(self):
-        if self.config['writer-config']['file']['csv_file_path']:
-            return CSVWriter(**self.config['writer-config']['file'])
-        else:
-            return CHWriter(**self.config['writer-config']['clickhouse'])
-
-    def writer(self):
-        if self.config['app-config']['mempool']:
-            return PoolWriter(writer=self.material(), max_pool_size=self.config['app-config']['mempool-max-events-num'])
-        else:
-            return self.material()
 
     def run(self):
         pumper = Pumper(
-            reader=self.reader(),
-            writer=self.writer(),
+            reader=self.config.reader(),
+            writer=self.config.writer(),
         )
         pumper.run()
 
     def start(self):
-        if self.config['app-config']['daemon']:
+        if self.config.is_daemon():
             if not super().start():
                 print("Error going background. The process already running?")
         else:

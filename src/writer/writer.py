@@ -13,5 +13,8 @@ class Writer(object):
     def insert(self, event=None):
         pass
 
+    def flush(self):
+        pass
+
     def close(self):
         pass

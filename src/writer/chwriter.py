@@ -32,17 +32,23 @@ class CHWriter(Writer):
         # ensure values is a list
         values = [event.row] if isinstance(event.row, dict) else event.row
 
-        sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
-            event.schema,
-            event.table,
-            ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
-        )
-        print('-------------------------')
-        print(sql)
-        print(values)
-        self.client.execute(sql, values)
+        try:
+            sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
+                event.schema,
+                event.table,
+                ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
+            )
+            self.client.execute(sql, values)
+        except:
+            print('QUERY FAILED -------------------------')
+            print(sql)
+            print(values)
 
     def batch(self, events):
+
+        if len(events) < 1:
+            return
+
         values = []
         converter = CHDataTypeConverter()
 
@@ -53,12 +59,18 @@ class CHWriter(Writer):
         schema = self.dst_db if self.dst_db else ev.schema
         table = self.dst_table if self.dst_table else ev.table
 
-        sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
-            schema,
-            table,
-            ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
-        )
-        self.client.execute(sql, values)
+        try:
+            sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
+                schema,
+                table,
+                ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
+            )
+            self.client.execute(sql, values)
+        except:
+            print('QUERY FAILED -------------------------')
+            print(sql)
+            print(values)
+
 
 
 if __name__ == '__main__':

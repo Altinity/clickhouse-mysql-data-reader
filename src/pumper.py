@@ -10,12 +10,14 @@ class Pumper(object):
     def __init__(self, reader=None, writer=None):
 
         self.reader = reader
+        self.writer = writer
+
         if self.reader:
             self.reader.subscribe({
                 'WriteRowsEvent': self.write_rows_event,
                 'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
+                'ReaderIdleEvent': self.reader_idle_event,
             })
-        self.writer = writer
 
     def run(self):
         self.reader.read()
@@ -26,6 +28,9 @@ class Pumper(object):
 
     def write_rows_event_each_row(self, event=None):
         self.writer.insert(event=event)
+
+    def reader_idle_event(self):
+        self.writer.flush()
 
 if __name__ == '__main__':
     print("pumper")
