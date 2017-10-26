@@ -5,7 +5,10 @@
 class Pool(object):
 
     # events pool
-    pool = {}
+    pool = {
+#       'key.1': [[event,], [event, event, event], [event, event, event]]
+#       'key.2': [[event,], [event, event, event], [event, event, event]]
+    }
     max_pool_size = None
     writer_class = None
     writer_params = None
@@ -23,29 +26,25 @@ class Pool(object):
 
     def insert(self, event):
         # build pool key
-        key = str(event.schema) + '_' + str(event.table)
+        key = str(event.schema) + '.' + str(event.table)
 
         # register key in pool
         if key not in self.pool:
-            self.pool[key] = []
+            self.pool[key] = [[]]
 
-        # pool event
-        self.pool[key].append(event)
+        # append to current pool key list
+        self.pool[key][0].append(event)
 
-        # may be it's time to flush pool
-        if len(self.pool[key]) > self.max_pool_size:
-            print('flushing key', key, 'len(pool[', key, '])=', len(self.pool[key]), 'keys:', len(self.pool))
+        if len(self.pool[key][0]) >= self.max_pool_size:
+            # shift pool key list
+            self.pool[key].insert(0, [])
+
+        while len(self.pool[key]) > 1:
+            buckets = len(self.pool[key])
+            last_bucket_size = len(self.pool[key][len(self.pool[key])-1])
+            print('flushing key', key, 'backets', buckets, 'last backet size', last_bucket_size, 'keys:', len(self.pool))
 
             # time to flush data for specified key
             writer = self.writer_class(**self.writer_params)
-            writer.batch(self.pool[key])
+            writer.batch(self.pool[key].pop())
             del writer
-
-            # data for specified key flushed, delete key from pool of data
-            self.delete(key)
-
-    def delete(self, key):
-        try:
-            self.pool.pop(key)
-        except:
-            pass

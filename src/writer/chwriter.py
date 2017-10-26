@@ -55,12 +55,17 @@ class CHWriter(Writer):
         schema = self.dst_db if self.dst_db else ev.schema
         table = self.dst_table if self.dst_table else ev.table
 
-        sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
-            schema,
-            table,
-            ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
-        )
-        self.client.execute(sql, values)
+        try:
+            sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
+                schema,
+                table,
+                ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
+            )
+            self.client.execute(sql, values)
+        except:
+            print('QUERY FAILED -------------------------')
+            print(sql)
+            print(values)
 
 
 
