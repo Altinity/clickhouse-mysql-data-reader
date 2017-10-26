@@ -52,6 +52,12 @@ class CLIOpts(object):
             default=1000,
             help='max events num to pool before batch write'
         )
+        argparser.add_argument(
+            '--mempool-max-flush-interval',
+            type=int,
+            default=60,
+            help='max seconds num between flushes'
+        )
 
         argparser.add_argument(
             '--src-server-id',
@@ -166,6 +172,7 @@ class CLIOpts(object):
                 'pid_file': args.pid_file,
                 'mempool': args.mempool,
                 'mempool-max-events-num': args.mempool_max_events_num,
+                'mempool-max-flush-interval': args.mempool_max_flush_interval,
             },
 
             'reader-config': {

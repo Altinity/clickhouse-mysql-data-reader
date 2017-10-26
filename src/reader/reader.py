@@ -10,6 +10,9 @@ class Reader(object):
 
         # called on each row inside WriteRowsEvent (thus can be called multiple times per WriteRowsEvent)
         'WriteRowsEvent.EachRow': [],
+
+        # called when Reader has no data to read
+        'ReaderIdleEvent': [],
     }
 
     def __init__(self, callbacks={}):

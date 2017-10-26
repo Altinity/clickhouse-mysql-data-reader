@@ -39,6 +39,10 @@ class CSVWriter(Writer):
             self.writer.writerow(row)
 
     def batch(self, events):
+
+        if len(events) < 1:
+            return
+
         values = []
 
         for event in events:

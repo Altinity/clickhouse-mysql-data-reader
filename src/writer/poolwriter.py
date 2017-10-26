@@ -17,16 +17,21 @@ class PoolWriter(Writer):
             self,
             writer_class=None,
             writer_params={},
-            max_pool_size=500000,
+            max_pool_size=10000,
+            max_flush_interval=60
     ):
         self.writer_class = writer_class
         self.writer_params = writer_params
         self.max_pool_size = max_pool_size
+        self.max_flush_interval = max_flush_interval
 
-        self.pool = Pool(self.writer_class, self.writer_params, self.max_pool_size)
+        self.pool = Pool(self.writer_class, self.writer_params, self.max_pool_size, self.max_flush_interval)
 
     def insert(self, event):
         self.pool.insert(event)
+
+    def flush(self):
+        self.pool.flush()
 
 if __name__ == '__main__':
     path = 'file.csv'

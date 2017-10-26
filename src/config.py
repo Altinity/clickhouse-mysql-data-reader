@@ -50,6 +50,7 @@ class Config(object):
                 writer_class=writer_class,
                 writer_params=writer_params,
                 max_pool_size=self.config['app-config']['mempool-max-events-num'],
+                max_flush_interval=self.config['app-config']['mempool-max-flush-interval'],
             )
         else:
             return writer_class(**writer_params)

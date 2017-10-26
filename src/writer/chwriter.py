@@ -45,6 +45,10 @@ class CHWriter(Writer):
             print(values)
 
     def batch(self, events):
+
+        if len(events) < 1:
+            return
+
         values = []
         converter = CHDataTypeConverter()
 
