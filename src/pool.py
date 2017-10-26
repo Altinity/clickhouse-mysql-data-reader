@@ -46,7 +46,8 @@ class Pool(object):
         # append to current pool key list
         self.pool[key][0].append(event)
 
-        self.flush_key(key)
+        if len(self.pool[key][0]) >= self.max_pool_size:
+            self.flush_key(key)
 
     def flush(self, key=None):
         empty_keys = []
