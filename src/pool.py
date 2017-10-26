@@ -67,13 +67,16 @@ class Pool(object):
 
         need_flush = False
         now = int(time.time())
+        flush_by = "U"
 
         if len(self.pool[key][0]) >= self.max_pool_size:
             # events number reached
             need_flush = True
+            flush_by = "SIZE"
         elif now >= self.flushed_at[key] + self.max_flush_interval:
             # time interval reached
             need_flush = True
+            flush_by = "TIME"
 
         if need_flush:
             # shift pool key list
@@ -83,7 +86,7 @@ class Pool(object):
         while len(self.pool[key]) > 1:
             buckets = len(self.pool[key])
             last_bucket_size = len(self.pool[key][len(self.pool[key])-1])
-            print(now, 'flushing key', key, 'backets', buckets, 'last backet size', last_bucket_size, 'keys:', len(self.pool))
+            print(now, 'flushing key', key, 'flush by', flush_by, 'backets', buckets, 'last backet size', last_bucket_size, 'keys:', len(self.pool))
 
             # time to flush data for specified key
             writer = self.writer_class(**self.writer_params)
