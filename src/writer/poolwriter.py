@@ -3,7 +3,7 @@
 
 from .writer import Writer
 from ..event.event import Event
-from ..pool import Pool
+from ..pool.bbpool import BBPool
 
 
 class PoolWriter(Writer):
@@ -25,10 +25,15 @@ class PoolWriter(Writer):
         self.max_pool_size = max_pool_size
         self.max_flush_interval = max_flush_interval
 
-        self.pool = Pool(self.writer_class, self.writer_params, self.max_pool_size, self.max_flush_interval)
+        self.pool = BBPool(
+            writer_class=self.writer_class,
+            writer_params=self.writer_params,
+            max_bucket_size=self.max_pool_size,
+            max_interval_between_rotations=self.max_flush_interval,
+        )
 
-    def insert(self, event):
-        self.pool.insert(event)
+    def insert(self, event_or_events):
+        self.pool.insert(event_or_events)
 
     def flush(self):
         self.pool.flush()

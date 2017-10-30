@@ -58,6 +58,12 @@ class CLIOpts(object):
             default=60,
             help='max seconds num between flushes'
         )
+        argparser.add_argument(
+            '--csvpool-file-path-prefix',
+            type=str,
+            default=None,
+            help='file path prefix to CSV pool files'
+        )
 
         argparser.add_argument(
             '--src-server-id',
@@ -173,6 +179,7 @@ class CLIOpts(object):
                 'mempool': args.mempool,
                 'mempool-max-events-num': args.mempool_max_events_num,
                 'mempool-max-flush-interval': args.mempool_max_flush_interval,
+                'csvpool_file_path_prefix': args.csvpool_file_path_prefix,
             },
 
             'reader-config': {
