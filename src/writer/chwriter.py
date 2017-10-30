@@ -18,41 +18,34 @@ class CHWriter(Writer):
         self.dst_db = dst_db
         self.dst_table = dst_table
 
-    def insert(self, event=None):
+    def insert(self, event_or_events=None):
+        # event_or_events = [
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        # ]
 
-        if self.dst_db:
-            event.schema = self.dst_db
-        if self.dst_table:
-            event.table = self.dst_table
-
-        converter = CHDataTypeConverter()
-        event = converter.convert(event)
-
-        # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
-        # ensure values is a list
-        values = [event.row] if isinstance(event.row, dict) else event.row
-
-        try:
-            sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
-                event.schema,
-                event.table,
-                ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
-            )
-            self.client.execute(sql, values)
-        except:
-            print('QUERY FAILED -------------------------')
-            print(sql)
-            print(values)
-
-    def batch(self, events):
-
-        if len(events) < 1:
+        if event_or_events is None:
+            # nothing to insert at all
             return
 
-        values = []
+        elif isinstance(event_or_events, list):
+            if len(event_or_events) < 1:
+                # list is empty - nothing to insert
+                return
+
+        else:
+            # event_or_events is instance of Event
+            event_or_events = [event_or_events]
+
         converter = CHDataTypeConverter()
 
-        for event in events:
+        values = []
+        ev = None
+        for event in event_or_events:
             ev = converter.convert(event)
             values.append(ev.row)
 
@@ -70,7 +63,6 @@ class CHWriter(Writer):
             print('QUERY FAILED -------------------------')
             print(sql)
             print(values)
-
 
 
 if __name__ == '__main__':
