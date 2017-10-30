@@ -27,7 +27,7 @@ class Pumper(object):
         pass
 
     def write_rows_event_each_row(self, event=None):
-        self.writer.insert(event_or_events=event)
+        self.writer.insert(event)
 
     def reader_idle_event(self):
         self.writer.flush()

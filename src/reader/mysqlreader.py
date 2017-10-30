@@ -74,6 +74,9 @@ class MySQLReader(Reader):
                         event.table = mysql_event.table
                         self.fire('WriteRowsEvent', event=event)
                         for row in mysql_event.rows:
+                            event = Event()
+                            event.schema = mysql_event.schema
+                            event.table = mysql_event.table
                             event.row = row['values']
                             self.fire('WriteRowsEvent.EachRow', event=event)
                     else:

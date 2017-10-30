@@ -4,6 +4,7 @@
 from .writer import Writer
 from ..event.event import Event
 import csv
+import os.path
 
 
 class CSVWriter(Writer):
@@ -11,6 +12,7 @@ class CSVWriter(Writer):
     file = None
     path = None
     writer = None
+    header_written = False
 
     def __init__(self, csv_file_path):
         self.path = csv_file_path
@@ -20,7 +22,12 @@ class CSVWriter(Writer):
 
     def open(self):
         if not self.opened():
-            self.file = open(self.path, 'w')
+            # do not write header to already existing file
+            # assume it was written earlier
+            if os.path.isfile(self.path):
+                self.header_written = True
+            # open file for write-at-the-end mode
+            self.file = open(self.path, 'a+')
 
     def insert(self, event_or_events):
         # event_or_events = [
@@ -49,8 +56,9 @@ class CSVWriter(Writer):
             self.open()
 
         if not self.writer:
-            self.writer = csv.DictWriter(self.file, fieldnames=event_or_events[0].row.keys())
-            self.writer.writeheader()
+            self.writer = csv.DictWriter(self.file, fieldnames=sorted(event_or_events[0].row.keys()))
+            if not self.header_written:
+                self.writer.writeheader()
 
         for event in event_or_events:
             self.writer.writerow(event.row)
