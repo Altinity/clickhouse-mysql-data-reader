@@ -22,41 +22,38 @@ class CSVWriter(Writer):
         if not self.opened():
             self.file = open(self.path, 'w')
 
-    def insert(self, event):
+    def insert(self, event_or_events):
+        # event_or_events = [
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        # ]
 
-        # values [{'id': 3, 'a': 3}, {'id': 2, 'a': 2}]
-        # ensure values is a list
-        values = [event.row] if isinstance(event.row, dict) else event.row
-
-        if not self.opened():
-            self.open()
-
-        if not self.writer:
-            self.writer = csv.DictWriter(self.file, fieldnames=values[0].keys())
-            self.writer.writeheader()
-
-        for row in values:
-            self.writer.writerow(row)
-
-    def batch(self, events):
-
-        if len(events) < 1:
+        if event_or_events is None:
+            # nothing to insert at all
             return
 
-        values = []
+        elif isinstance(event_or_events, list):
+            if len(event_or_events) < 1:
+                # list is empty - nothing to insert
+                return
 
-        for event in events:
-            values.append(event.row)
+        else:
+            # event_or_events is instance of Event
+            event_or_events = [event_or_events]
 
         if not self.opened():
             self.open()
 
         if not self.writer:
-            self.writer = csv.DictWriter(self.file, fieldnames=values[0].keys())
+            self.writer = csv.DictWriter(self.file, fieldnames=event_or_events[0].row.keys())
             self.writer.writeheader()
 
-        for row in values:
-            self.writer.writerow(row)
+        for event in event_or_events:
+            self.writer.writerow(event.row)
 
     def close(self):
         if self.opened():
