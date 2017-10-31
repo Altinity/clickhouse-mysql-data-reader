@@ -5,7 +5,7 @@ from .converter import Converter
 import ast
 
 
-class CSVEmptyValueConverter(Converter):
+class CSVReadConverter(Converter):
 
     def convert(self, event):
         for column in event.row:
