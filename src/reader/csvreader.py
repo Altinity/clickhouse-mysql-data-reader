@@ -3,7 +3,7 @@
 
 from .reader import Reader
 from ..event.event import Event
-from ..converter.csvemptyvalueconverter import CSVEmptyValueConverter
+from ..converter.csvreadconverter import CSVReadConverter
 import csv
 import os
 
@@ -17,8 +17,8 @@ class CSVReader(Reader):
     has_header = False
     reader = None
 
-    def __init__(self, csv_file_path, callbacks={}):
-        super().__init__(callbacks=callbacks)
+    def __init__(self, csv_file_path, converter=None, callbacks={}):
+        super().__init__(converter=converter, callbacks=callbacks)
 
         self.csv_file_path = csv_file_path
         self.csvfile = open(self.csv_file_path)
@@ -44,8 +44,7 @@ class CSVReader(Reader):
             self.fire('WriteRowsEvent', event=event)
             for row in self.reader:
                 event.row = row
-                converter = CSVEmptyValueConverter()
-                self.fire('WriteRowsEvent.EachRow', event=converter.convert(event))
+                self.fire('WriteRowsEvent.EachRow', event=self.converter.convert(event) if self.converter else event)
         except KeyboardInterrupt:
             pass
 

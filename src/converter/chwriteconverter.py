@@ -7,7 +7,7 @@ import datetime
 import decimal
 
 
-class CHDataTypeConverter(Converter):
+class CHWriteConverter(Converter):
 
     delete_empty_columns = False
 
