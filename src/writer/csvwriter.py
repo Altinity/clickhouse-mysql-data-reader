@@ -17,20 +17,29 @@ class CSVWriter(Writer):
     fieldnames = None
     header_written = False
     converter = None
+    path_prefix = None
+    path_suffix_parts = []
 
     def __init__(
             self,
             csv_file_path=None,
+            csv_file_path_prefix=None,
+            csv_file_path_suffix_parts=[],
             dst_db=None,
             dst_table=None,
             next=None,
             converter=None,
     ):
         self.path = csv_file_path
+        self.path_prefix = csv_file_path_prefix
+        self.path_suffix_parts = csv_file_path_suffix_parts
         self.dst_db = dst_db
         self.dst_table = dst_table
         self.next = next
         self.converter = converter
+
+        if self.path is None:
+            self.path = self.path_prefix + '_' + '_'.join(self.path_suffix_parts) + '.csv'
 
     def opened(self):
         return bool(self.file)

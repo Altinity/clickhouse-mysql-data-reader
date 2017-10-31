@@ -219,7 +219,6 @@ class CLIOpts(object):
                 'mempool-max-events-num': args.mempool_max_events_num,
                 'mempool-max-flush-interval': args.mempool_max_flush_interval,
                 'csvpool': args.csvpool,
-                'csvpool_file_path_prefix': args.csvpool_file_path_prefix,
             },
 
             'converter-config': {
@@ -263,6 +262,8 @@ class CLIOpts(object):
                 },
                 'file': {
                     'csv_file_path': args.dst_file,
+                    'csv_file_path_prefix': args.csvpool_file_path_prefix,
+                    'csv_file_path_suffix_parts': [],
                     'dst_db': args.dst_db,
                     'dst_table': args.dst_table,
                 },

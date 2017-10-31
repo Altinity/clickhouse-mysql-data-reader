@@ -125,6 +125,7 @@ class BBPool(Pool):
             print(now, self.buckets_count, 'rotating belt', belt_index, 'rotate by', rotate_by, 'buckets_num', buckets_num, 'last bucket size', last_bucket_size, 'belts:', len(self.belts))
 
             # time to flush data for specified key
+            self.writer_params['csv_file_path_suffix_parts'] = [str(now), str(self.buckets_count)]
             writer = self.writer_class(**self.writer_params)
             writer.insert(self.belts[belt_index].pop())
             writer.close()
