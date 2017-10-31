@@ -127,6 +127,8 @@ class BBPool(Pool):
             # time to flush data for specified key
             writer = self.writer_class(**self.writer_params)
             writer.insert(self.belts[belt_index].pop())
+            writer.close()
+            writer.push()
             del writer
 
         # belt rotated

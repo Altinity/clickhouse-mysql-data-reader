@@ -5,6 +5,7 @@ from .reader.mysqlreader import MySQLReader
 from .reader.csvreader import CSVReader
 from .writer.chwriter import CHWriter
 from .writer.csvwriter import CSVWriter
+from .writer.chcsvwriter import CHCSVWriter
 from .writer.poolwriter import PoolWriter
 
 
@@ -37,8 +38,16 @@ class Config(object):
             return MySQLReader(**self.config['reader-config']['mysql'])
 
     def writer_class(self):
-        if self.config['writer-config']['file']['csv_file_path']:
+
+        if self.config['app-config']['csvpool']:
+            return CSVWriter, {
+                **self.config['writer-config']['file'],
+                'next': CHCSVWriter(**self.config['writer-config']['clickhouse']['connection_settings']),
+            }
+
+        elif self.config['writer-config']['file']['csv_file_path']:
             return CSVWriter, self.config['writer-config']['file']
+
         else:
             return CHWriter, self.config['writer-config']['clickhouse']
 

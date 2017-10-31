@@ -12,10 +12,22 @@ class CSVWriter(Writer):
     file = None
     path = None
     writer = None
+    dst_db = None
+    dst_table = None
+    fieldnames = None
     header_written = False
 
-    def __init__(self, csv_file_path):
+    def __init__(
+            self,
+            csv_file_path=None,
+            dst_db=None,
+            dst_table=None,
+            next=None,
+    ):
         self.path = csv_file_path
+        self.dst_db = dst_db
+        self.dst_table = dst_table
+        self.next = next
 
     def opened(self):
         return bool(self.file)
@@ -56,15 +68,28 @@ class CSVWriter(Writer):
             self.open()
 
         if not self.writer:
-            self.writer = csv.DictWriter(self.file, fieldnames=sorted(event_or_events[0].row.keys()))
+            self.fieldnames = sorted(event_or_events[0].row.keys())
+            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
             if not self.header_written:
                 self.writer.writeheader()
 
         for event in event_or_events:
             self.writer.writerow(event.row)
 
+    def push(self):
+        if not self.next:
+            return
+
+        event = Event()
+        event.schema = self.dst_db
+        event.table = self.dst_table
+        event.file = self.path
+        event.fieldnames = self.fieldnames
+        self.next.insert([event])
+
     def close(self):
         if self.opened():
+            self.file.flush()
             self.file.close()
             self.file = None
             self.writer = None

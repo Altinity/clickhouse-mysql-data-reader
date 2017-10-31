@@ -59,9 +59,14 @@ class CLIOpts(object):
             help='max seconds num between flushes'
         )
         argparser.add_argument(
+            '--csvpool',
+            action='store_true',
+            help='Cache data in csv files.'
+        )
+        argparser.add_argument(
             '--csvpool-file-path-prefix',
             type=str,
-            default=None,
+            default='/tmp/csvpool',
             help='file path prefix to CSV pool files'
         )
 
@@ -179,6 +184,7 @@ class CLIOpts(object):
                 'mempool': args.mempool,
                 'mempool-max-events-num': args.mempool_max_events_num,
                 'mempool-max-flush-interval': args.mempool_max_flush_interval,
+                'csvpool': args.csvpool,
                 'csvpool_file_path_prefix': args.csvpool_file_path_prefix,
             },
 
@@ -214,6 +220,8 @@ class CLIOpts(object):
                 },
                 'file': {
                     'csv_file_path': args.dst_file,
+                    'dst_db': args.dst_db,
+                    'dst_table': args.dst_table,
                 },
             },
         })

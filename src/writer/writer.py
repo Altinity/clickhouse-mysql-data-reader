@@ -4,6 +4,8 @@
 
 class Writer(object):
 
+    next = None
+
     def opened(self):
         pass
 
@@ -22,6 +24,9 @@ class Writer(object):
         pass
 
     def flush(self):
+        pass
+
+    def push(self):
         pass
 
     def close(self):
