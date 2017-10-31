@@ -9,4 +9,5 @@ python3 main.py \
 	--csvpool --csvpool-file-path-prefix=qwe \
 	--csv-column-default-value date_1=2000-01-01 datetime_1=2000-01-01\ 01:02:03 time_1=2001-01-01\ 01:02:03 timestamp_1=2002-01-01\ 01:02:03
 
-#	--dst-file=dst.csv \
+#	--dst-file=dst.csv 
+#	--csvpool-keep-files

@@ -94,6 +94,11 @@ class CLIOpts(object):
             default='/tmp/csvpool',
             help='file path prefix to CSV pool files'
         )
+        argparser.add_argument(
+            '--csvpool-keep-files',
+            action='store_true',
+            help='Keep pool csv files.'
+        )
 
         argparser.add_argument(
             '--src-server-id',
@@ -264,6 +269,7 @@ class CLIOpts(object):
                     'csv_file_path': args.dst_file,
                     'csv_file_path_prefix': args.csvpool_file_path_prefix,
                     'csv_file_path_suffix_parts': [],
+                    'csv_keep_file': args.csvpool_keep_files,
                     'dst_db': args.dst_db,
                     'dst_table': args.dst_table,
                 },

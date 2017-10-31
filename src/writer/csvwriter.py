@@ -19,12 +19,14 @@ class CSVWriter(Writer):
     converter = None
     path_prefix = None
     path_suffix_parts = []
+    delete = False
 
     def __init__(
             self,
             csv_file_path=None,
             csv_file_path_prefix=None,
             csv_file_path_suffix_parts=[],
+            csv_keep_file=False,
             dst_db=None,
             dst_table=None,
             next=None,
@@ -40,6 +42,7 @@ class CSVWriter(Writer):
 
         if self.path is None:
             self.path = self.path_prefix + '_' + '_'.join(self.path_suffix_parts) + '.csv'
+            self.delete = not csv_keep_file
 
     def opened(self):
         return bool(self.file)
@@ -105,6 +108,10 @@ class CSVWriter(Writer):
             self.file.close()
             self.file = None
             self.writer = None
+
+    def destroy(self):
+        if self.delete:
+            os.remove(self.path)
 
 if __name__ == '__main__':
     path = 'file.csv'

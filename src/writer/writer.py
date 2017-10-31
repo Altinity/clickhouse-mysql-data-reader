@@ -29,5 +29,8 @@ class Writer(object):
     def push(self):
         pass
 
+    def destroy(self):
+        pass
+
     def close(self):
         pass

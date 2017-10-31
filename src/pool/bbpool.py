@@ -130,6 +130,7 @@ class BBPool(Pool):
             writer.insert(self.belts[belt_index].pop())
             writer.close()
             writer.push()
+            writer.destroy()
             del writer
 
         # belt rotated
