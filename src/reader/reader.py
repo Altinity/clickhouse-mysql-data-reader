@@ -4,6 +4,8 @@
 
 class Reader(object):
 
+    converter = None
+
     callbacks = {
         # called on each WriteRowsEvent
         'WriteRowsEvent': [],
@@ -15,7 +17,8 @@ class Reader(object):
         'ReaderIdleEvent': [],
     }
 
-    def __init__(self, callbacks={}):
+    def __init__(self, converter=None, callbacks={}):
+        self.converter = converter
         self.subscribe(callbacks)
 
     def subscribe(self, callbacks):

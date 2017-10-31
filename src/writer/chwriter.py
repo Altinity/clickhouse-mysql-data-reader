@@ -4,7 +4,7 @@
 from clickhouse_driver.client import Client
 from .writer import Writer
 from ..event.event import Event
-from ..converter.chdatatypeconverter import CHDataTypeConverter
+from ..converter.chwriteconverter import CHWriteConverter
 
 
 class CHWriter(Writer):
@@ -41,7 +41,7 @@ class CHWriter(Writer):
             # event_or_events is instance of Event
             event_or_events = [event_or_events]
 
-        converter = CHDataTypeConverter()
+        converter = CHWriteConverter()
 
         values = []
         ev = None

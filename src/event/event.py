@@ -12,3 +12,8 @@ class Event(object):
 
     # {'id':1, 'col1':1}
     row = None
+
+    file = None
+
+    # ['id', 'col1', 'col2']
+    fieldnames = None
