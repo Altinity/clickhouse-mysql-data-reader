@@ -8,6 +8,31 @@ from .config import Config
 class CLIOpts(object):
 
     @staticmethod
+    def join(lists_to_join):
+        # lists_to_join contains something like
+        # [['a=b', 'c=d'], ['e=f', 'z=x'], ]
+        if not isinstance(lists_to_join, list):
+            return None
+
+        res = {}
+        for lst in lists_to_join:
+            # lst = ['a=b', 'c=d']
+            for column_value_pair in lst:
+                # value = 'a=b'
+                column, value = column_value_pair.split('=', 2)
+                res[column] = value
+
+        # dict {
+        #   'col1': 'value1',
+        #   'col2': 'value2',
+        # }
+
+        if len(res) > 0:
+            return res
+        else:
+            return None
+
+    @staticmethod
     def config():
         """
         parse CLI options into options dict
@@ -172,6 +197,15 @@ class CLIOpts(object):
             help='Table to be used when writing to dst'
         )
 
+        argparser.add_argument(
+            '--csv-column-default-value',
+            type=str,
+            nargs='*',
+            action='append',
+            default=None,
+            help='Table to be used when writing to dst'
+        )
+
         args = argparser.parse_args()
 
         # build options
@@ -186,6 +220,15 @@ class CLIOpts(object):
                 'mempool-max-flush-interval': args.mempool_max_flush_interval,
                 'csvpool': args.csvpool,
                 'csvpool_file_path_prefix': args.csvpool_file_path_prefix,
+            },
+
+            'converter-config': {
+                'clickhouse': {
+
+                },
+                'csv': {
+                    'column_default_value': CLIOpts.join(args.csv_column_default_value),
+                },
             },
 
             'reader-config': {

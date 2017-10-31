@@ -16,6 +16,7 @@ class CSVWriter(Writer):
     dst_table = None
     fieldnames = None
     header_written = False
+    converter = None
 
     def __init__(
             self,
@@ -23,11 +24,13 @@ class CSVWriter(Writer):
             dst_db=None,
             dst_table=None,
             next=None,
+            converter=None,
     ):
         self.path = csv_file_path
         self.dst_db = dst_db
         self.dst_table = dst_table
         self.next = next
+        self.converter = converter
 
     def opened(self):
         return bool(self.file)
@@ -74,7 +77,7 @@ class CSVWriter(Writer):
                 self.writer.writeheader()
 
         for event in event_or_events:
-            self.writer.writerow(event.row)
+            self.writer.writerow(self.converter.convert(event).row if self.converter else event.row)
 
     def push(self):
         if not self.next:

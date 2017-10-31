@@ -3,10 +3,13 @@
 
 from .reader.mysqlreader import MySQLReader
 from .reader.csvreader import CSVReader
+
 from .writer.chwriter import CHWriter
 from .writer.csvwriter import CSVWriter
 from .writer.chcsvwriter import CHCSVWriter
 from .writer.poolwriter import PoolWriter
+
+from .converter.csvwriteconverter import CSVWriteConverter
 
 
 class Config(object):
@@ -43,6 +46,7 @@ class Config(object):
             return CSVWriter, {
                 **self.config['writer-config']['file'],
                 'next': CHCSVWriter(**self.config['writer-config']['clickhouse']['connection_settings']),
+                'converter': CSVWriteConverter(defaults=self.config['converter-config']['csv']['column_default_value']) if self.config['converter-config']['csv']['column_default_value'] else None,
             }
 
         elif self.config['writer-config']['file']['csv_file_path']:
