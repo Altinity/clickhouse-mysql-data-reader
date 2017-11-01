@@ -8,6 +8,7 @@ from .writer.chwriter import CHWriter
 from .writer.csvwriter import CSVWriter
 from .writer.chcsvwriter import CHCSVWriter
 from .writer.poolwriter import PoolWriter
+from .objectbuilder import ObjectBuilder
 
 from .converter.csvwriteconverter import CSVWriteConverter
 
@@ -40,30 +41,27 @@ class Config(object):
         else:
             return MySQLReader(**self.config['reader-config']['mysql'])
 
-    def writer_class(self):
+    def writer_builder(self):
 
         if self.config['app-config']['csvpool']:
-            return CSVWriter, {
+            return ObjectBuilder(class_name=CSVWriter, params={
                 **self.config['writer-config']['file'],
-                'next': CHCSVWriter(**self.config['writer-config']['clickhouse']['connection_settings']),
-                'converter': CSVWriteConverter(defaults=self.config['converter-config']['csv']['column_default_value']) if self.config['converter-config']['csv']['column_default_value'] else None,
-            }
+                'next_writer_builder': ObjectBuilder(instance=CHCSVWriter(**self.config['writer-config']['clickhouse']['connection_settings'])),
+                'converter_builder': ObjectBuilder(instance=CSVWriteConverter(defaults=self.config['converter-config']['csv']['column_default_value'])) if self.config['converter-config']['csv']['column_default_value'] else None,
+            })
 
         elif self.config['writer-config']['file']['csv_file_path']:
-            return CSVWriter, self.config['writer-config']['file']
+            return ObjectBuilder(class_name=CSVWriter, params=self.config['writer-config']['file'])
 
         else:
-            return CHWriter, self.config['writer-config']['clickhouse']
+            return ObjectBuilder(class_name=CHWriter, params=self.config['writer-config']['clickhouse'])
 
     def writer(self):
-        writer_class, writer_params = self.writer_class()
-
         if self.config['app-config']['mempool']:
             return PoolWriter(
-                writer_class=writer_class,
-                writer_params=writer_params,
+                writer_builder=self.writer_builder(),
                 max_pool_size=self.config['app-config']['mempool-max-events-num'],
                 max_flush_interval=self.config['app-config']['mempool-max-flush-interval'],
             )
         else:
-            return writer_class(**writer_params)
+            return self.writer_builder().get()

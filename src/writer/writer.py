@@ -4,7 +4,8 @@
 
 class Writer(object):
 
-    next = None
+    next_writer_builder = None
+    converter_builder = None
 
     def opened(self):
         pass

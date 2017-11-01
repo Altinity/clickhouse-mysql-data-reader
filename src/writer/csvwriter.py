@@ -16,7 +16,6 @@ class CSVWriter(Writer):
     dst_table = None
     fieldnames = None
     header_written = False
-    converter = None
     path_prefix = None
     path_suffix_parts = []
     delete = False
@@ -29,16 +28,16 @@ class CSVWriter(Writer):
             csv_keep_file=False,
             dst_db=None,
             dst_table=None,
-            next=None,
-            converter=None,
+            next_writer_builder=None,
+            converter_builder=None,
     ):
         self.path = csv_file_path
         self.path_prefix = csv_file_path_prefix
         self.path_suffix_parts = csv_file_path_suffix_parts
         self.dst_db = dst_db
         self.dst_table = dst_table
-        self.next = next
-        self.converter = converter
+        self.next_writer_builder = next_writer_builder
+        self.converter_builder = converter_builder
 
         if self.path is None:
             self.path = self.path_prefix + '_' + '_'.join(self.path_suffix_parts) + '.csv'
@@ -92,10 +91,10 @@ class CSVWriter(Writer):
                 self.writer.writeheader()
 
         for event in event_or_events:
-            self.writer.writerow(self.converter.convert(event).row if self.converter else event.row)
+            self.writer.writerow(self.converter_builder.get().convert(event).row if self.converter_builder else event.row)
 
     def push(self):
-        if not self.next:
+        if not self.next_writer_builder:
             return
 
         event = Event()
@@ -103,7 +102,7 @@ class CSVWriter(Writer):
         event.table = self.dst_table
         event.file = self.path
         event.fieldnames = self.fieldnames
-        self.next.insert([event])
+        self.next_writer_builder.get().insert([event])
 
     def close(self):
         if self.opened():

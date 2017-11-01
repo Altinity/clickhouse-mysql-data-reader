@@ -8,26 +8,22 @@ from ..pool.bbpool import BBPool
 
 class PoolWriter(Writer):
 
-    writer_class = None
-    writer_params = None
+    writer_builder = None
     max_pool_size = None
     pool = None
 
     def __init__(
             self,
-            writer_class=None,
-            writer_params={},
+            writer_builder=None,
             max_pool_size=10000,
             max_flush_interval=60
     ):
-        self.writer_class = writer_class
-        self.writer_params = writer_params
+        self.writer_builder = writer_builder
         self.max_pool_size = max_pool_size
         self.max_flush_interval = max_flush_interval
 
         self.pool = BBPool(
-            writer_class=self.writer_class,
-            writer_params=self.writer_params,
+            writer_builder=self.writer_builder,
             max_bucket_size=self.max_pool_size,
             max_interval_between_rotations=self.max_flush_interval,
         )
