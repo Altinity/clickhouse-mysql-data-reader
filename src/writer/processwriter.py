@@ -39,7 +39,7 @@ class ProcessWriter(Writer):
         #   },
         # ]
         process = mp.Process(target=self.process, args=(event_or_events,))
-        print('Start Process')
+        #print('Start Process')
         process.start()
         #print('Join Process')
         #process.join()

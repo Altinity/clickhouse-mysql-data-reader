@@ -8,13 +8,13 @@ from .writer import Writer
 class CHWriter(Writer):
 
     client = None
-    dst_db = None
+    dst_schema = None
     dst_table = None
 
     def __init__(
             self,
             connection_settings,
-            dst_db=None,
+            dst_schema=None,
             dst_table=None,
             next_writer_builder=None,
             converter_builder=None,
@@ -22,7 +22,7 @@ class CHWriter(Writer):
         super().__init__(next_writer_builder=next_writer_builder, converter_builder=converter_builder)
 
         self.client = Client(**connection_settings)
-        self.dst_db = dst_db
+        self.dst_schema = dst_schema
         self.dst_table = dst_table
 
     def insert(self, event_or_events=None):
@@ -45,7 +45,7 @@ class CHWriter(Writer):
             event_converted = self.convert(event)
             values.append(event_converted.row)
 
-        schema = self.dst_db if self.dst_db else event_converted.schema
+        schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = self.dst_table if self.dst_table else event_converted.table
 
         try:

@@ -12,7 +12,7 @@ class CSVWriter(Writer):
     file = None
     path = None
     writer = None
-    dst_db = None
+    dst_schema = None
     dst_table = None
     fieldnames = None
     header_written = False
@@ -26,7 +26,7 @@ class CSVWriter(Writer):
             csv_file_path_prefix=None,
             csv_file_path_suffix_parts=[],
             csv_keep_file=False,
-            dst_db=None,
+            dst_schema=None,
             dst_table=None,
             next_writer_builder=None,
             converter_builder=None,
@@ -36,7 +36,7 @@ class CSVWriter(Writer):
         self.path = csv_file_path
         self.path_prefix = csv_file_path_prefix
         self.path_suffix_parts = csv_file_path_suffix_parts
-        self.dst_db = dst_db
+        self.dst_schema = dst_schema
         self.dst_table = dst_table
 
         if self.path is None:
@@ -77,6 +77,11 @@ class CSVWriter(Writer):
 
         if not self.writer:
             self.fieldnames = sorted(events[0].row.keys())
+            if self.dst_schema is None:
+                self.dst_schema = events[0].schema
+            if self.dst_table is None:
+                self.dst_table = events[0].table
+
             self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
             if not self.header_written:
                 self.writer.writeheader()
@@ -89,7 +94,7 @@ class CSVWriter(Writer):
             return
 
         event = Event()
-        event.schema = self.dst_db
+        event.schema = self.dst_schema
         event.table = self.dst_table
         event.file = self.path
         event.fieldnames = self.fieldnames
