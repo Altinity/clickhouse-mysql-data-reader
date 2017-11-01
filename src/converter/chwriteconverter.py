@@ -28,26 +28,27 @@ class CHWriteConverter(Converter):
     def convert(self, event):
 
         columns_to_delete = []
-        for column_name in event.row:
-#                print(column_name, row['values'][column_name], type(row['values'][column_name]))
 
-            if self.delete_empty_columns and (event.row[column_name] is None):
-#                print("Skip None value for column", column_name)
-                columns_to_delete.append(column_name)
+        for column in event.row:
+            if (event.row[column] is None) and self.delete_empty_columns:
+                # include empty column to the list of to be deleted columns
+                columns_to_delete.append(column)
+                # move to next column
                 continue
 
             for t in self.types_to_convert:
-                if isinstance(event.row[column_name], t):
-#                    print("Converting column", column_name, "of type", type(event.row[column_name]),
-#                          event.row[column_name])
-                    event.row[column_name] = str(event.row[column_name])
-#                    print("res", event.row[column_name])
+                if isinstance(event.row[column], t):
+#                    print("Converting column", column, "of type", type(event.row[column]),
+#                          event.row[column])
+                    event.row[column] = str(event.row[column])
+#                    print("res", event.row[column])
                     break
             else:
-#                print("Using asis column", column_name, "of type", type(event.row[column_name]))
+#                print("Using asis column", column, "of type", type(event.row[column]))
                 pass
 
-        for column_to_delete in columns_to_delete:
-            event.row.pop(column_to_delete)
+        # delete columns according to the list
+        for column in columns_to_delete:
+            event.row.pop(column)
 
         return event
