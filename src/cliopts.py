@@ -52,7 +52,7 @@ class CLIOpts(object):
         argparser.add_argument(
             '--dry',
             action='store_true',
-            help='Dry mode - do not do anything that can harm.'
+            help='Dry mode - do not do anything that can harm. '
             'Useful for debugging.'
         )
         argparser.add_argument(
@@ -74,30 +74,30 @@ class CLIOpts(object):
         argparser.add_argument(
             '--mempool-max-events-num',
             type=int,
-            default=1000,
-            help='max events num to pool before batch write'
+            default=100000,
+            help='Max events number to pool - triggering pool flush'
         )
         argparser.add_argument(
             '--mempool-max-flush-interval',
             type=int,
             default=60,
-            help='max seconds num between flushes'
+            help='Max seconds number between pool flushes'
         )
         argparser.add_argument(
             '--csvpool',
             action='store_true',
-            help='Cache data in csv files.'
+            help='Cache data in CSV pool files on disk. Requires memory pooling, thus enables --mempool even if it is not explicitly specified'
         )
         argparser.add_argument(
             '--csvpool-file-path-prefix',
             type=str,
-            default='/tmp/csvpool',
-            help='file path prefix to CSV pool files'
+            default='/tmp/csvpool_',
+            help='File path prefix to CSV pool files'
         )
         argparser.add_argument(
             '--csvpool-keep-files',
             action='store_true',
-            help='Keep pool csv files.'
+            help='Keep CSV pool files. Useful for debugging'
         )
 
         argparser.add_argument(
@@ -156,7 +156,7 @@ class CLIOpts(object):
             '--src-file',
             type=str,
             default=None,
-            help='Source file tp read data from'
+            help='Source file to read data from'
         )
 
         argparser.add_argument(
@@ -190,10 +190,10 @@ class CLIOpts(object):
             help='Password to be used when writing to dst'
         )
         argparser.add_argument(
-            '--dst-db',
+            '--dst-schema',
             type=str,
             default=None,
-            help='Database to be used when writing to dst'
+            help='Database/schema to be used when writing to dst'
         )
         argparser.add_argument(
             '--dst-table',
@@ -220,7 +220,7 @@ class CLIOpts(object):
                 'dry': args.dry,
                 'daemon': args.daemon,
                 'pid_file': args.pid_file,
-                'mempool': args.mempool,
+                'mempool': args.mempool or args.csvpool, # csvpool assumes mempool to be enabled
                 'mempool-max-events-num': args.mempool_max_events_num,
                 'mempool-max-flush-interval': args.mempool_max_flush_interval,
                 'csvpool': args.csvpool,
@@ -262,7 +262,7 @@ class CLIOpts(object):
                         'user': args.dst_user,
                         'password': args.dst_password,
                     },
-                    'dst_db': args.dst_db,
+                    'dst_schema': args.dst_schema,
                     'dst_table': args.dst_table,
                 },
                 'file': {
@@ -270,7 +270,7 @@ class CLIOpts(object):
                     'csv_file_path_prefix': args.csvpool_file_path_prefix,
                     'csv_file_path_suffix_parts': [],
                     'csv_keep_file': args.csvpool_keep_files,
-                    'dst_db': args.dst_db,
+                    'dst_schema': args.dst_schema,
                     'dst_table': args.dst_table,
                 },
             },

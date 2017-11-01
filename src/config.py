@@ -8,8 +8,11 @@ from .writer.chwriter import CHWriter
 from .writer.csvwriter import CSVWriter
 from .writer.chcsvwriter import CHCSVWriter
 from .writer.poolwriter import PoolWriter
+from .writer.processwriter import ProcessWriter
+from .objectbuilder import ObjectBuilder
 
 from .converter.csvwriteconverter import CSVWriteConverter
+from .converter.chwriteconverter import CHWriteConverter
 
 
 class Config(object):
@@ -40,30 +43,47 @@ class Config(object):
         else:
             return MySQLReader(**self.config['reader-config']['mysql'])
 
-    def writer_class(self):
+    def converter_builder(self):
+        if not self.config['converter-config']['csv']['column_default_value']:
+            # no default values for CSV columns provided
+            return None
 
+        return ObjectBuilder(
+            instance=CSVWriteConverter(
+                defaults=self.config['converter-config']['csv']['column_default_value']
+            ))
+
+    def writer_builder(self):
         if self.config['app-config']['csvpool']:
-            return CSVWriter, {
-                **self.config['writer-config']['file'],
-                'next': CHCSVWriter(**self.config['writer-config']['clickhouse']['connection_settings']),
-                'converter': CSVWriteConverter(defaults=self.config['converter-config']['csv']['column_default_value']) if self.config['converter-config']['csv']['column_default_value'] else None,
-            }
+            return ObjectBuilder(class_name=ProcessWriter, constructor_params={
+                'next_writer_builder': ObjectBuilder(class_name=CSVWriter, constructor_params={
+                    **self.config['writer-config']['file'],
+                    'next_writer_builder': ObjectBuilder(
+                        class_name=CHCSVWriter,
+                        constructor_params=self.config['writer-config']['clickhouse']['connection_settings']
+                    ),
+                    'converter_builder': self.converter_builder(),
+                })
+            })
 
         elif self.config['writer-config']['file']['csv_file_path']:
-            return CSVWriter, self.config['writer-config']['file']
+            return ObjectBuilder(class_name=CSVWriter, constructor_params={
+                **self.config['writer-config']['file'],
+                'converter_builder': self.converter_builder(),
+            })
 
         else:
-            return CHWriter, self.config['writer-config']['clickhouse']
+            return ObjectBuilder(class_name=CHWriter, constructor_params={
+                **self.config['writer-config']['clickhouse'],
+                'converter_builder': ObjectBuilder(instance=CHWriteConverter()),
+            })
 
     def writer(self):
-        writer_class, writer_params = self.writer_class()
-
         if self.config['app-config']['mempool']:
             return PoolWriter(
-                writer_class=writer_class,
-                writer_params=writer_params,
+                writer_builder=self.writer_builder(),
                 max_pool_size=self.config['app-config']['mempool-max-events-num'],
                 max_flush_interval=self.config['app-config']['mempool-max-flush-interval'],
             )
         else:
-            return writer_class(**writer_params)
+            return self.writer_builder().get()

@@ -3,19 +3,26 @@
 
 from clickhouse_driver.client import Client
 from .writer import Writer
-from ..event.event import Event
-from ..converter.chwriteconverter import CHWriteConverter
 
 
 class CHWriter(Writer):
 
     client = None
-    dst_db = None
+    dst_schema = None
     dst_table = None
 
-    def __init__(self, connection_settings, dst_db, dst_table):
+    def __init__(
+            self,
+            connection_settings,
+            dst_schema=None,
+            dst_table=None,
+            next_writer_builder=None,
+            converter_builder=None,
+    ):
+        super().__init__(next_writer_builder=next_writer_builder, converter_builder=converter_builder)
+
         self.client = Client(**connection_settings)
-        self.dst_db = dst_db
+        self.dst_schema = dst_schema
         self.dst_table = dst_table
 
     def insert(self, event_or_events=None):
@@ -28,29 +35,18 @@ class CHWriter(Writer):
         #   },
         # ]
 
-        if event_or_events is None:
-            # nothing to insert at all
+        events = self.listify(event_or_events)
+        if len(events) < 1:
             return
 
-        elif isinstance(event_or_events, list):
-            if len(event_or_events) < 1:
-                # list is empty - nothing to insert
-                return
-
-        else:
-            # event_or_events is instance of Event
-            event_or_events = [event_or_events]
-
-        converter = CHWriteConverter()
-
         values = []
-        ev = None
-        for event in event_or_events:
-            ev = converter.convert(event)
-            values.append(ev.row)
+        event_converted = None
+        for event in events:
+            event_converted = self.convert(event)
+            values.append(event_converted.row)
 
-        schema = self.dst_db if self.dst_db else ev.schema
-        table = self.dst_table if self.dst_table else ev.table
+        schema = self.dst_schema if self.dst_schema else event_converted.schema
+        table = self.dst_table if self.dst_table else event_converted.table
 
         try:
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(

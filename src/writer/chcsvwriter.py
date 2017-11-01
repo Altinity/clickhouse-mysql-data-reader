@@ -1,9 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
+from .writer import Writer
 
-class CHCSVWriter(object):
+import os
+import time
+
+class CHCSVWriter(Writer):
 
     host = None
     port = None
@@ -26,7 +29,11 @@ class CHCSVWriter(object):
         #   },
         # ]
 
-        for event in event_or_events:
+        events = self.listify(event_or_events)
+        if len(events) < 1:
+            return
+
+        for event in events:
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) FORMAT CSV'.format(
                 event.schema,
                 event.table,
@@ -48,7 +55,7 @@ class CHCSVWriter(object):
                 sql,
             )
 
-            print('running:', bash)
+#            print('running:', bash)
             os.system(bash)
 
         pass
