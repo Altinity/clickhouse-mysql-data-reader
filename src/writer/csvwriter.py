@@ -44,6 +44,9 @@ class CSVWriter(Writer):
             self.path = self.path_prefix + '_' + '_'.join(self.path_suffix_parts) + '.csv'
             self.delete = not csv_keep_file
 
+    def __del__(self):
+        self.destroy()
+
     def opened(self):
         return bool(self.file)
 
@@ -110,7 +113,8 @@ class CSVWriter(Writer):
             self.writer = None
 
     def destroy(self):
-        if self.delete:
+        if self.delete and os.path.isfile(self.path):
+            self.close()
             os.remove(self.path)
 
 if __name__ == '__main__':
