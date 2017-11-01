@@ -4,13 +4,44 @@
 
 class Writer(object):
 
-    next = None
+    next_writer_builder = None
+    converter_builder = None
+
+    def __init__(
+            self,
+            next_writer_builder=None,
+            converter_builder=None
+    ):
+        self.next_writer_builder = next_writer_builder
+        self.converter_builder = converter_builder
 
     def opened(self):
         pass
 
     def open(self):
         pass
+
+    def listify(self, obj_or_list):
+        """Ensure list"""
+
+        if obj_or_list is None:
+            # no value - return empty list
+            return []
+
+        elif isinstance(obj_or_list, list):
+            if len(obj_or_list) < 1:
+                # list is empty - nothing to do
+                return []
+            else:
+                # list is good
+                return obj_or_list
+
+        else:
+            # event_or_events is an object
+            return [obj_or_list]
+
+    def convert(self, event):
+        return self.converter_builder.get().convert(event) if self.converter_builder else event
 
     def insert(self, event_or_events=None):
         # event_or_events = [

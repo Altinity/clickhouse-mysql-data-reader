@@ -88,7 +88,6 @@ class MySQLReader(Reader):
 
                 # blocking
                 self.fire('ReaderIdleEvent')
-                time.sleep(1)
 
         except KeyboardInterrupt:
             pass
