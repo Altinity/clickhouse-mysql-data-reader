@@ -74,7 +74,7 @@ class CLIOpts(object):
         argparser.add_argument(
             '--mempool-max-events-num',
             type=int,
-            default=1000,
+            default=100000,
             help='max events num to pool before batch write'
         )
         argparser.add_argument(
@@ -91,7 +91,7 @@ class CLIOpts(object):
         argparser.add_argument(
             '--csvpool-file-path-prefix',
             type=str,
-            default='/tmp/csvpool',
+            default='/tmp/csvpool_',
             help='file path prefix to CSV pool files'
         )
         argparser.add_argument(
@@ -220,7 +220,7 @@ class CLIOpts(object):
                 'dry': args.dry,
                 'daemon': args.daemon,
                 'pid_file': args.pid_file,
-                'mempool': args.mempool,
+                'mempool': args.mempool or args.csvpool, # csvpool assumes mempool to be enabled
                 'mempool-max-events-num': args.mempool_max_events_num,
                 'mempool-max-flush-interval': args.mempool_max_flush_interval,
                 'csvpool': args.csvpool,

@@ -40,7 +40,7 @@ class CSVWriter(Writer):
         self.dst_table = dst_table
 
         if self.path is None:
-            self.path = self.path_prefix + '_' + '_'.join(self.path_suffix_parts) + '.csv'
+            self.path = self.path_prefix + '_'.join(self.path_suffix_parts) + '.csv'
             self.delete = not csv_keep_file
 
     def __del__(self):
@@ -82,7 +82,7 @@ class CSVWriter(Writer):
                 self.writer.writeheader()
 
         for event in events:
-            self.writer.writerow(self.converter_builder.get().convert(event).row if self.converter_builder else event.row)
+            self.writer.writerow(self.convert(event).row)
 
     def push(self):
         if not self.next_writer_builder:
@@ -93,7 +93,7 @@ class CSVWriter(Writer):
         event.table = self.dst_table
         event.file = self.path
         event.fieldnames = self.fieldnames
-        self.next_writer_builder.get().insert([event])
+        self.next_writer_builder.get().insert(event)
 
     def close(self):
         if self.opened():

@@ -40,6 +40,8 @@ class Writer(object):
             # event_or_events is an object
             return [obj_or_list]
 
+    def convert(self, event):
+        return self.converter_builder.get().convert(event) if self.converter_builder else event
 
     def insert(self, event_or_events=None):
         # event_or_events = [
