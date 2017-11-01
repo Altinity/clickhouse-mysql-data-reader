@@ -28,24 +28,15 @@ class CHWriter(Writer):
         #   },
         # ]
 
-        if event_or_events is None:
-            # nothing to insert at all
+        events = self.listify(event_or_events)
+        if len(events) < 1:
             return
-
-        elif isinstance(event_or_events, list):
-            if len(event_or_events) < 1:
-                # list is empty - nothing to insert
-                return
-
-        else:
-            # event_or_events is instance of Event
-            event_or_events = [event_or_events]
 
         converter = CHWriteConverter()
 
         values = []
         ev = None
-        for event in event_or_events:
+        for event in events:
             ev = converter.convert(event)
             values.append(ev.row)
 

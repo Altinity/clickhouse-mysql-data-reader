@@ -6,6 +6,7 @@ from src.pumper import Pumper
 from src.daemon import Daemon
 
 import sys
+import multiprocessing as mp
 
 
 if sys.version_info[0] < 3:
@@ -17,6 +18,7 @@ class Main(Daemon):
     config = None
 
     def __init__(self):
+        mp.set_start_method('forkserver')
         self.config = CLIOpts.config()
         super().__init__(pidfile=self.config.pid_file())
 

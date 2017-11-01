@@ -31,13 +31,13 @@ class CSVWriter(Writer):
             next_writer_builder=None,
             converter_builder=None,
     ):
+        super().__init__(next_writer_builder=next_writer_builder, converter_builder=converter_builder)
+
         self.path = csv_file_path
         self.path_prefix = csv_file_path_prefix
         self.path_suffix_parts = csv_file_path_suffix_parts
         self.dst_db = dst_db
         self.dst_table = dst_table
-        self.next_writer_builder = next_writer_builder
-        self.converter_builder = converter_builder
 
         if self.path is None:
             self.path = self.path_prefix + '_' + '_'.join(self.path_suffix_parts) + '.csv'
@@ -68,29 +68,20 @@ class CSVWriter(Writer):
         #   },
         # ]
 
-        if event_or_events is None:
-            # nothing to insert at all
+        events = self.listify(event_or_events)
+        if len(events) < 1:
             return
-
-        elif isinstance(event_or_events, list):
-            if len(event_or_events) < 1:
-                # list is empty - nothing to insert
-                return
-
-        else:
-            # event_or_events is instance of Event
-            event_or_events = [event_or_events]
 
         if not self.opened():
             self.open()
 
         if not self.writer:
-            self.fieldnames = sorted(event_or_events[0].row.keys())
+            self.fieldnames = sorted(events[0].row.keys())
             self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
             if not self.header_written:
                 self.writer.writeheader()
 
-        for event in event_or_events:
+        for event in events:
             self.writer.writerow(self.converter_builder.get().convert(event).row if self.converter_builder else event.row)
 
     def push(self):

@@ -8,6 +8,7 @@ from .writer.chwriter import CHWriter
 from .writer.csvwriter import CSVWriter
 from .writer.chcsvwriter import CHCSVWriter
 from .writer.poolwriter import PoolWriter
+from .writer.processwriter import ProcessWriter
 from .objectbuilder import ObjectBuilder
 
 from .converter.csvwriteconverter import CSVWriteConverter
@@ -42,19 +43,23 @@ class Config(object):
             return MySQLReader(**self.config['reader-config']['mysql'])
 
     def writer_builder(self):
-
         if self.config['app-config']['csvpool']:
-            return ObjectBuilder(class_name=CSVWriter, params={
-                **self.config['writer-config']['file'],
-                'next_writer_builder': ObjectBuilder(instance=CHCSVWriter(**self.config['writer-config']['clickhouse']['connection_settings'])),
-                'converter_builder': ObjectBuilder(instance=CSVWriteConverter(defaults=self.config['converter-config']['csv']['column_default_value'])) if self.config['converter-config']['csv']['column_default_value'] else None,
+            return ObjectBuilder(class_name=ProcessWriter, constructor_params={
+                'next_writer_builder': ObjectBuilder(class_name=CSVWriter, constructor_params={
+                    **self.config['writer-config']['file'],
+                    'next_writer_builder': ObjectBuilder(
+                        class_name=CHCSVWriter,
+                        constructor_params=self.config['writer-config']['clickhouse']['connection_settings']
+                    ),
+                    'converter_builder': ObjectBuilder(instance=CSVWriteConverter(defaults=self.config['converter-config']['csv']['column_default_value'])) if self.config['converter-config']['csv']['column_default_value'] else None,
+                })
             })
 
         elif self.config['writer-config']['file']['csv_file_path']:
-            return ObjectBuilder(class_name=CSVWriter, params=self.config['writer-config']['file'])
+            return ObjectBuilder(class_name=CSVWriter, constructor_params=self.config['writer-config']['file'])
 
         else:
-            return ObjectBuilder(class_name=CHWriter, params=self.config['writer-config']['clickhouse'])
+            return ObjectBuilder(class_name=CHWriter, constructor_params=self.config['writer-config']['clickhouse'])
 
     def writer(self):
         if self.config['app-config']['mempool']:
