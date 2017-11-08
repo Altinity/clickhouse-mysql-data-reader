@@ -76,7 +76,7 @@ class CSVWriter(Writer):
             self.open()
 
         if not self.writer:
-            self.fieldnames = sorted(events[0].row.keys())
+            self.fieldnames = sorted(events[0].first().keys())
             if self.dst_schema is None:
                 self.dst_schema = events[0].schema
             if self.dst_table is None:
@@ -87,7 +87,8 @@ class CSVWriter(Writer):
                 self.writer.writeheader()
 
         for event in events:
-            self.writer.writerow(self.convert(event).row)
+            for row in event.all():
+                self.writer.writerow(self.convert(row))
 
     def push(self):
         if not self.next_writer_builder:
@@ -96,7 +97,7 @@ class CSVWriter(Writer):
         event = Event()
         event.schema = self.dst_schema
         event.table = self.dst_table
-        event.file = self.path
+        event.filename = self.path
         event.fieldnames = self.fieldnames
         self.next_writer_builder.get().insert(event)
 

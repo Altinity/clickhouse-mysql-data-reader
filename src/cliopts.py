@@ -9,8 +9,16 @@ class CLIOpts(object):
 
     @staticmethod
     def join(lists_to_join):
-        # lists_to_join contains something like
-        # [['a=b', 'c=d'], ['e=f', 'z=x'], ]
+        """Join several lists into one
+
+        :param lists_to_join: is a list of lists
+        [['a=b', 'c=d'], ['e=f', 'z=x'], ]
+
+        :return: None or dictionary
+        {'a': 'b', 'c': 'd', 'e': 'f', 'z': 'x'}
+
+        """
+
         if not isinstance(lists_to_join, list):
             return None
 
@@ -18,15 +26,16 @@ class CLIOpts(object):
         for lst in lists_to_join:
             # lst = ['a=b', 'c=d']
             for column_value_pair in lst:
-                # value = 'a=b'
+                # column_value_value = 'a=b'
                 column, value = column_value_pair.split('=', 2)
                 res[column] = value
 
-        # dict {
+        # res = dict {
         #   'col1': 'value1',
         #   'col2': 'value2',
         # }
 
+        # return with sanity check
         if len(res) > 0:
             return res
         else:
@@ -34,10 +43,10 @@ class CLIOpts(object):
 
     @staticmethod
     def config():
+        """Parse application's CLI options into options dictionary
+        :return: instance of Config
         """
-        parse CLI options into options dict
-        :return: dict
-        """
+
         argparser = argparse.ArgumentParser(
             description='ClickHouse data reader',
             epilog='==============='
