@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+from ..observable import Observable
 
-class Reader(object):
+
+class Reader(Observable):
 
     converter = None
 
-    callbacks = {
+    event_handlers = {
         # called on each WriteRowsEvent
         'WriteRowsEvent': [],
 
@@ -20,15 +22,6 @@ class Reader(object):
     def __init__(self, converter=None, callbacks={}):
         self.converter = converter
         self.subscribe(callbacks)
-
-    def subscribe(self, callbacks):
-        for callback_name in callbacks:
-            if callback_name in self.callbacks:
-                self.callbacks[callback_name].append(callbacks[callback_name])
-
-    def fire(self, event_name, **attrs):
-        for callback in self.callbacks[event_name]:
-            callback(**attrs)
 
     def read(self):
         pass

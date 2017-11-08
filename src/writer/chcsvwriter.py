@@ -50,7 +50,7 @@ class CHCSVWriter(Writer):
             if self.password:
                 choptions += " --password=" + self.password
             bash = "tail -n +2 '{0}' | clickhouse-client {1} --query='{2}'".format(
-                event.file,
+                event.filename,
                 choptions,
                 sql,
             )

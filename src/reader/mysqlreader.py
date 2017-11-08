@@ -69,16 +69,22 @@ class MySQLReader(Reader):
             while True:
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
-                        event = Event()
-                        event.schema = mysql_event.schema
-                        event.table = mysql_event.table
-                        self.fire('WriteRowsEvent', event=event)
-                        for row in mysql_event.rows:
+                        if self.subscribers('WriteRowsEvent'):
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
-                            event.row = row['values']
-                            self.fire('WriteRowsEvent.EachRow', event=event)
+                            event.rows = []
+                            for row in mysql_event.rows:
+                                event.rows.append(row['values'])
+                            self.notify('WriteRowsEvent', event=event)
+
+                        if self.subscribers('WriteRowsEvent.EachRow'):
+                            for row in mysql_event.rows:
+                                event = Event()
+                                event.schema = mysql_event.schema
+                                event.table = mysql_event.table
+                                event.row = row['values']
+                                self.notify('WriteRowsEvent.EachRow', event=event)
                     else:
                         # skip non-insert events
                         pass
@@ -87,7 +93,7 @@ class MySQLReader(Reader):
                     break
 
                 # blocking
-                self.fire('ReaderIdleEvent')
+                self.notify('ReaderIdleEvent')
 
         except KeyboardInterrupt:
             pass

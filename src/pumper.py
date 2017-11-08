@@ -16,7 +16,7 @@ class Pumper(object):
         if self.reader:
             self.reader.subscribe({
                 'WriteRowsEvent': self.write_rows_event,
-                'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
+#                'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
                 'ReaderIdleEvent': self.reader_idle_event,
             })
 
@@ -24,8 +24,7 @@ class Pumper(object):
         self.reader.read()
 
     def write_rows_event(self, event=None):
-#        binlog_event.dump()
-        pass
+        self.writer.insert(event)
 
     def write_rows_event_each_row(self, event=None):
         self.writer.insert(event)

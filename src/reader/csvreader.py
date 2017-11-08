@@ -41,10 +41,10 @@ class CSVReader(Reader):
         try:
             event = Event()
             event.table = os.path.splitext(self.csv_file_path)[0]
-            self.fire('WriteRowsEvent', event=event)
+            self.notify('WriteRowsEvent', event=event)
             for row in self.reader:
                 event.row = row
-                self.fire('WriteRowsEvent.EachRow', event=self.converter.convert(event) if self.converter else event)
+                self.notify('WriteRowsEvent.EachRow', event=self.converter.convert(event) if self.converter else event)
         except KeyboardInterrupt:
             pass
 

@@ -43,7 +43,8 @@ class CHWriter(Writer):
         event_converted = None
         for event in events:
             event_converted = self.convert(event)
-            values.append(event_converted.row)
+            for value in event_converted.all():
+                values.append(value)
 
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = self.dst_table if self.dst_table else event_converted.table
