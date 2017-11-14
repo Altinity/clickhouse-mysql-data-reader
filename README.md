@@ -1,8 +1,16 @@
+#
+
+https://github.com/noplay/python-mysql-replication
+pip install mysql-replication
+
+
+https://github.com/mymarilyn/clickhouse-driver
+pip install clickhouse-driver
+
+
 # clickhouse-mysql-data-reader
 utility to read mysql data
 
-
-pip install mysql-replication
 
 you need (at least one of) the SUPER, REPLICATION CLIENT privilege(s) for this operation
 
@@ -563,38 +571,31 @@ CREATE TABLE long_varbinary_datatypes(
 ) ENGINE = Memory
 ;
 
-MySQL section
 
-mysqlimport --ignore-lines=1 \
-            --fields-terminated-by=, \
-            --fields-enclosed-by=\" \
-            --local -u root \
-            -p Database \
-             TableName.csv
+airline ontime test case
 
+Import Data
 
 ls|sort|head -n 100
+
 i=1
 for file in $(ls *.csv|sort|head -n 100); do
     echo "$i. Copy $file"
-    cp -f $file ontime
+    cp -f $file ontime.csv
     echo "$i. Import $file"
-    mysqlimport --ignore-lines=1 --fields-terminated-by=, --fields-enclosed-by=\" --local -u root airline ontime
-    rm -f ontime
+    mysqlimport \
+        --ignore-lines=1 \
+        --fields-terminated-by=, \
+        --fields-enclosed-by=\" \
+        --local \
+        -u root \
+        airline ontime.csv
+    rm -f ontime.csv
     i=$((i+1))
 done
 
-
-
- load data local infile 'file.csv' into table table
- fields terminated by ','
- enclosed by '"'
- lines terminated by '\n'
- (column1, column2, column3,...)
-
-
+MySQL
 CREATE DATABASE IF NOT EXISTS `airline`;
-
 CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
   `Year`                 SMALLINT UNSIGNED, -- UInt16,
   `Quarter`              TINYINT UNSIGNED, -- UInt8,
@@ -707,3 +708,115 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
   `Div5TailNum`          LONGTEXT  -- String
 );
 
+ClickHouse
+CREATE TABLE IF NOT EXISTS `airline`.`ontime` ( 
+  `Year`                 UInt16,  
+  `Quarter`              UInt8,  
+  `Month`                UInt8,  
+  `DayofMonth`           UInt8,  
+  `DayOfWeek`            UInt8,  
+  `FlightDate`           Date,  
+  `UniqueCarrier`        String,  
+  `AirlineID`            UInt32,  
+  `Carrier`              String,  
+  `TailNum`              String,  
+  `FlightNum`            String,  
+  `OriginAirportID`      UInt32,  
+  `OriginAirportSeqID`   UInt32,  
+  `OriginCityMarketID`   UInt32,  
+  `Origin`               String,  
+  `OriginCityName`       String,  
+  `OriginState`          String,  
+  `OriginStateFips`      String,  
+  `OriginStateName`      String,  
+  `OriginWac`            UInt32,  
+  `DestAirportID`        UInt32,  
+  `DestAirportSeqID`     UInt32,  
+  `DestCityMarketID`     UInt32,  
+  `Dest`                 String,  
+  `DestCityName`         String,  
+  `DestState`            String,  
+  `DestStateFips`        String,  
+  `DestStateName`        String,  
+  `DestWac`              UInt32,  
+  `CRSDepTime`           UInt32,  
+  `DepTime`              UInt32,  
+  `DepDelay`             Float32,  
+  `DepDelayMinutes`      Float32,  
+  `DepDel15`             Float32,  
+  `DepartureDelayGroups` Int32,  
+  `DepTimeBlk`           String,  
+  `TaxiOut`              Float32,  
+  `WheelsOff`            UInt32,  
+  `WheelsOn`             UInt32,  
+  `TaxiIn`               Float32,  
+  `CRSArrTime`           UInt32,  
+  `ArrTime`              UInt32,  
+  `ArrDelay`             Float32,  
+  `ArrDelayMinutes`      Float32,  
+  `ArrDel15`             Float32,  
+  `ArrivalDelayGroups`   Int32,  
+  `ArrTimeBlk`           String,  
+  `Cancelled`            Float32,  
+  `CancellationCode`     String,  
+  `Diverted`             Float32,  
+  `CRSElapsedTime`       Float32,  
+  `ActualElapsedTime`    Float32,  
+  `AirTime`              Float32,  
+  `Flights`              Float32,  
+  `Distance`             Float32,  
+  `DistanceGroup`        Float32,  
+  `CarrierDelay`         Float32,  
+  `WeatherDelay`         Float32,  
+  `NASDelay`             Float32,  
+  `SecurityDelay`        Float32,  
+  `LateAircraftDelay`    Float32,  
+  `FirstDepTime`         String,  
+  `TotalAddGTime`        String,  
+  `LongestAddGTime`      String,  
+  `DivAirportLandings`   String,  
+  `DivReachedDest`       String,  
+  `DivActualElapsedTime` String,  
+  `DivArrDelay`          String,  
+  `DivDistance`          String,  
+  `Div1Airport`          String,  
+  `Div1AirportID`        UInt32,  
+  `Div1AirportSeqID`     UInt32,  
+  `Div1WheelsOn`         String,  
+  `Div1TotalGTime`       String,  
+  `Div1LongestGTime`     String,  
+  `Div1WheelsOff`        String,  
+  `Div1TailNum`          String,  
+  `Div2Airport`          String,  
+  `Div2AirportID`        UInt32,  
+  `Div2AirportSeqID`     UInt32,  
+  `Div2WheelsOn`         String,  
+  `Div2TotalGTime`       String,  
+  `Div2LongestGTime`     String,  
+  `Div2WheelsOff`        String,  
+  `Div2TailNum`          String,  
+  `Div3Airport`          String,  
+  `Div3AirportID`        UInt32,  
+  `Div3AirportSeqID`     UInt32,  
+  `Div3WheelsOn`         String,  
+  `Div3TotalGTime`       String,  
+  `Div3LongestGTime`     String,  
+  `Div3WheelsOff`        String,  
+  `Div3TailNum`          String,  
+  `Div4Airport`          String,  
+  `Div4AirportID`        UInt32,  
+  `Div4AirportSeqID`     UInt32,  
+  `Div4WheelsOn`         String,  
+  `Div4TotalGTime`       String,  
+  `Div4LongestGTime`     String,  
+  `Div4WheelsOff`        String,  
+  `Div4TailNum`          String,  
+  `Div5Airport`          String,  
+  `Div5AirportID`        UInt32,  
+  `Div5AirportSeqID`     UInt32,  
+  `Div5WheelsOn`         String,  
+  `Div5TotalGTime`       String,  
+  `Div5LongestGTime`     String,  
+  `Div5WheelsOff`        String,  
+  `Div5TailNum`          String
+) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month, DepDel15), 8192)
