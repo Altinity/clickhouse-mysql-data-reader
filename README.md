@@ -1,167 +1,195 @@
-#
-
-https://github.com/noplay/python-mysql-replication
-pip install mysql-replication
-
-
-https://github.com/mymarilyn/clickhouse-driver
-pip install clickhouse-driver
-
-
 # clickhouse-mysql-data-reader
-utility to read mysql data
 
+---
 
-you need (at least one of) the SUPER, REPLICATION CLIENT privilege(s) for this operation
+# Table of Contents
 
+ * [Introduction](#introduction)
+ * [Requirements](#requirements)
+ * [Testing](#testing)
+   * [MySQL Data Types](#mysql-data-types)
+   * [ClickHouse Data Types](#clickhouse-data-types)
+   * [MySQL -> ClickHouse Data Types Mapping](#mysql---clickhouse-data-types-mapping)
+   * [MySQL Test Tables](#mysql-test-tables)
+   * [ClickHouse Test Tables](#clickhouse-test-tables)
+   * [Airline ontime Test Case](#airline-ontime-test-case)
+   
+---
+
+# Introduction
+
+Utility to read mysql data
+
+# Requirements
+
+This package is used for interacting with MySQL:
+[https://github.com/noplay/python-mysql-replication](https://github.com/noplay/python-mysql-replication)
+```bash
+pip install mysql-replication
+```
+
+This package is used for interacting with ClickHouse:
+[https://github.com/mymarilyn/clickhouse-driver](https://github.com/mymarilyn/clickhouse-driver)
+```bash
+pip install clickhouse-driver
+```
+
+You need (at least one of) the `SUPER`, `REPLICATION CLIENT` privilege(s) for this operation
+
+```sql
 CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
 CREATE USER 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
 CREATE USER 'reader'@'*' IDENTIFIED BY 'qwerty';
-grant replication client, replication slave, super on *.* to 'reader'@'localhost';
-grant replication client, replication slave, super on *.* to 'reader'@'127.0.0.1';
-grant replication client, replication slave, super on *.* to 'reader'@'*';
-flush privileges;
 
-grant replication client, replication slave, super on *.* to 'reader'@'localhost' identified by 'qwerty';
-grant replication client, replication slave, super on *.* to 'reader'@'127.0.0.1' identified by 'qwerty';
-grant replication client, replication slave, super on *.* to 'reader'@'*'         identified by 'qwerty';
-flush privileges;
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'localhost';
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'127.0.0.1';
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'*';
+FLUSH PRIVILEGES;
 
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'localhost' IDENTIFIED BY 'qwerty';
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'*'         IDENTIFIED BY 'qwerty';
+FLUSH PRIVILEGES;
+```
 
-https://github.com/noplay/python-mysql-replication
-https://github.com/mymarilyn/clickhouse-driver
-
+MySQL config options required:
+```ini
 [mysqld]
 server-id		 = 1
 log_bin			 = /var/log/mysql/mysql-bin.log
 expire_logs_days = 10
 max_binlog_size  = 100M
 binlog-format    = row #Very important if you want to receive write, update and delete row events
+```
 
-=======
-MySQL data types
+# Testing
 
-Numeric Types
+## MySQL Data Types
 
-BIT  the number of bits per value, from 1 to 64
-TINYINT -128 to 127. The unsigned range is 0 to 255
-BOOL, BOOLEAN synonyms for TINYINT(1)
-SMALLINT  -32768 to 32767. The unsigned range is 0 to 65535
-MEDIUMINT -8388608 to 8388607. The unsigned range is 0 to 16777215.
-INT, INTEGER -2147483648 to 2147483647. The unsigned range is 0 to 4294967295
-BIGINT  -9223372036854775808 to 9223372036854775807. The unsigned range is 0 to 18446744073709551615
+### Numeric Types
 
-SERIAL is an alias for BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE.
-DEC, DECIMAL, FIXED, NUMERIC A packed ?exact? fixed-point number
-FLOAT  Permissible values are -3.402823466E+38 to -1.175494351E-38, 0, and 1.175494351E-38 to 3.402823466E+38
-DOUBLE, REAL  Permissible values are -1.7976931348623157E+308 to -2.2250738585072014E-308, 0, and 2.2250738585072014E-308 to 1.7976931348623157E+308
+  * `BIT`  the number of bits per value, from 1 to 64
+  * `TINYINT` -128 to 127. The unsigned range is 0 to 255
+  * `BOOL`, `BOOLEAN` synonyms for `TINYINT(1)`
+  * `SMALLINT`  -32768 to 32767. The unsigned range is 0 to 65535
+  * `MEDIUMINT` -8388608 to 8388607. The unsigned range is 0 to 16777215.
+  * `INT`, `INTEGER` -2147483648 to 2147483647. The unsigned range is 0 to 4294967295
+  * `BIGINT` -9223372036854775808 to 9223372036854775807. The unsigned range is 0 to 18446744073709551615
 
-
-Date and Time Types
-
-DATE The supported range is '1000-01-01' to '9999-12-31'
-DATETIME The supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
-TIMESTAMP The range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999'
-TIME The range is '-838:59:59.000000' to '838:59:59.000000'
-YEAR  Values display as 1901 to 2155, and 0000
+  * `SERIAL` is an alias for `BIGINT UNSIGNED NOT NULL AUTO_INCREMENT UNIQUE`.
+  * `DEC`, `DECIMAL`, `FIXED`, `NUMERIC` A packed ?exact? fixed-point number
+  * `FLOAT` Permissible values are -3.402823466E+38 to -1.175494351E-38, 0, and 1.175494351E-38 to 3.402823466E+38
+  * `DOUBLE`, `REAL` Permissible values are -1.7976931348623157E+308 to -2.2250738585072014E-308, 0, and 2.2250738585072014E-308 to 1.7976931348623157E+308
 
 
-String Types
-CHAR The range of M is 0 to 255. If M is omitted, the length is 1.
-VARCHAR The range of M is 0 to 65,535
-BINARY similar to CHAR
-VARBINARY similar to VARCHAR
-TINYBLOB  maximum length of 255
-TINYTEXT maximum length of 255
-BLOB maximum length of 65,535
-TEXT maximum length of 65,535
-MEDIUMBLOB maximum length of 16,777,215
-MEDIUMTEXT maximum length of 16,777,215
-LONGBLOB maximum length of 4,294,967,295 or 4GB
-LONGTEXT maximum length of 4,294,967,295 or 4GB
-ENUM can have a maximum of 65,535 distinct elements
-SET can have a maximum of 64 distinct members
+### Date and Time Types
+
+  * `DATE` The supported range is '1000-01-01' to '9999-12-31'
+  * `DATETIME` The supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
+  * `TIMESTAMP` The range is '1970-01-01 00:00:01.000000' UTC to '2038-01-19 03:14:07.999999'
+  * `TIME` The range is '-838:59:59.000000' to '838:59:59.000000'
+  * `YEAR` Values display as 1901 to 2155, and 0000
+
+### String Types
+  * `CHAR` The range of M is 0 to 255. If M is omitted, the length is 1.
+  * `VARCHAR` The range of M is 0 to 65,535
+  * `BINARY` similar to CHAR
+  * `VARBINARY` similar to VARCHAR
+  * `TINYBLOB` maximum length of 255
+  * `TINYTEXT` maximum length of 255
+  * `BLOB` maximum length of 65,535
+  * `TEXT` maximum length of 65,535
+  * `MEDIUMBLOB` maximum length of 16,777,215
+  * `MEDIUMTEXT` maximum length of 16,777,215
+  * `LONGBLOB` maximum length of 4,294,967,295 or 4GB
+  * `LONGTEXT` maximum length of 4,294,967,295 or 4GB
+  * `ENUM` can have a maximum of 65,535 distinct elements
+  * `SET` can have a maximum of 64 distinct members
+
+  * `JSON` native JSON data type defined by RFC 7159
+
+---
+
+## ClickHouse Data Types
+
+  * `Date` number of days since 1970-01-01
+  * `DateTime` Unix timestamp
+  * `Enum8` or `Enum16`. A set of enumerated string values that are stored as `Int8` or `Int16`. The numeric values must be within -128..127 for Enum8 and -32768..32767 for Enum16
+  * `Float32`, `Float64`
+
+  * `Int8` -128 127
+  * `UInt8` 0 255
+
+  * `Int16` -32768 32767
+  * `UInt16` 0 65535
+
+  * `Int32` -2147483648 2147483647
+  * `UInt32` 0 4294967295
+
+  * `Int64` -9223372036854775808 9223372036854775807
+  * `UInt64` 0 18446744073709551615
+
+  * `FixedString(N)` string of `N` bytes (not characters or code points)
+  * `String` The length is not limited. The value can contain an arbitrary set of bytes, including null bytes
+
+---
+
+## MySQL -> ClickHouse Data Types Mapping
+
+### Numeric Types
+
+  * `BIT` -> ??? (possibly `String`?)
+  * `TINYINT` -> `Int8`, `UInt8`
+  * `BOOL`, `BOOLEAN` -> `UInt8`
+  * `SMALLINT` -> `Int16`, `UInt16`
+  * `MEDIUMINT` -> `Int32`, `UInt32`
+  * `INT`, `INTEGER` -> `Int32`, `UInt32`
+  * `BIGINT` -> `Int64`, `UInt64`
+
+  * `SERIAL` -> `UInt64`
+  * `DEC`, `DECIMAL`, `FIXED`, `NUMERIC` -> ???? (possibly `String`?)
+  * `FLOAT` -> `Float32`
+  * `DOUBLE`, `REAL` -> `Float64`
 
 
-JSON native JSON data type defined by RFC 7159
+### Date and Time Types
 
-=========
-CH data types
-
-Date number of days since 1970-01-01
-DateTime Unix timestamp
-Enum8 or Enum16. A set of enumerated string values that are stored as Int8 or Int16. The numeric values must be within -128..127 for Enum8 and -32768..32767 for Enum16
-Float32, Float64
-
-Int8	-128	127
-UInt8	0	255
-
-Int16	-32768	32767
-UInt16	0	65535
-
-Int32	-2147483648	2147483647
-UInt32	0	4294967295
-
-Int64	-9223372036854775808	9223372036854775807
-UInt64	0	18446744073709551615
-
-FixedString(N) string of N bytes (not characters or code points)
-String The length is not limited. The value can contain an arbitrary set of bytes, including null bytes
+  * `DATE` -> `Date` (for valid values) or `String` (`Date` Allows storing values from just after the beginning of the Unix Epoch to the upper threshold defined by a constant at the compilation stage (currently, this is until the year 2038, but it may be expanded to 2106))
+  * `DATETIME` -> `DateTime` (for valid values) or `String`
+  * `TIMESTAMP` -> `DateTime`
+  * `TIME` -> ????? (possibly `String`?)
+  * `YEAR` -> `UInt16`
 
 
-==========================
-MySQL -> CH data types mapping
+### String Types
 
-Numeric Types
+  * `CHAR` -> `FixedString`
+  * `VARCHAR` -> `String`
+  * `BINARY` -> `String`
+  * `VARBINARY` -> `String`
+  * `TINYBLOB` -> `String`
+  * `TINYTEXT` -> `String`
+  * `BLOB` -> `String`
+  * `TEXT` -> `String`
+  * `MEDIUMBLOB` -> `String`
+  * `MEDIUMTEXT` -> `String`
+  * `LONGBLOB` -> `String`
+  * `LONGTEXT` -> `String`
 
-BIT  -> ??? (possibly String?)
-TINYINT -> Int8 UInt8
-BOOL, BOOLEAN -> UInt8
-SMALLINT  -> Int16 UInt16
-MEDIUMINT -> Int32 UInt32
-INT, INTEGER -> Int32 UInt32
-BIGINT -> Int64 UInt64
+  * `ENUM` -> `Enum8`, `Enum16`
+  * `SET` -> `Array(Int8)`
 
-SERIAL -> UInt64
-DEC, DECIMAL, FIXED, NUMERIC -> ???? (possibly String?)
-FLOAT -> Float32
-DOUBLE, REAL -> Float64
-
-
-Date and Time Types
-
-DATE -> Date (for valid values) or String (Date Allows storing values from just after the beginning of the Unix Epoch to the upper threshold defined by a constant at the compilation stage (currently, this is until the year 2038, but it may be expanded to 2106))
-DATETIME -> DateTime (for valid values) or String
-TIMESTAMP -> DateTime
-TIME -> ????? (possibly String?)
-YEAR  -> UInt16
+  * `JSON` -> ?????? (possibly `String`?)
 
 
-String Types
+## MySQL Test Tables
 
-CHAR -> FixedString
-VARCHAR -> String
-BINARY -> String
-VARBINARY -> String
-TINYBLOB -> String
-TINYTEXT -> String
-BLOB -> String
-TEXT -> String
-MEDIUMBLOB -> String
-MEDIUMTEXT -> String
-LONGBLOB -> String
-LONGTEXT -> String
-
-ENUM -> Enum8 Enum16
-SET -> Array(Int8)
-
-JSON -> ?????? (possibly String?)
-
-
-
+We have to separate test table into several ones because of this error, produced by MySQL:
+```bash
 ERROR 1118 (42000): Row size too large. The maximum row size for the used table type, not counting BLOBs, is 65535. This includes storage overhead, check the manual. You have to change some columns to TEXT or BLOBs
+```
 
-
+```sql
 CREATE TABLE datatypes(
 
     bit_1 BIT(1),
@@ -253,8 +281,6 @@ CREATE TABLE json_datatypes(
 )
 ;
 
-ERROR 1118 (42000): Row size too large. The maximum row size for the used table type, not counting BLOBs, is 65535. This includes storage overhead, check the manual. You have to change some columns to TEXT or BLOBs
-
 CREATE TABLE long_varchar_datatypes(
     varchar_2 VARCHAR(65532)
 )
@@ -264,12 +290,15 @@ CREATE TABLE long_varbinary_datatypes(
     varbinary_2 VARBINARY(65532) COMMENT 'similar to VARCHAR'
 )
 ;
+```
 
 
-
+```sql
 -- in order to be able to set timestamp = '1970-01-01 00:00:01'
 set time_zone='+00:00';
+```
 
+```sql
 -- MIN values
 INSERT INTO datatypes SET
 
@@ -365,7 +394,9 @@ INSERT INTO long_varchar_datatypes SET
 INSERT INTO long_varbinary_datatypes SET
     varbinary_2 = ""
 ;
+```
 
+```sql
 -- MAX values
 INSERT INTO datatypes SET
 
@@ -461,9 +492,11 @@ INSERT INTO long_varchar_datatypes SET
 INSERT INTO long_varbinary_datatypes SET
     varbinary_2 = "abc"
 ;
+```
 
-===========================
+## ClickHouse Test Tables
 
+```sql
 CREATE TABLE datatypes(
     bit_1 Nullable(String), -- bit_1 BIT(1),
     bit_2 Nullable(String), -- bit_2 BIT(64),
@@ -570,145 +603,130 @@ CREATE TABLE long_varbinary_datatypes(
     varbinary_2 String
 ) ENGINE = Memory
 ;
+```
 
+## Airline ontime Test Case
 
-airline ontime test case
+### MySQL Table
 
-Import Data
-
-ls|sort|head -n 100
-
-i=1
-for file in $(ls *.csv|sort|head -n 100); do
-    echo "$i. Copy $file"
-    cp -f $file ontime.csv
-    echo "$i. Import $file"
-    mysqlimport \
-        --ignore-lines=1 \
-        --fields-terminated-by=, \
-        --fields-enclosed-by=\" \
-        --local \
-        -u root \
-        airline ontime.csv
-    rm -f ontime.csv
-    i=$((i+1))
-done
-
-MySQL
+```sql
 CREATE DATABASE IF NOT EXISTS `airline`;
 CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
-  `Year`                 SMALLINT UNSIGNED, -- UInt16,
-  `Quarter`              TINYINT UNSIGNED, -- UInt8,
-  `Month`                TINYINT UNSIGNED, -- UInt8,
-  `DayofMonth`           TINYINT UNSIGNED, -- UInt8,
-  `DayOfWeek`            TINYINT UNSIGNED, -- UInt8,
-  `FlightDate`           DATE, -- Date,
-  `UniqueCarrier`        LONGTEXT, -- String,
-  `AirlineID`            INTEGER UNSIGNED, -- UInt32,
-  `Carrier`              LONGTEXT, -- String,
-  `TailNum`              LONGTEXT, -- String,
-  `FlightNum`            LONGTEXT, -- String,
-  `OriginAirportID`      INTEGER UNSIGNED, -- UInt32,
-  `OriginAirportSeqID`   INTEGER UNSIGNED, -- UInt32,
-  `OriginCityMarketID`   INTEGER UNSIGNED, -- UInt32,
-  `Origin`               LONGTEXT, -- String,
-  `OriginCityName`       LONGTEXT, -- String,
-  `OriginState`          LONGTEXT, -- String,
-  `OriginStateFips`      LONGTEXT, -- String,
-  `OriginStateName`      LONGTEXT, -- String,
-  `OriginWac`            INTEGER UNSIGNED, -- UInt32,
-  `DestAirportID`        INTEGER UNSIGNED, -- UInt32,
-  `DestAirportSeqID`     INTEGER UNSIGNED, -- UInt32,
-  `DestCityMarketID`     INTEGER UNSIGNED, -- UInt32,
-  `Dest`                 LONGTEXT, -- String,
-  `DestCityName`         LONGTEXT, -- String,
-  `DestState`            LONGTEXT, -- String,
-  `DestStateFips`        LONGTEXT, -- String,
-  `DestStateName`        LONGTEXT, -- String,
-  `DestWac`              INTEGER UNSIGNED, -- UInt32,
-  `CRSDepTime`           INTEGER UNSIGNED, -- UInt32,
-  `DepTime`              INTEGER UNSIGNED, -- UInt32,
-  `DepDelay`             FLOAT, -- Float32,
-  `DepDelayMinutes`      FLOAT, -- Float32,
-  `DepDel15`             FLOAT, -- Float32,
-  `DepartureDelayGroups` INTEGER, -- Int32,
-  `DepTimeBlk`           LONGTEXT, -- String,
-  `TaxiOut`              FLOAT, -- Float32,
-  `WheelsOff`            INTEGER UNSIGNED, -- UInt32,
-  `WheelsOn`             INTEGER UNSIGNED, -- UInt32,
-  `TaxiIn`               FLOAT, -- Float32,
-  `CRSArrTime`           INTEGER UNSIGNED, -- UInt32,
-  `ArrTime`              INTEGER UNSIGNED, -- UInt32,
-  `ArrDelay`             FLOAT, -- Float32,
-  `ArrDelayMinutes`      FLOAT, -- Float32,
-  `ArrDel15`             FLOAT, -- Float32,
-  `ArrivalDelayGroups`   INTEGER, -- Int32,
-  `ArrTimeBlk`           LONGTEXT, -- String,
-  `Cancelled`            FLOAT, -- Float32,
-  `CancellationCode`     LONGTEXT, -- String,
-  `Diverted`             FLOAT, -- Float32,
-  `CRSElapsedTime`       FLOAT, -- Float32,
-  `ActualElapsedTime`    FLOAT, -- Float32,
-  `AirTime`              FLOAT, -- Float32,
-  `Flights`              FLOAT, -- Float32,
-  `Distance`             FLOAT, -- Float32,
-  `DistanceGroup`        FLOAT, -- Float32,
-  `CarrierDelay`         FLOAT, -- Float32,
-  `WeatherDelay`         FLOAT, -- Float32,
-  `NASDelay`             FLOAT, -- Float32,
-  `SecurityDelay`        FLOAT, -- Float32,
-  `LateAircraftDelay`    FLOAT, -- Float32,
-  `FirstDepTime`         LONGTEXT, -- String,
-  `TotalAddGTime`        LONGTEXT, -- String,
-  `LongestAddGTime`      LONGTEXT, -- String,
-  `DivAirportLandings`   LONGTEXT, -- String,
-  `DivReachedDest`       LONGTEXT, -- String,
-  `DivActualElapsedTime` LONGTEXT, -- String,
-  `DivArrDelay`          LONGTEXT, -- String,
-  `DivDistance`          LONGTEXT, -- String,
-  `Div1Airport`          LONGTEXT, -- String,
-  `Div1AirportID`        INTEGER UNSIGNED, -- UInt32,
-  `Div1AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
-  `Div1WheelsOn`         LONGTEXT, -- String,
-  `Div1TotalGTime`       LONGTEXT, -- String,
-  `Div1LongestGTime`     LONGTEXT, -- String,
-  `Div1WheelsOff`        LONGTEXT, -- String,
-  `Div1TailNum`          LONGTEXT, -- String,
-  `Div2Airport`          LONGTEXT, -- String,
-  `Div2AirportID`        INTEGER UNSIGNED, -- UInt32,
-  `Div2AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
-  `Div2WheelsOn`         LONGTEXT, -- String,
-  `Div2TotalGTime`       LONGTEXT, -- String,
-  `Div2LongestGTime`     LONGTEXT, -- String,
-  `Div2WheelsOff`        LONGTEXT, -- String,
-  `Div2TailNum`          LONGTEXT, -- String,
-  `Div3Airport`          LONGTEXT, -- String,
-  `Div3AirportID`        INTEGER UNSIGNED, -- UInt32,
-  `Div3AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
-  `Div3WheelsOn`         LONGTEXT, -- String,
-  `Div3TotalGTime`       LONGTEXT, -- String,
-  `Div3LongestGTime`     LONGTEXT, -- String,
-  `Div3WheelsOff`        LONGTEXT, -- String,
-  `Div3TailNum`          LONGTEXT, -- String,
-  `Div4Airport`          LONGTEXT, -- String,
-  `Div4AirportID`        INTEGER UNSIGNED, -- UInt32,
-  `Div4AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
-  `Div4WheelsOn`         LONGTEXT, -- String,
-  `Div4TotalGTime`       LONGTEXT, -- String,
-  `Div4LongestGTime`     LONGTEXT, -- String,
-  `Div4WheelsOff`        LONGTEXT, -- String,
-  `Div4TailNum`          LONGTEXT, -- String,
-  `Div5Airport`          LONGTEXT, -- String,
-  `Div5AirportID`        INTEGER UNSIGNED, -- UInt32,
-  `Div5AirportSeqID`     INTEGER UNSIGNED, -- UInt32,
-  `Div5WheelsOn`         LONGTEXT, -- String,
-  `Div5TotalGTime`       LONGTEXT, -- String,
-  `Div5LongestGTime`     LONGTEXT, -- String,
-  `Div5WheelsOff`        LONGTEXT, -- String,
-  `Div5TailNum`          LONGTEXT  -- String
+  `Year`                 SMALLINT UNSIGNED, -- maps to UInt16,
+  `Quarter`              TINYINT UNSIGNED, -- maps to UInt8,
+  `Month`                TINYINT UNSIGNED, -- maps to UInt8,
+  `DayofMonth`           TINYINT UNSIGNED, -- maps to UInt8,
+  `DayOfWeek`            TINYINT UNSIGNED, -- maps to UInt8,
+  `FlightDate`           DATE, -- maps to Date,
+  `UniqueCarrier`        LONGTEXT, -- maps to String,
+  `AirlineID`            INTEGER UNSIGNED, -- maps to UInt32,
+  `Carrier`              LONGTEXT, -- maps to String,
+  `TailNum`              LONGTEXT, -- maps to String,
+  `FlightNum`            LONGTEXT, -- maps to String,
+  `OriginAirportID`      INTEGER UNSIGNED, -- maps to UInt32,
+  `OriginAirportSeqID`   INTEGER UNSIGNED, -- maps to UInt32,
+  `OriginCityMarketID`   INTEGER UNSIGNED, -- maps to UInt32,
+  `Origin`               LONGTEXT, -- maps to String,
+  `OriginCityName`       LONGTEXT, -- maps to String,
+  `OriginState`          LONGTEXT, -- maps to String,
+  `OriginStateFips`      LONGTEXT, -- maps to String,
+  `OriginStateName`      LONGTEXT, -- maps to String,
+  `OriginWac`            INTEGER UNSIGNED, -- maps to UInt32,
+  `DestAirportID`        INTEGER UNSIGNED, -- maps to UInt32,
+  `DestAirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
+  `DestCityMarketID`     INTEGER UNSIGNED, -- maps to UInt32,
+  `Dest`                 LONGTEXT, -- maps to String,
+  `DestCityName`         LONGTEXT, -- maps to String,
+  `DestState`            LONGTEXT, -- maps to String,
+  `DestStateFips`        LONGTEXT, -- maps to String,
+  `DestStateName`        LONGTEXT, -- maps to String,
+  `DestWac`              INTEGER UNSIGNED, -- maps to UInt32,
+  `CRSDepTime`           INTEGER UNSIGNED, -- maps to UInt32,
+  `DepTime`              INTEGER UNSIGNED, -- maps to UInt32,
+  `DepDelay`             FLOAT, -- maps to Float32,
+  `DepDelayMinutes`      FLOAT, -- maps to Float32,
+  `DepDel15`             FLOAT, -- maps to Float32,
+  `DepartureDelayGroups` INTEGER, -- maps to Int32,
+  `DepTimeBlk`           LONGTEXT, -- maps to String,
+  `TaxiOut`              FLOAT, -- maps to Float32,
+  `WheelsOff`            INTEGER UNSIGNED, -- maps to UInt32,
+  `WheelsOn`             INTEGER UNSIGNED, -- maps to UInt32,
+  `TaxiIn`               FLOAT, -- maps to Float32,
+  `CRSArrTime`           INTEGER UNSIGNED, -- maps to UInt32,
+  `ArrTime`              INTEGER UNSIGNED, -- maps to UInt32,
+  `ArrDelay`             FLOAT, -- maps to Float32,
+  `ArrDelayMinutes`      FLOAT, -- maps to Float32,
+  `ArrDel15`             FLOAT, -- maps to Float32,
+  `ArrivalDelayGroups`   INTEGER, -- maps to Int32,
+  `ArrTimeBlk`           LONGTEXT, -- maps to String,
+  `Cancelled`            FLOAT, -- maps to Float32,
+  `CancellationCode`     LONGTEXT, -- maps to String,
+  `Diverted`             FLOAT, -- maps to Float32,
+  `CRSElapsedTime`       FLOAT, -- maps to Float32,
+  `ActualElapsedTime`    FLOAT, -- maps to Float32,
+  `AirTime`              FLOAT, -- maps to Float32,
+  `Flights`              FLOAT, -- maps to Float32,
+  `Distance`             FLOAT, -- maps to Float32,
+  `DistanceGroup`        FLOAT, -- maps to Float32,
+  `CarrierDelay`         FLOAT, -- maps to Float32,
+  `WeatherDelay`         FLOAT, -- maps to Float32,
+  `NASDelay`             FLOAT, -- maps to Float32,
+  `SecurityDelay`        FLOAT, -- maps to Float32,
+  `LateAircraftDelay`    FLOAT, -- maps to Float32,
+  `FirstDepTime`         LONGTEXT, -- maps to String,
+  `TotalAddGTime`        LONGTEXT, -- maps to String,
+  `LongestAddGTime`      LONGTEXT, -- maps to String,
+  `DivAirportLandings`   LONGTEXT, -- maps to String,
+  `DivReachedDest`       LONGTEXT, -- maps to String,
+  `DivActualElapsedTime` LONGTEXT, -- maps to String,
+  `DivArrDelay`          LONGTEXT, -- maps to String,
+  `DivDistance`          LONGTEXT, -- maps to String,
+  `Div1Airport`          LONGTEXT, -- maps to String,
+  `Div1AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
+  `Div1AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
+  `Div1WheelsOn`         LONGTEXT, -- maps to String,
+  `Div1TotalGTime`       LONGTEXT, -- maps to String,
+  `Div1LongestGTime`     LONGTEXT, -- maps to String,
+  `Div1WheelsOff`        LONGTEXT, -- maps to String,
+  `Div1TailNum`          LONGTEXT, -- maps to String,
+  `Div2Airport`          LONGTEXT, -- maps to String,
+  `Div2AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
+  `Div2AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
+  `Div2WheelsOn`         LONGTEXT, -- maps to String,
+  `Div2TotalGTime`       LONGTEXT, -- maps to String,
+  `Div2LongestGTime`     LONGTEXT, -- maps to String,
+  `Div2WheelsOff`        LONGTEXT, -- maps to String,
+  `Div2TailNum`          LONGTEXT, -- maps to String,
+  `Div3Airport`          LONGTEXT, -- maps to String,
+  `Div3AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
+  `Div3AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
+  `Div3WheelsOn`         LONGTEXT, -- maps to String,
+  `Div3TotalGTime`       LONGTEXT, -- maps to String,
+  `Div3LongestGTime`     LONGTEXT, -- maps to String,
+  `Div3WheelsOff`        LONGTEXT, -- maps to String,
+  `Div3TailNum`          LONGTEXT, -- maps to String,
+  `Div4Airport`          LONGTEXT, -- maps to String,
+  `Div4AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
+  `Div4AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
+  `Div4WheelsOn`         LONGTEXT, -- maps to String,
+  `Div4TotalGTime`       LONGTEXT, -- maps to String,
+  `Div4LongestGTime`     LONGTEXT, -- maps to String,
+  `Div4WheelsOff`        LONGTEXT, -- maps to String,
+  `Div4TailNum`          LONGTEXT, -- maps to String,
+  `Div5Airport`          LONGTEXT, -- maps to String,
+  `Div5AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
+  `Div5AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
+  `Div5WheelsOn`         LONGTEXT, -- maps to String,
+  `Div5TotalGTime`       LONGTEXT, -- maps to String,
+  `Div5LongestGTime`     LONGTEXT, -- maps to String,
+  `Div5WheelsOff`        LONGTEXT, -- maps to String,
+  `Div5TailNum`          LONGTEXT  -- maps to String
 );
+```
 
-ClickHouse
+### ClickHouse Table
+
+```sql
 CREATE TABLE IF NOT EXISTS `airline`.`ontime` ( 
   `Year`                 UInt16,  
   `Quarter`              UInt8,  
@@ -820,3 +838,26 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
   `Div5WheelsOff`        String,  
   `Div5TailNum`          String
 ) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month, DepDel15), 8192)
+```
+
+### Import Data
+
+```bash
+ls|sort|head -n 100
+
+i=1
+for file in $(ls *.csv|sort|head -n 100); do
+    echo "$i. Copy $file"
+    cp -f $file ontime.csv
+    echo "$i. Import $file"
+    mysqlimport \
+        --ignore-lines=1 \
+        --fields-terminated-by=, \
+        --fields-enclosed-by=\" \
+        --local \
+        -u root \
+        airline ontime.csv
+    rm -f ontime.csv
+    i=$((i+1))
+done
+```
