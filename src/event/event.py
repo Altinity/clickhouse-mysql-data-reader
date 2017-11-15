@@ -10,6 +10,10 @@ class Event(object):
     # table name
     table = None
 
+    #for row in mysql_event.rows:
+    #    event.rows.append(row['values'])
+    mysql_event = None
+
     # {'id':1, 'col1':1}
     row = None
 
@@ -22,14 +26,33 @@ class Event(object):
     # ['id', 'col1', 'col2']
     fieldnames = None
 
-    def first(self):
-        if self.rows is None:
-            return self.row
-        else:
-            return self.rows[0]
+    _iter = None
 
-    def all(self):
-        if self.rows is None:
-            return [self.row]
+    def __iter__(self):
+        if self.mysql_event is not None:
+            self._iter = iter(self.mysql_event.rows)
+
+        elif self.row is not None:
+            self._iter = iter([self.row])
+
         else:
-            return self.rows
+            self._iter = iter(self.rows)
+
+        return self
+
+    def __next__(self):
+        item = next(self._iter)
+
+        if self.mysql_event is not None:
+            return item['values']
+        else:
+            return item
+
+    def column_names(self):
+        if self.mysql_event is not None:
+            return self.mysql_event.rows[0]['values'].keys()
+
+        if self.row is not None:
+            return self.row.keys()
+
+        return self.rows[0].keys()
