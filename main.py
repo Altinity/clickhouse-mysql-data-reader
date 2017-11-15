@@ -20,7 +20,6 @@ class Main(Daemon):
     config = None
 
     def __init__(self):
-        mp.set_start_method('forkserver')
         self.config = CLIOpts.config()
 
         logging.basicConfig(
@@ -30,6 +29,7 @@ class Main(Daemon):
         )
         super().__init__(pidfile=self.config.pid_file())
         logging.debug(pprint.pformat(self.config.config))
+        mp.set_start_method('forkserver')
 
     def run(self):
         pumper = Pumper(

@@ -24,11 +24,13 @@ class ProcessWriter(Writer):
         pass
 
     def process(self, event_or_events=None):
+        logging.debug('class:%s starting process', __class__)
         writer = self.next_writer_builder.get()
         writer.insert(event_or_events)
         writer.close()
         writer.push()
         writer.destroy()
+        logging.debug('class:%s ending process', __class__)
 
     def insert(self, event_or_events=None):
         # event_or_events = [
