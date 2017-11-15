@@ -7,6 +7,7 @@ from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
 #from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 import time
+import logging
 
 class MySQLReader(Reader):
 
@@ -70,6 +71,7 @@ class MySQLReader(Reader):
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
                         if self.subscribers('WriteRowsEvent'):
+                            logging.info('WriteRowsEvent rows: %d', len(mysql_event.rows))
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
@@ -79,6 +81,7 @@ class MySQLReader(Reader):
                             self.notify('WriteRowsEvent', event=event)
 
                         if self.subscribers('WriteRowsEvent.EachRow'):
+                            logging.info('firing WriteRowsEvent.EachRow')
                             for row in mysql_event.rows:
                                 event = Event()
                                 event.schema = mysql_event.schema

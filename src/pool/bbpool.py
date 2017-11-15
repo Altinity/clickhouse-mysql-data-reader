@@ -5,6 +5,7 @@ import time
 
 from .pool import Pool
 from ..objectbuilder import ObjectBuilder
+import logging
 
 
 # Buckets Belts' Index Generator
@@ -20,14 +21,14 @@ class BBPool(Pool):
 
     # buckets on the belts
     belts = {
-#                  pour data into 0-index bucket
-#       'key.1': [[item,], [item, item, item,], [item, item, item,]]
-#       'key.2': [[item,], [item, item, item,], [item, item, item,]]
+        #          pour data into 0-index bucket
+        # 'key.1': [[item,], [item, item, item,], [item, item, item,]]
+        # 'key.2': [[item,], [item, item, item,], [item, item, item,]]
     }
 
     belts_rotated_at = {
-#        'key.1': UNIX TIMESTAMP
-#        'key.2': UNIX TIMESTAMP
+        # 'key.1': UNIX TIMESTAMP
+        # 'key.2': UNIX TIMESTAMP
     }
 
     buckets_count = 0
@@ -49,11 +50,14 @@ class BBPool(Pool):
         )
 
     def create_belt(self, belt_index):
-        # create belt with one empty bucket
+        """create belt with one empty bucket"""
+
         self.belts[belt_index] = [[]]
         self.belts_rotated_at[belt_index] = int(time.time())
 
     def insert(self, item):
+        """Insert item into pool"""
+
         # which belt we'll insert item?
         belt_index = self.key_generator.generate(item)
 
@@ -64,12 +68,12 @@ class BBPool(Pool):
         # append item to the 0-indexed bucket of the specified belt
         self.belts[belt_index][0].append(item)
 
-        # may be bucket is already full
-        if len(self.belts[belt_index][0]) >= self.max_bucket_size:
-            # bucket full, rotate the belt
-            self.rotate_belt(belt_index)
+        # try to rotate belt - may it it already should be rotated
+        self.rotate_belt(belt_index)
 
     def flush(self, key=None):
+        """Flush all buckets from the belt and delete the belt itself"""
+
         belt_index = key
         empty_belts_indexes = []
 
@@ -87,25 +91,27 @@ class BBPool(Pool):
             self.belts_rotated_at.pop(b_index)
 
     def rotate_belt(self, belt_index, flush=False):
-        now = int(time.time())
-        need_rotation = True if flush else False
-        rotate_reason = "FLUSH"
+        """Try to rotate belt"""
 
-        if len(self.belts[belt_index][0]) >= self.max_bucket_size:
+        now = int(time.time())
+
+        if flush:
+            # explicit flush requested
+            rotate_reason = "FLUSH"
+
+        elif len(self.belts[belt_index][0]) >= self.max_bucket_size:
             # 0-index bucket is full
-            need_rotation = True
             rotate_reason = "SIZE"
 
         elif now >= self.belts_rotated_at[belt_index] + self.max_interval_between_rotations:
             # time interval reached
-            need_rotation = True
             rotate_reason = "TIME"
 
-        if not need_rotation:
-            # belt not rotated
+        else:
+            # no need to rotate belt
             return False
 
-        # belts needs rotation
+        # belt(s) needs rotation
 
         # insert empty bucket into the beginning of the belt
         self.belts[belt_index].insert(0, [])
@@ -121,7 +127,15 @@ class BBPool(Pool):
 
             buckets_num = len(self.belts[belt_index])
             last_bucket_size = len(self.belts[belt_index][buckets_num-1])
-            print('rotating belt. now:', now, 'bucket number:', self.buckets_count, 'index:', belt_index, 'reason:', rotate_reason, 'buckets on belt:', buckets_num, 'last bucket size:', last_bucket_size, 'belts count:', len(self.belts))
+            logging.info('rbelt. now:%d bucket:%d index:%d reason:%s bucketsonbelt:%d lastbucketsize:%d beltsnum:%d',
+                now,
+                self.buckets_count,
+                belt_index,
+                rotate_reason,
+                buckets_num,
+                last_bucket_size,
+                len(self.belts)
+            )
 
             # time to flush data for specified key
             self.writer_builder.param('csv_file_path_suffix_parts', [str(now), str(self.buckets_count)])
