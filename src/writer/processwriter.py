@@ -3,6 +3,7 @@
 
 from .writer import Writer
 import multiprocessing as mp
+import logging
 
 
 class ProcessWriter(Writer):
@@ -23,11 +24,13 @@ class ProcessWriter(Writer):
         pass
 
     def process(self, event_or_events=None):
+        logging.debug('class:%s process()', __class__)
         writer = self.next_writer_builder.get()
         writer.insert(event_or_events)
         writer.close()
         writer.push()
         writer.destroy()
+        logging.debug('class:%s process() done', __class__)
 
     def insert(self, event_or_events=None):
         # event_or_events = [
@@ -38,12 +41,14 @@ class ProcessWriter(Writer):
         #       row: {'id': 3, 'a': 3}
         #   },
         # ]
+        logging.debug('class:%s insert', __class__)
         process = mp.Process(target=self.process, args=(event_or_events,))
-        #print('Start Process')
+
+        logging.debug('class:%s insert.process.start()', __class__)
         process.start()
-        #print('Join Process')
+
         #process.join()
-        #print('Done Process')
+        logging.debug('class:%s insert done', __class__)
         pass
 
     def flush(self):

@@ -1,5 +1,7 @@
 #!/bin/bash
 
+sudo bash -c "echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse"
+
 python3 main.py \
     --src-resume \
     --src-wait \

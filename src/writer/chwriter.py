@@ -3,6 +3,7 @@
 
 from clickhouse_driver.client import Client
 from .writer import Writer
+import logging
 
 
 class CHWriter(Writer):
@@ -38,6 +39,8 @@ class CHWriter(Writer):
         events = self.listify(event_or_events)
         if len(events) < 1:
             return
+
+        logging.debug('class:%s insert %d rows', __class__, len(events))
 
         values = []
         event_converted = None

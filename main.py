@@ -7,10 +7,12 @@ from src.daemon import Daemon
 
 import sys
 import multiprocessing as mp
-
+import logging
+import pprint
 
 if sys.version_info[0] < 3:
     raise "Must be using Python 3"
+
 
 
 class Main(Daemon):
@@ -18,13 +20,16 @@ class Main(Daemon):
     config = None
 
     def __init__(self):
-        mp.set_start_method('forkserver')
         self.config = CLIOpts.config()
-        super().__init__(pidfile=self.config.pid_file())
 
-        print('---')
-        print(self.config)
-        print('---')
+        logging.basicConfig(
+            filename=self.config.log_file(),
+            level=self.config.log_level(),
+            format='%(asctime)s - %(levelname)s - %(message)s'
+        )
+        super().__init__(pidfile=self.config.pid_file())
+        logging.debug(pprint.pformat(self.config.config))
+#        mp.set_start_method('forkserver')
 
     def run(self):
         pumper = Pumper(
@@ -36,7 +41,7 @@ class Main(Daemon):
     def start(self):
         if self.config.is_daemon():
             if not super().start():
-                print("Error going background. The process already running?")
+                logging.error("Error going background. The process already running?")
         else:
             self.run()
 
