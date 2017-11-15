@@ -5,6 +5,7 @@ from .writer import Writer
 from ..event.event import Event
 import csv
 import os.path
+import logging
 
 
 class CSVWriter(Writer):
@@ -71,6 +72,8 @@ class CSVWriter(Writer):
         events = self.listify(event_or_events)
         if len(events) < 1:
             return
+
+        logging.debug('class:%s insert %d rows', __class__, len(events))
 
         if not self.opened():
             self.open()

@@ -11,7 +11,7 @@ python3.6 main.py \
     --dst-host=127.0.0.1 \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
-    --mempool-max-flush-interval=10 \
+    --mempool-max-flush-interval=60 \
     --mempool-max-events-num=100000
 
 #	--mempool

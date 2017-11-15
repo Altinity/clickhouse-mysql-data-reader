@@ -4,6 +4,7 @@
 from .writer import Writer
 from ..event.event import Event
 from ..pool.bbpool import BBPool
+import logging
 
 
 class PoolWriter(Writer):
@@ -29,6 +30,7 @@ class PoolWriter(Writer):
         )
 
     def insert(self, event_or_events):
+        logging.debug('class:%s insert', __class__)
         self.pool.insert(event_or_events)
 
     def flush(self):
