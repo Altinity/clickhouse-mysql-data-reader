@@ -2,10 +2,11 @@
 
 sudo bash -c "echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse"
 
-python3.6 main.py \
+python3.6 main.py ${*:1} \
     --src-resume \
     --src-wait \
     --nice-pause=1 \
+    --log-level=info \
     --src-host=127.0.0.1 \
     --src-user=root \
     --dst-host=127.0.0.1 \
@@ -21,3 +22,4 @@ python3.6 main.py \
 #	--dst-schema=db
 #   --dst-table=datatypes
 #	--csvpool-keep-files
+#    --log-level=info \
