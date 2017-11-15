@@ -41,11 +41,12 @@ class ProcessWriter(Writer):
         # ]
         logging.debug('class:%s insert', __class__)
         process = mp.Process(target=self.process, args=(event_or_events,))
-        #print('Start Process')
+
+        logging.debug('class:%s insert - starting process', __class__)
         process.start()
-        #print('Join Process')
+
         #process.join()
-        #print('Done Process')
+        logging.debug('class:%s insert - done process', __class__)
         pass
 
     def flush(self):

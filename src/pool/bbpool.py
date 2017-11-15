@@ -32,6 +32,11 @@ class BBPool(Pool):
     }
 
     buckets_count = 0
+    buckets_content_count = 0;
+
+    prev_time = None
+    prev_buckets_count = 0
+    prev_buckets_content_count = 0;
 
     def __init__(
             self,
@@ -123,13 +128,17 @@ class BBPool(Pool):
         while len(self.belts[belt_index]) > buckets_num_left_on_belt:
             # too many buckets on the belt
             # time to rotate belt and flush the most-right-bucket
-            self.buckets_count += 1
 
             buckets_num = len(self.belts[belt_index])
             last_bucket_size = len(self.belts[belt_index][buckets_num-1])
-            logging.info('rbelt. now:%d bucket:%d index:%s reason:%s bucketsonbelt:%d lastbucketsize:%d beltsnum:%d',
+
+            self.buckets_count += 1
+            self.buckets_content_count += last_bucket_size
+
+            logging.info('rot now:%d bktcnt:%d bktcontentcnt: %d index:%s reason:%s bktsonbelt:%d bktsize:%d beltnum:%d',
                 now,
                 self.buckets_count,
+                self.buckets_content_count,
                 str(belt_index),
                 rotate_reason,
                 buckets_num,
@@ -145,6 +154,23 @@ class BBPool(Pool):
             writer.push()
             writer.destroy()
             del writer
+
+        if self.prev_time is not None:
+            # have previous time - meaning this is at least second rotate
+            # can calculate belt speed
+            window_size = now - self.prev_time
+            buckets_per_sec = (self.buckets_count - self.prev_buckets_count)/window_size
+            buckets_content_per_sec = (self.buckets_content_count - self.prev_buckets_content_count)/window_size
+            logging.info(
+                'buckets per sec:%f buckets content per sec:%f for last %d sec',
+                 buckets_per_sec,
+                 buckets_content_per_sec,
+                 window_size
+            )
+
+        self.prev_time = now
+        self.prev_buckets_count = self.buckets_count
+        self.prev_buckets_content_count = self.buckets_content_count
 
         # belt rotated
         return True
