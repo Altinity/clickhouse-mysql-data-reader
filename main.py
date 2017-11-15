@@ -29,7 +29,7 @@ class Main(Daemon):
         )
         super().__init__(pidfile=self.config.pid_file())
         logging.debug(pprint.pformat(self.config.config))
-        mp.set_start_method('forkserver')
+#        mp.set_start_method('forkserver')
 
     def run(self):
         pumper = Pumper(

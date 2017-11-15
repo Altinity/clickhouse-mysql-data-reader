@@ -73,7 +73,7 @@ class CSVWriter(Writer):
         if len(events) < 1:
             return
 
-        logging.debug('class:%s insert %d rows', __class__, len(events))
+        logging.debug('class:%s insert %d events', __class__, len(events))
 
         if not self.opened():
             self.open()

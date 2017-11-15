@@ -32,11 +32,11 @@ class BBPool(Pool):
     }
 
     buckets_count = 0
-    buckets_content_count = 0;
+    items_count = 0;
 
     prev_time = None
     prev_buckets_count = 0
-    prev_buckets_content_count = 0;
+    prev_items_count = 0;
 
     def __init__(
             self,
@@ -133,18 +133,18 @@ class BBPool(Pool):
             last_bucket_size = len(self.belts[belt_index][buckets_num-1])
 
             self.buckets_count += 1
-            self.buckets_content_count += last_bucket_size
+            self.items_count += last_bucket_size
 
             logging.info('rot now:%d bktcnt:%d bktcontentcnt: %d index:%s reason:%s bktsonbelt:%d bktsize:%d beltnum:%d',
-                now,
-                self.buckets_count,
-                self.buckets_content_count,
-                str(belt_index),
-                rotate_reason,
-                buckets_num,
-                last_bucket_size,
-                len(self.belts)
-            )
+                         now,
+                         self.buckets_count,
+                         self.items_count,
+                         str(belt_index),
+                         rotate_reason,
+                         buckets_num,
+                         last_bucket_size,
+                         len(self.belts)
+                         )
 
             # time to flush data for specified key
             self.writer_builder.param('csv_file_path_suffix_parts', [str(now), str(self.buckets_count)])
@@ -160,17 +160,17 @@ class BBPool(Pool):
             # can calculate belt speed
             window_size = now - self.prev_time
             buckets_per_sec = (self.buckets_count - self.prev_buckets_count)/window_size
-            buckets_content_per_sec = (self.buckets_content_count - self.prev_buckets_content_count)/window_size
+            items_per_sec = (self.items_count - self.prev_items_count) / window_size
             logging.info(
-                'buckets per sec:%f buckets content per sec:%f for last %d sec',
+                'buckets_per_sec:%f items_per_sec:%f for last %d sec',
                  buckets_per_sec,
-                 buckets_content_per_sec,
+                 items_per_sec,
                  window_size
             )
 
         self.prev_time = now
         self.prev_buckets_count = self.buckets_count
-        self.prev_buckets_content_count = self.buckets_content_count
+        self.prev_items_count = self.items_count
 
         # belt rotated
         return True

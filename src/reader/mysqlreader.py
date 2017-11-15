@@ -73,13 +73,17 @@ class MySQLReader(Reader):
         start_timestamp = int(time.time())
         # fetch events
         try:
+            prev_stat_time = time.time()
+            rows_num = 0
+
             while True:
-                logging.info('Check events in binlog stream')
+                logging.debug('Check events in binlog stream')
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
                         if self.subscribers('WriteRowsEvent'):
                             self.write_rows_event_num += 1
-                            logging.info('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
+                            logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
+                            rows_num += len(mysql_event.rows)
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
@@ -90,8 +94,9 @@ class MySQLReader(Reader):
 
                         if self.subscribers('WriteRowsEvent.EachRow'):
                             self.write_rows_event_each_row_num += 1
-                            logging.info('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
+                            logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
                             for row in mysql_event.rows:
+                                rows_num += 1
                                 event = Event()
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
@@ -101,8 +106,21 @@ class MySQLReader(Reader):
                         # skip non-insert events
                         pass
 
+                now = time.time()
+                if now > prev_stat_time + 60:
+                    # time to calc stat
+                    window_size = now - prev_stat_time
+                    rows_per_sec = rows_num / window_size
+                    logging.info(
+                        'rows_per_sec:%f for last %f sec',
+                        rows_per_sec,
+                        window_size
+                    )
+                    prev_stat_time = now
+                    rows_num = 0
+
                 if not self.blocking:
-                    break
+                    break # while True
 
                 # blocking
                 if self.nice_pause > 0:

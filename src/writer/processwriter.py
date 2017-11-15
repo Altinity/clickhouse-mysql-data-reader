@@ -24,13 +24,13 @@ class ProcessWriter(Writer):
         pass
 
     def process(self, event_or_events=None):
-        logging.debug('class:%s starting process', __class__)
+        logging.debug('class:%s process()', __class__)
         writer = self.next_writer_builder.get()
         writer.insert(event_or_events)
         writer.close()
         writer.push()
         writer.destroy()
-        logging.debug('class:%s ending process', __class__)
+        logging.debug('class:%s process() done', __class__)
 
     def insert(self, event_or_events=None):
         # event_or_events = [
@@ -44,11 +44,11 @@ class ProcessWriter(Writer):
         logging.debug('class:%s insert', __class__)
         process = mp.Process(target=self.process, args=(event_or_events,))
 
-        logging.debug('class:%s insert - starting process', __class__)
+        logging.debug('class:%s insert.process.start()', __class__)
         process.start()
 
         #process.join()
-        logging.debug('class:%s insert - done process', __class__)
+        logging.debug('class:%s insert done', __class__)
         pass
 
     def flush(self):
