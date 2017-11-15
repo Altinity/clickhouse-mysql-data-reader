@@ -108,7 +108,7 @@ class BBPool(Pool):
             rotate_reason = "TIME"
 
         else:
-            # no need to rotate belt
+            # no need to rotate belt - belt not rotated
             return False
 
         # belt(s) needs rotation
