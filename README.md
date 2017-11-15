@@ -6,13 +6,13 @@
 
  * [Introduction](#introduction)
  * [Requirements](#requirements)
- * [Testing](#tesing)
-   * [MySQL Data Types](#mysql_data_types)
-   * [ClickHouse Data Types](#clickhouse_data_types)
-   * [MySQL -> ClickHouse Data Types Mapping](#mysql_clickhouse_data_types_mapping)
-   * [MySQL Test Tables](#mysql_test_tables)
-   * [ClickHouse Test Tables](#clickhouse_test_tables)
-   * [Airline ontime Test Case](#airline_ontime_test_case)
+ * [Testing](#testing)
+   * [MySQL Data Types](#mysql-data-types)
+   * [ClickHouse Data Types](#clickhouse-data-types)
+   * [MySQL -> ClickHouse Data Types Mapping](#mysql---clickhouse-data-types-mapping)
+   * [MySQL Test Tables](#mysql-test-tables)
+   * [ClickHouse Test Tables](#clickhouse-test-tables)
+   * [Airline ontime Test Case](#airline-ontime-test-case)
    
 ---
 
