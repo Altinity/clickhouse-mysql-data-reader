@@ -127,10 +127,10 @@ class BBPool(Pool):
 
             buckets_num = len(self.belts[belt_index])
             last_bucket_size = len(self.belts[belt_index][buckets_num-1])
-            logging.info('rbelt. now:%d bucket:%d index:%d reason:%s bucketsonbelt:%d lastbucketsize:%d beltsnum:%d',
+            logging.info('rbelt. now:%d bucket:%d index:%s reason:%s bucketsonbelt:%d lastbucketsize:%d beltsnum:%d',
                 now,
                 self.buckets_count,
-                belt_index,
+                str(belt_index),
                 rotate_reason,
                 buckets_num,
                 last_bucket_size,

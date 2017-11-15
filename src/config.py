@@ -34,6 +34,9 @@ class Config(object):
     def log_level(self):
         return self.config['app-config']['log-level']
 
+    def nice_pause(self):
+        return self.config['app-config']['nice-pause']
+
     def pid_file(self):
         return self.config['app-config']['pid_file']
 

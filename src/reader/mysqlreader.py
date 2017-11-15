@@ -20,6 +20,10 @@ class MySQLReader(Reader):
     blocking = None
     resume_stream = None
     binlog_stream = None
+    nice_pause = 0
+
+    write_rows_event_num = 0
+    write_rows_event_each_row_num = 0;
 
     def __init__(
             self,
@@ -31,6 +35,7 @@ class MySQLReader(Reader):
             only_tables=None,
             blocking=None,
             resume_stream=None,
+            nice_pause=None,
             callbacks={},
     ):
         super().__init__(callbacks=callbacks)
@@ -43,6 +48,7 @@ class MySQLReader(Reader):
         self.only_tables = only_tables
         self.blocking = blocking
         self.resume_stream = resume_stream
+        self.nice_pause = nice_pause
         self.binlog_stream = BinLogStreamReader(
             # MySQL server - data source
             connection_settings=self.connection_settings,
@@ -68,10 +74,12 @@ class MySQLReader(Reader):
         # fetch events
         try:
             while True:
+                logging.info('Check events in binlog stream')
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
                         if self.subscribers('WriteRowsEvent'):
-                            logging.info('WriteRowsEvent rows: %d', len(mysql_event.rows))
+                            self.write_rows_event_num += 1
+                            logging.info('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
@@ -81,7 +89,8 @@ class MySQLReader(Reader):
                             self.notify('WriteRowsEvent', event=event)
 
                         if self.subscribers('WriteRowsEvent.EachRow'):
-                            logging.info('firing WriteRowsEvent.EachRow')
+                            self.write_rows_event_each_row_num += 1
+                            logging.info('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
                             for row in mysql_event.rows:
                                 event = Event()
                                 event.schema = mysql_event.schema
@@ -96,6 +105,9 @@ class MySQLReader(Reader):
                     break
 
                 # blocking
+                if self.nice_pause > 0:
+                    time.sleep(self.nice_pause)
+
                 self.notify('ReaderIdleEvent')
 
         except KeyboardInterrupt:
