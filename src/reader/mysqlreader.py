@@ -87,9 +87,7 @@ class MySQLReader(Reader):
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
-                            event.rows = []
-                            for row in mysql_event.rows:
-                                event.rows.append(row['values'])
+                            event.mysql_event = mysql_event
                             self.notify('WriteRowsEvent', event=event)
 
                         if self.subscribers('WriteRowsEvent.EachRow'):

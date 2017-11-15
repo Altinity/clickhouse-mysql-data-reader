@@ -42,12 +42,12 @@ class CHWriter(Writer):
 
         logging.debug('class:%s insert %d rows', __class__, len(events))
 
-        values = []
+        rows = []
         event_converted = None
         for event in events:
             event_converted = self.convert(event)
-            for value in event_converted.all():
-                values.append(value)
+            for row in event_converted:
+                rows.append(row)
 
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = self.dst_table if self.dst_table else event_converted.table
@@ -56,13 +56,13 @@ class CHWriter(Writer):
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
                 schema,
                 table,
-                ', '.join(map(lambda column: '`%s`' % column, values[0].keys()))
+                ', '.join(map(lambda column: '`%s`' % column, rows[0].keys()))
             )
-            self.client.execute(sql, values)
+            self.client.execute(sql, rows)
         except:
             print('QUERY FAILED -------------------------')
             print(sql)
-            print(values)
+            print(rows)
 
 
 if __name__ == '__main__':
