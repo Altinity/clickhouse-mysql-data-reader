@@ -3,6 +3,7 @@
 
 import argparse
 from .config import Config
+import logging
 
 
 class CLIOpts(object):
@@ -42,6 +43,25 @@ class CLIOpts(object):
             return None
 
     @staticmethod
+    def log_level_from_string(log_level_string):
+        level = log_level_string.upper()
+
+        if level == 'CRITICAL':
+            return logging.CRITICAL
+        elif level == 'ERROR':
+            return logging.ERROR
+        elif level == 'WARNING':
+            return logging.WARNING
+        elif level == 'INFO':
+            return logging.INFO
+        elif level == 'DEBUG':
+            return logging.DEBUG
+        elif level == 'NOTSET':
+            return logging.NOTSET
+        else:
+            return logging.NOTSET
+
+    @staticmethod
     def config():
         """Parse application's CLI options into options dictionary
         :return: instance of Config
@@ -55,8 +75,26 @@ class CLIOpts(object):
         argparser.add_argument(
             '--config-file',
             type=str,
-            default='',
+            default=None,
             help='Path to config file. Default - not specified'
+        )
+        argparser.add_argument(
+            '--log-file',
+            type=str,
+            default=None,
+            help='Path to log file. Default - not specified'
+        )
+        argparser.add_argument(
+            '--log-level',
+            type=str,
+            default="NOTSET",
+            help='Log Level. Default - NOTSET'
+        )
+        argparser.add_argument(
+            '--nice-pause',
+            type=int,
+            default=None,
+            help='make nice pause between attempts to read binlog stream'
         )
         argparser.add_argument(
             '--dry',
@@ -226,6 +264,8 @@ class CLIOpts(object):
         return Config ({
             'app-config': {
                 'config-file': args.config_file,
+                'log-file': args.log_file,
+                'log-level': CLIOpts.log_level_from_string(args.log_level),
                 'dry': args.dry,
                 'daemon': args.daemon,
                 'pid_file': args.pid_file,
@@ -257,9 +297,11 @@ class CLIOpts(object):
                     'only_tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
                     'blocking': args.src_wait,
                     'resume_stream': args.src_resume,
+                    'nice_pause': 0 if args.nice_pause is None else args.nice_pause,
                 },
                 'file': {
                     'csv_file_path': args.src_file,
+                    'nice_pause': 0 if args.nice_pause is None else args.nice_pause,
                 },
             },
 

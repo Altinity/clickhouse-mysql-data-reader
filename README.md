@@ -185,7 +185,7 @@ binlog-format    = row #Very important if you want to receive write, update and 
 ## MySQL Test Tables
 
 We have to separate test table into several ones because of this error, produced by MySQL:
-```bash
+```text
 ERROR 1118 (42000): Row size too large. The maximum row size for the used table type, not counting BLOBs, is 65535. This includes storage overhead, check the manual. You have to change some columns to TEXT or BLOBs
 ```
 
@@ -727,6 +727,7 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 ### ClickHouse Table
 
 ```sql
+CREATE DATABASE IF NOT EXISTS `airline`;
 CREATE TABLE IF NOT EXISTS `airline`.`ontime` ( 
   `Year`                 UInt16,  
   `Quarter`              UInt8,  

@@ -28,6 +28,15 @@ class Config(object):
     def __getitem__(self, item):
         return self.config[item]
 
+    def log_file(self):
+        return self.config['app-config']['log-file']
+
+    def log_level(self):
+        return self.config['app-config']['log-level']
+
+    def nice_pause(self):
+        return self.config['app-config']['nice-pause']
+
     def pid_file(self):
         return self.config['app-config']['pid_file']
 

@@ -5,6 +5,7 @@ from .writer import Writer
 
 import os
 import time
+import logging
 
 class CHCSVWriter(Writer):
 
@@ -32,6 +33,8 @@ class CHCSVWriter(Writer):
         events = self.listify(event_or_events)
         if len(events) < 1:
             return
+
+        logging.debug('class:%s insert %d rows', __class__, len(events))
 
         for event in events:
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) FORMAT CSV'.format(

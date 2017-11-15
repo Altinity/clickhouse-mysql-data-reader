@@ -7,6 +7,7 @@ from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
 #from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 import time
+import logging
 
 class MySQLReader(Reader):
 
@@ -19,6 +20,10 @@ class MySQLReader(Reader):
     blocking = None
     resume_stream = None
     binlog_stream = None
+    nice_pause = 0
+
+    write_rows_event_num = 0
+    write_rows_event_each_row_num = 0;
 
     def __init__(
             self,
@@ -30,6 +35,7 @@ class MySQLReader(Reader):
             only_tables=None,
             blocking=None,
             resume_stream=None,
+            nice_pause=None,
             callbacks={},
     ):
         super().__init__(callbacks=callbacks)
@@ -42,6 +48,7 @@ class MySQLReader(Reader):
         self.only_tables = only_tables
         self.blocking = blocking
         self.resume_stream = resume_stream
+        self.nice_pause = nice_pause
         self.binlog_stream = BinLogStreamReader(
             # MySQL server - data source
             connection_settings=self.connection_settings,
@@ -66,10 +73,17 @@ class MySQLReader(Reader):
         start_timestamp = int(time.time())
         # fetch events
         try:
+            prev_stat_time = time.time()
+            rows_num = 0
+
             while True:
+                logging.debug('Check events in binlog stream')
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
                         if self.subscribers('WriteRowsEvent'):
+                            self.write_rows_event_num += 1
+                            logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
+                            rows_num += len(mysql_event.rows)
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
@@ -79,7 +93,10 @@ class MySQLReader(Reader):
                             self.notify('WriteRowsEvent', event=event)
 
                         if self.subscribers('WriteRowsEvent.EachRow'):
+                            self.write_rows_event_each_row_num += 1
+                            logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
                             for row in mysql_event.rows:
+                                rows_num += 1
                                 event = Event()
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
@@ -89,10 +106,26 @@ class MySQLReader(Reader):
                         # skip non-insert events
                         pass
 
+                now = time.time()
+                if now > prev_stat_time + 60:
+                    # time to calc stat
+                    window_size = now - prev_stat_time
+                    rows_per_sec = rows_num / window_size
+                    logging.info(
+                        'rows_per_sec:%f for last %f sec',
+                        rows_per_sec,
+                        window_size
+                    )
+                    prev_stat_time = now
+                    rows_num = 0
+
                 if not self.blocking:
-                    break
+                    break # while True
 
                 # blocking
+                if self.nice_pause > 0:
+                    time.sleep(self.nice_pause)
+
                 self.notify('ReaderIdleEvent')
 
         except KeyboardInterrupt:
