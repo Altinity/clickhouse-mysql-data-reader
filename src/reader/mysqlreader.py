@@ -69,15 +69,30 @@ class MySQLReader(Reader):
             resume_stream=self.resume_stream,
         )
 
+    def speed_report(self, start, rows_num, now=None):
+        # time to calc stat
+        if now is None:
+            now = time.time()
+        window_size = now - start
+        rows_per_sec = rows_num / window_size
+        logging.info(
+            'rows_per_sec:%f for last %d rows %f sec',
+            rows_per_sec,
+            rows_num,
+            window_size
+        )
+
     def read(self):
         start_timestamp = int(time.time())
         # fetch events
         try:
-            prev_stat_time = time.time()
-            rows_num = 0
-
             while True:
                 logging.debug('Check events in binlog stream')
+
+                start = time.time()
+                rows_num = 0
+
+                # fetch available events from MySQL
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
                         if self.subscribers('WriteRowsEvent'):
@@ -100,22 +115,22 @@ class MySQLReader(Reader):
                                 event.table = mysql_event.table
                                 event.row = row['values']
                                 self.notify('WriteRowsEvent.EachRow', event=event)
+
+                        if rows_num % 100000 == 0:
+                            # speed report each N rows
+                            self.speed_report(start, rows_num)
                     else:
                         # skip non-insert events
                         pass
 
-                now = time.time()
-                if now > prev_stat_time + 60:
-                    # time to calc stat
-                    window_size = now - prev_stat_time
-                    rows_per_sec = rows_num / window_size
-                    logging.info(
-                        'rows_per_sec:%f for last %f sec',
-                        rows_per_sec,
-                        window_size
-                    )
-                    prev_stat_time = now
-                    rows_num = 0
+                # all events fetched (or none of them available)
+
+                if rows_num > 0:
+                    # we have some rows processed
+                    now = time.time()
+                    if now > start + 60:
+                        # and processing was long enough
+                        self.speed_report(start, rows_num, now)
 
                 if not self.blocking:
                     break # while True
