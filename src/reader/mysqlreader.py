@@ -91,6 +91,7 @@ class MySQLReader(Reader):
 
                 start = time.time()
                 rows_num = 0
+                rows_num_since_interim_speed_report = 0
 
                 # fetch available events from MySQL
                 for mysql_event in self.binlog_stream:
@@ -99,6 +100,7 @@ class MySQLReader(Reader):
                             self.write_rows_event_num += 1
                             logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
                             rows_num += len(mysql_event.rows)
+                            rows_num_since_interim_speed_report += len(mysql_event.rows)
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
@@ -110,15 +112,17 @@ class MySQLReader(Reader):
                             logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
                             for row in mysql_event.rows:
                                 rows_num += 1
+                                rows_num_since_interim_speed_report += 1
                                 event = Event()
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
                                 event.row = row['values']
                                 self.notify('WriteRowsEvent.EachRow', event=event)
 
-                        if rows_num % 100000 == 0:
+                        if rows_num_since_interim_speed_report >= 100000:
                             # speed report each N rows
                             self.speed_report(start, rows_num)
+                            rows_num_since_interim_speed_report = 0
                     else:
                         # skip non-insert events
                         pass
