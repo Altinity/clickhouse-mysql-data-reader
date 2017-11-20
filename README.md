@@ -861,4 +861,25 @@ for file in $(ls *.csv|sort|head -n 100); do
     rm -f ontime.csv
     i=$((i+1))
 done
+
+#!/bin/bash
+files_to_import_num=3
+i=1
+for file in $(ls /mnt/nas/work/ontime/*.csv|sort|head -n $files_to_import_num); do
+    echo "$i. Prepare $file"
+    rm -f ontime
+    ln -s $file ontime
+    echo "$i. Import $file"
+    time mysqlimport \
+        --ignore-lines=1 \
+        --fields-terminated-by=, \
+        --fields-enclosed-by=\" \
+        --local \
+        -u root \
+        airline ontime
+    rm -f ontime
+    i=$((i+1))
+done
+
+
 ```

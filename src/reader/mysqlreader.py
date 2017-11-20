@@ -69,21 +69,57 @@ class MySQLReader(Reader):
             resume_stream=self.resume_stream,
         )
 
+    def performance_report(self, start, rows_num, rows_num_per_event_min=None, rows_num_per_event_max=None, now=None):
+        # time to calc stat
+
+        if now is None:
+            now = time.time()
+
+        window_size = now - start
+        if window_size > 0:
+            rows_per_sec = rows_num / window_size
+            logging.info(
+                'PERF - rows_per_sec:%f rows_per_event_min: %d rows_per_event_max: %d for last %d rows %f sec',
+                rows_per_sec,
+                rows_num_per_event_min if rows_num_per_event_min is not None else -1,
+                rows_num_per_event_max if rows_num_per_event_max is not None else -1,
+                rows_num,
+                window_size,
+            )
+        else:
+            logging.info("PERF - rows window size=0 can not calc performance for this window")
+
+
     def read(self):
         start_timestamp = int(time.time())
         # fetch events
         try:
-            prev_stat_time = time.time()
-            rows_num = 0
-
             while True:
                 logging.debug('Check events in binlog stream')
+
+                start = time.time()
+                rows_num = 0
+                rows_num_since_interim_performance_report = 0
+                rows_num_per_event = 0
+                rows_num_per_event_min = None
+                rows_num_per_event_max = None
+
+
+                # fetch available events from MySQL
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
+
+                        rows_num_per_event = len(mysql_event.rows)
+                        if (rows_num_per_event_min is None) or (rows_num_per_event < rows_num_per_event_min):
+                            rows_num_per_event_min = rows_num_per_event
+                        if (rows_num_per_event_max is None) or (rows_num_per_event > rows_num_per_event_max):
+                            rows_num_per_event_max = rows_num_per_event
+
                         if self.subscribers('WriteRowsEvent'):
                             self.write_rows_event_num += 1
                             logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
                             rows_num += len(mysql_event.rows)
+                            rows_num_since_interim_performance_report += len(mysql_event.rows)
                             event = Event()
                             event.schema = mysql_event.schema
                             event.table = mysql_event.table
@@ -95,27 +131,36 @@ class MySQLReader(Reader):
                             logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
                             for row in mysql_event.rows:
                                 rows_num += 1
+                                rows_num_since_interim_performance_report += 1
                                 event = Event()
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
                                 event.row = row['values']
                                 self.notify('WriteRowsEvent.EachRow', event=event)
+
+                        if rows_num_since_interim_performance_report >= 100000:
+                            # speed report each N rows
+                            self.performance_report(
+                                start=start,
+                                rows_num=rows_num,
+                                rows_num_per_event_min=rows_num_per_event_min,
+                                rows_num_per_event_max=rows_num_per_event_max,
+                            )
+                            rows_num_since_interim_performance_report = 0
+                            rows_num_per_event_min = None
+                            rows_num_per_event_max = None
                     else:
                         # skip non-insert events
                         pass
 
-                now = time.time()
-                if now > prev_stat_time + 60:
-                    # time to calc stat
-                    window_size = now - prev_stat_time
-                    rows_per_sec = rows_num / window_size
-                    logging.info(
-                        'rows_per_sec:%f for last %f sec',
-                        rows_per_sec,
-                        window_size
-                    )
-                    prev_stat_time = now
-                    rows_num = 0
+                # all events fetched (or none of them available)
+
+                if rows_num > 0:
+                    # we have some rows processed
+                    now = time.time()
+                    if now > start + 60:
+                        # and processing was long enough
+                        self.performance_report(start, rows_num, now)
 
                 if not self.blocking:
                     break # while True
