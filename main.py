@@ -25,9 +25,10 @@ class Main(Daemon):
         logging.basicConfig(
             filename=self.config.log_file(),
             level=self.config.log_level(),
-            format='%(asctime)s - %(levelname)s - %(message)s'
+            format='%(asctime)s/%(created)f:%(levelname)s:%(message)s'
         )
         super().__init__(pidfile=self.config.pid_file())
+        logging.info('Starting')
         logging.debug(pprint.pformat(self.config.config))
 #        mp.set_start_method('forkserver')
 

@@ -58,7 +58,8 @@ class CHCSVWriter(Writer):
                 sql,
             )
 
-            logging.info('starting %s', bash)
+            logging.info('starting clickhouse-client process')
+            logging.debug('starting %s', bash)
             os.system(bash)
 
         pass
