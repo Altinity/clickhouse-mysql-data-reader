@@ -69,22 +69,26 @@ class MySQLReader(Reader):
             resume_stream=self.resume_stream,
         )
 
-    def performance_report(self, start, rows_num, rows_per_event_min=-1, rows_per_event_max=-1, now=None):
+    def performance_report(self, start, rows_num, rows_num_per_event_min=None, rows_num_per_event_max=None, now=None):
         # time to calc stat
 
         if now is None:
             now = time.time()
 
         window_size = now - start
-        rows_per_sec = rows_num / window_size
-        logging.info(
-            'rows_per_sec:%f rows_per_event_min: %d rows_per_event_max: %d for last %d rows %f sec',
-            rows_per_sec,
-            rows_per_event_min,
-            rows_per_event_max,
-            rows_num,
-            window_size,
-        )
+        if window_size > 0:
+            rows_per_sec = rows_num / window_size
+            logging.info(
+                'PERF - rows_per_sec:%f rows_per_event_min: %d rows_per_event_max: %d for last %d rows %f sec',
+                rows_per_sec,
+                rows_num_per_event_min if rows_num_per_event_min is not None else -1,
+                rows_num_per_event_max if rows_num_per_event_max is not None else -1,
+                rows_num,
+                window_size,
+            )
+        else:
+            logging.info("PERF - rows window size=0 can not calc performance for this window")
+
 
     def read(self):
         start_timestamp = int(time.time())
@@ -96,20 +100,20 @@ class MySQLReader(Reader):
                 start = time.time()
                 rows_num = 0
                 rows_num_since_interim_performance_report = 0
-                rows_per_event = 0
-                rows_per_event_min = 0
-                rows_per_event_max = 0
+                rows_num_per_event = 0
+                rows_num_per_event_min = None
+                rows_num_per_event_max = None
 
 
                 # fetch available events from MySQL
                 for mysql_event in self.binlog_stream:
                     if isinstance(mysql_event, WriteRowsEvent):
 
-                        rows_per_event = len(mysql_event.rows)
-                        if rows_per_event < rows_per_event_min:
-                            rows_per_event_min = rows_per_event
-                        if rows_per_event > rows_per_event_max:
-                            rows_per_event_max = rows_per_event
+                        rows_num_per_event = len(mysql_event.rows)
+                        if (rows_num_per_event_min is None) or (rows_num_per_event < rows_num_per_event_min):
+                            rows_num_per_event_min = rows_num_per_event
+                        if (rows_num_per_event_max is None) or (rows_num_per_event > rows_num_per_event_max):
+                            rows_num_per_event_max = rows_num_per_event
 
                         if self.subscribers('WriteRowsEvent'):
                             self.write_rows_event_num += 1
@@ -139,12 +143,12 @@ class MySQLReader(Reader):
                             self.performance_report(
                                 start=start,
                                 rows_num=rows_num,
-                                rows_per_event_min=rows_per_event_min,
-                                rows_per_event_max=rows_per_event_max,
+                                rows_num_per_event_min=rows_num_per_event_min,
+                                rows_num_per_event_max=rows_num_per_event_max,
                             )
                             rows_num_since_interim_performance_report = 0
-                            rows_per_event_min = 0
-                            rows_per_event_max = 0
+                            rows_num_per_event_min = None
+                            rows_num_per_event_max = None
                     else:
                         # skip non-insert events
                         pass

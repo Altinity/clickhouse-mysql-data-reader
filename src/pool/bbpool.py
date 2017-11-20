@@ -159,14 +159,17 @@ class BBPool(Pool):
             # have previous time - meaning this is at least second rotate
             # can calculate belt speed
             window_size = now - self.prev_time
-            buckets_per_sec = (self.buckets_count - self.prev_buckets_count)/window_size
-            items_per_sec = (self.items_count - self.prev_items_count) / window_size
-            logging.info(
-                'buckets_per_sec:%f items_per_sec:%f for last %d sec',
-                 buckets_per_sec,
-                 items_per_sec,
-                 window_size
-            )
+            if window_size > 0:
+                buckets_per_sec = (self.buckets_count - self.prev_buckets_count)/window_size
+                items_per_sec = (self.items_count - self.prev_items_count) / window_size
+                logging.info(
+                    'PERF - buckets_per_sec:%f items_per_sec:%f for last %d sec',
+                     buckets_per_sec,
+                     items_per_sec,
+                     window_size
+                )
+            else:
+                logging.info("PERF - buckets window size=0 can not calc performance for this window")
 
         self.prev_time = now
         self.prev_buckets_count = self.buckets_count
