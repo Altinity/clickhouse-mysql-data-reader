@@ -10,6 +10,7 @@ $PYTHON main.py ${*:1} \
     --src-wait \
     --nice-pause=1 \
     --log-level=info \
+    --log-file=ontime.log \
     --src-host=127.0.0.1 \
     --src-user=root \
     --dst-host=127.0.0.1 \
