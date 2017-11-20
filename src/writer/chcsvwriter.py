@@ -58,7 +58,7 @@ class CHCSVWriter(Writer):
                 sql,
             )
 
-#            print('running:', bash)
+            logging.info('starting %s', bash)
             os.system(bash)
 
         pass
