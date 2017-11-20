@@ -31,8 +31,8 @@ class BBPool(Pool):
         # 'key.2': UNIX TIMESTAMP
     }
 
-    buckets_count = 0
-    items_count = 0;
+    buckets_num_total = 0
+    items_num_total = 0;
 
     prev_time = None
     prev_buckets_count = 0
@@ -98,7 +98,7 @@ class BBPool(Pool):
     def rotate_belt(self, belt_index, flush=False):
         """Try to rotate belt"""
 
-        now = int(time.time())
+        now = time.time()
 
         if flush:
             # explicit flush requested
@@ -129,25 +129,25 @@ class BBPool(Pool):
             # too many buckets on the belt
             # time to rotate belt and flush the most-right-bucket
 
-            buckets_num = len(self.belts[belt_index])
-            last_bucket_size = len(self.belts[belt_index][buckets_num-1])
+            buckets_on_belt_num = len(self.belts[belt_index])
+            most_right_bucket_size = len(self.belts[belt_index][buckets_on_belt_num-1])
 
-            self.buckets_count += 1
-            self.items_count += last_bucket_size
+            self.buckets_num_total += 1
+            self.items_num_total += most_right_bucket_size
 
-            logging.info('rot now:%d bktcnt:%d bktcontentcnt: %d index:%s reason:%s bktsonbelt:%d bktsize:%d beltnum:%d',
-                         now,
-                         self.buckets_count,
-                         self.items_count,
-                         str(belt_index),
-                         rotate_reason,
-                         buckets_num,
-                         last_bucket_size,
-                         len(self.belts)
-                         )
+            logging.info('rot now:%f bktttl:%d bktitemsttl: %d index:%s reason:%s bktsonbelt:%d bktsize:%d beltnum:%d',
+                 now,
+                 self.buckets_num_total,
+                 self.items_num_total,
+                 str(belt_index),
+                 rotate_reason,
+                 buckets_on_belt_num,
+                 most_right_bucket_size,
+                 len(self.belts),
+            )
 
             # time to flush data for specified key
-            self.writer_builder.param('csv_file_path_suffix_parts', [str(now), str(self.buckets_count)])
+            self.writer_builder.param('csv_file_path_suffix_parts', [str(int(now)), str(self.buckets_num_total)])
             writer = self.writer_builder.get()
             writer.insert(self.belts[belt_index].pop())
             writer.close()
@@ -160,8 +160,8 @@ class BBPool(Pool):
             # can calculate belt speed
             window_size = now - self.prev_time
             if window_size > 0:
-                buckets_per_sec = (self.buckets_count - self.prev_buckets_count)/window_size
-                items_per_sec = (self.items_count - self.prev_items_count) / window_size
+                buckets_per_sec = (self.buckets_num_total - self.prev_buckets_count) / window_size
+                items_per_sec = (self.items_num_total - self.prev_items_count) / window_size
                 logging.info(
                     'PERF - buckets_per_sec:%f items_per_sec:%f for last %d sec',
                      buckets_per_sec,
@@ -172,8 +172,8 @@ class BBPool(Pool):
                 logging.info("PERF - buckets window size=0 can not calc performance for this window")
 
         self.prev_time = now
-        self.prev_buckets_count = self.buckets_count
-        self.prev_items_count = self.items_count
+        self.prev_buckets_count = self.buckets_num_total
+        self.prev_items_count = self.items_num_total
 
         # belt rotated
         return True
