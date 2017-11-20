@@ -148,7 +148,7 @@ class BBPool(Pool):
 
             # time to flush data for specified key
             self.writer_builder.param('csv_file_path_suffix_parts', [str(int(now)), str(self.buckets_num_total)])
-            writer = self.writer_builder.get()
+            writer = self.writer_builder.new()
             writer.insert(self.belts[belt_index].pop())
             writer.close()
             writer.push()
