@@ -8,16 +8,18 @@
  * [Requirements](#requirements)
  * [Operation](#operation)
    * [Requirements and Limitations](#requirements-and-limitations)
-   * [General Schema](#general-schema)
+   * [Operation General Schema](#operation-general-schema)
    * [Example](#example)
  * [Performance](#performance)
  * [Testing](#testing)
-   * [MySQL Data Types](#mysql-data-types)
-   * [ClickHouse Data Types](#clickhouse-data-types)
-   * [MySQL -> ClickHouse Data Types Mapping](#mysql---clickhouse-data-types-mapping)
-   * [MySQL Test Tables](#mysql-test-tables)
-   * [ClickHouse Test Tables](#clickhouse-test-tables)
-   * [Airline ontime Test Case](#airline-ontime-test-case)
+   * [Testing General Schema](#testing-general-schema)
+     * [MySQL Data Types](#mysql-data-types)
+     * [ClickHouse Data Types](#clickhouse-data-types)
+     * [MySQL -> ClickHouse Data Types Mapping](#mysql---clickhouse-data-types-mapping)
+     * [MySQL Test Tables](#mysql-test-tables)
+     * [ClickHouse Test Tables](#clickhouse-test-tables)
+   * [Test Cases](#test-cases)
+     * [airline.ontime Test Case](#airline-ontime-test-case)
    
 ---
 
@@ -79,7 +81,7 @@ Data reader understands INSERT SQL statements only. In practice this means that:
   * DELETE statements are not handled - meaning DELETEs within MySQL would not be relayed into ClickHouse
   * DDL statements are not handled. For example, source table structure change can lead to insertion errors 
 
-## General schema
+## Operation General Schema
 
   * Step 1. Data Reader reads data from the source event-by-event (for MySQL binlog) or line-by-line (file).
   * Step 2. **OPTIONAL** Caching in memory pool. Since ClickHouse prefers to get data in bundles (row-by-row insertion is extremely slow), we need to introduce some caching.
@@ -164,9 +166,11 @@ Now you can run data reader via `pypy`
 
 # Testing
 
-## MySQL Data Types
+## Testing General Schema
 
-### Numeric Types
+### MySQL Data Types
+
+#### Numeric Types
 
   * `BIT`  the number of bits per value, from 1 to 64
   * `TINYINT` -128 to 127. The unsigned range is 0 to 255
@@ -182,7 +186,7 @@ Now you can run data reader via `pypy`
   * `DOUBLE`, `REAL` Permissible values are -1.7976931348623157E+308 to -2.2250738585072014E-308, 0, and 2.2250738585072014E-308 to 1.7976931348623157E+308
 
 
-### Date and Time Types
+#### Date and Time Types
 
   * `DATE` The supported range is '1000-01-01' to '9999-12-31'
   * `DATETIME` The supported range is '1000-01-01 00:00:00.000000' to '9999-12-31 23:59:59.999999'
@@ -190,7 +194,7 @@ Now you can run data reader via `pypy`
   * `TIME` The range is '-838:59:59.000000' to '838:59:59.000000'
   * `YEAR` Values display as 1901 to 2155, and 0000
 
-### String Types
+#### String Types
   * `CHAR` The range of M is 0 to 255. If M is omitted, the length is 1.
   * `VARCHAR` The range of M is 0 to 65,535
   * `BINARY` similar to CHAR
@@ -210,7 +214,7 @@ Now you can run data reader via `pypy`
 
 ---
 
-## ClickHouse Data Types
+### ClickHouse Data Types
 
   * `Date` number of days since 1970-01-01
   * `DateTime` Unix timestamp
@@ -234,9 +238,9 @@ Now you can run data reader via `pypy`
 
 ---
 
-## MySQL -> ClickHouse Data Types Mapping
+### MySQL -> ClickHouse Data Types Mapping
 
-### Numeric Types
+#### Numeric Types
 
   * `BIT` -> ??? (possibly `String`?)
   * `TINYINT` -> `Int8`, `UInt8`
@@ -252,7 +256,7 @@ Now you can run data reader via `pypy`
   * `DOUBLE`, `REAL` -> `Float64`
 
 
-### Date and Time Types
+#### Date and Time Types
 
   * `DATE` -> `Date` (for valid values) or `String` (`Date` Allows storing values from just after the beginning of the Unix Epoch to the upper threshold defined by a constant at the compilation stage (currently, this is until the year 2038, but it may be expanded to 2106))
   * `DATETIME` -> `DateTime` (for valid values) or `String`
@@ -261,7 +265,7 @@ Now you can run data reader via `pypy`
   * `YEAR` -> `UInt16`
 
 
-### String Types
+#### String Types
 
   * `CHAR` -> `FixedString`
   * `VARCHAR` -> `String`
@@ -282,7 +286,7 @@ Now you can run data reader via `pypy`
   * `JSON` -> ?????? (possibly `String`?)
 
 
-## MySQL Test Tables
+### MySQL Test Tables
 
 We have to separate test table into several ones because of this error, produced by MySQL:
 ```text
@@ -594,7 +598,7 @@ INSERT INTO long_varbinary_datatypes SET
 ;
 ```
 
-## ClickHouse Test Tables
+### ClickHouse Test Tables
 
 ```sql
 CREATE TABLE datatypes(
@@ -705,9 +709,26 @@ CREATE TABLE long_varbinary_datatypes(
 ;
 ```
 
-## Airline ontime Test Case
+## Test Cases
 
-### MySQL Table
+### airline.ontime Test Case
+Main Steps
+  * Download airline.ontime dataset
+  * Create airline.ontime MySQL table
+  * Create airline.ontime ClickHouse table
+  * Start data reader (migrate data MySQL -> ClickHouse)
+  * Start data importer (import data into MySQL)
+  * Check how data are loaded into ClickHouse
+
+#### airline.ontime Data Set in CSV files
+Run [download script](run_airline_ontime_data_download.sh)
+```bash
+./run_airline_ontime_data_download.sh
+```
+Downloading can take some time. 
+
+#### airline.ontime MySQL Table
+Create MySQL table of the following structure:
 
 ```sql
 CREATE DATABASE IF NOT EXISTS `airline`;
@@ -824,8 +845,8 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 );
 ```
 
-### ClickHouse Table
-
+#### airline.ontime ClickHouse Table
+Create ClickHouse table of the following structure:
 ```sql
 CREATE DATABASE IF NOT EXISTS `airline`;
 CREATE TABLE IF NOT EXISTS `airline`.`ontime` ( 
@@ -941,28 +962,15 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 ) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month, DepDel15), 8192)
 ```
 
-### Import Data
+#### airline.ontime Data Reader
+Run [datareader script](run_airline_ontime_data_reader.sh)
+```bash
+./run_airline_ontime_data_reader.sh
+```
+
+#### airline.ontime Data Importer
+Run [data importer script](run_airline_ontime_import.sh)
 
 ```bash
-#!/bin/bash
-files_to_import_num=3
-i=1
-for file in $(ls /mnt/nas/work/ontime/*.csv|sort|head -n $files_to_import_num); do
-    echo "$i. Prepare. Make link to $file"
-    rm -f ontime
-    ln -s $file ontime
-    
-    echo "$i. Import. $file"
-    time mysqlimport \
-        --ignore-lines=1 \
-        --fields-terminated-by=, \
-        --fields-enclosed-by=\" \
-        --local \
-        -u root \
-        airline ontime
-        
-    echo "$i. Cleanup. $file"
-    rm -f ontime
-    i=$((i+1))
-done
-```
+./run_airline_ontime_import.sh
+``` 
