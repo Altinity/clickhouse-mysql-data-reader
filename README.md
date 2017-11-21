@@ -129,6 +129,38 @@ Options description
 
 # Performance
 
+`pypy` significantly improves performance. You should try it.
+For example you can start with [Portable PyPy distribution for Linux](#https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux)
+Unpack it into your place of choice.
+
+```bash
+[user@localhost ~]$ ls -l pypy3.5-5.9-beta-linux_x86_64-portable
+total 32
+drwxr-xr-x  2 user user   140 Oct 24 01:14 bin
+drwxr-xr-x  5 user user  4096 Oct  3 11:57 include
+drwxr-xr-x  4 user user  4096 Oct  3 11:57 lib
+drwxr-xr-x 13 user user  4096 Oct  3 11:56 lib_pypy
+drwxr-xr-x  3 user user    15 Oct  3 11:56 lib-python
+-rw-r--r--  1 user user 11742 Oct  3 11:56 LICENSE
+-rw-r--r--  1 user user  1296 Oct  3 11:56 README.rst
+drwxr-xr-x 14 user user  4096 Oct 24 01:16 site-packages
+drwxr-xr-x  2 user user   195 Oct  3 11:57 virtualenv_support
+```
+
+Install `pip`
+```bash
+pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy -m ensurepip
+```
+Install required modules
+```bash
+pypy3.5-5.9-beta-linux_x86_64-portable/bin/pip3 install mysql-replication
+pypy3.5-5.9-beta-linux_x86_64-portable/bin/pip3 install clickhouse-driver
+```
+
+Now you can run data reader via `pypy`
+```bash
+/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy main.py
+```
 
 # Testing
 
