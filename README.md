@@ -402,6 +402,8 @@ CREATE TABLE long_varbinary_datatypes(
 set time_zone='+00:00';
 ```
 
+Insert minimal acceptable values into the test table:
+
 ```mysql
 -- MIN values
 INSERT INTO datatypes SET
@@ -499,6 +501,8 @@ INSERT INTO long_varbinary_datatypes SET
     varbinary_2 = ""
 ;
 ```
+
+Insert maximum acceptable values into the test table:
 
 ```mysql
 -- MAX values
@@ -727,8 +731,10 @@ You may want to adjust dirs where to keep `ZIP` and `CSV` file
 
 In `run_airline_ontime_data_download.sh` edit these lines:
 ```bash
+...
 ZIP_FILES_DIR="zip"
 CSV_FILES_DIR="csv"
+...
 ```
 You may want to adjust number of files to download (In case downloading all it may take some time).
 
@@ -986,8 +992,10 @@ Run [datareader script](run_airline_ontime_data_reader.sh)
 
 You may want to adjust `PYTHON` path and source and target hosts and usernames
 ```bash
+...
 PYTHON=python3.6
 PYTHON=/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy
+...
 ```
 ```bash
 ...
@@ -1005,11 +1013,13 @@ Run [data importer script](run_airline_ontime_import.sh)
 
 You may want to adjust `CSV` files location, number of imported files and MySQL user/password used for import
 ```bash
+...
 # looking for csv files in this dir
 FILES_TO_IMPORT_DIR="/mnt/nas/work/ontime"
 
 # limit import to this number of files
 FILES_TO_IMPORT_NUM=3
+...
 ```
 ```bash
 ...
