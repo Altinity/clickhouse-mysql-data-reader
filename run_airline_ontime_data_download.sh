@@ -1,6 +1,9 @@
 #!/bin/bash
 # download airline.ontime test dataset
 
+ZIP_FILES_DIR="zip"
+CSV_FILES_DIR="csv"
+
 echo "Check required commands availability"
 if command -v wget && command -v unzip && command -v clickhouse-client && command -v wc && command -v awk; then
 	echo "Looks like all required commands are available"
@@ -11,7 +14,6 @@ fi
 
 echo "Download dataset"
 
-ZIP_FILES_DIR="zip"
 echo "Create dir $ZIP_FILES_DIR for downloading zip files"
 mkdir "$ZIP_FILES_DIR"
 
@@ -29,9 +31,6 @@ for year in `seq 1987 2017`; do
 done
 
 echo "Unzip dataset"
-
-ZIP_FILES_DIR="zip"
-CSV_FILES_DIR="csv"
 
 mkdir "$CSV_FILES_DIR"
 

@@ -19,7 +19,7 @@
      * [MySQL Test Tables](#mysql-test-tables)
      * [ClickHouse Test Tables](#clickhouse-test-tables)
    * [Test Cases](#test-cases)
-     * [airline.ontime Test Case](#airline-ontime-test-case)
+     * [airline.ontime Test Case](#airlineontime-test-case)
    
 ---
 
@@ -722,6 +722,13 @@ Main Steps
 
 #### airline.ontime Data Set in CSV files
 Run [download script](run_airline_ontime_data_download.sh)
+You may want to adjust dirs where to keep `ZIP` and `CSV` file
+In `run_airline_ontime_data_download.sh` edit these lines:
+```bash
+ZIP_FILES_DIR="zip"
+CSV_FILES_DIR="csv"
+```
+
 ```bash
 ./run_airline_ontime_data_download.sh
 ```
@@ -964,12 +971,37 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 
 #### airline.ontime Data Reader
 Run [datareader script](run_airline_ontime_data_reader.sh)
+You may want to adjust `PYTHON` path and source and target hosts and usernames
+```bash
+PYTHON=python3.6
+PYTHON=/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy
+```
+```bash
+...
+    --src-host=127.0.0.1 \
+    --src-user=root \
+    --dst-host=127.0.0.1 \
+...
+```
 ```bash
 ./run_airline_ontime_data_reader.sh
 ```
 
 #### airline.ontime Data Importer
 Run [data importer script](run_airline_ontime_import.sh)
+You may want to adjust `CSV` files location, number of imported files and MySQL user/password used for import
+```bash
+# looking for csv files in this dir
+FILES_TO_IMPORT_DIR="/mnt/nas/work/ontime"
+
+# limit import to this number of files
+FILES_TO_IMPORT_NUM=3
+```
+```bash
+...
+        -u root \
+...
+```
 
 ```bash
 ./run_airline_ontime_import.sh
