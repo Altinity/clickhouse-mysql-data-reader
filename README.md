@@ -6,6 +6,11 @@
 
  * [Introduction](#introduction)
  * [Requirements](#requirements)
+ * [Operation](#operation)
+   * [Requirements and Limitations](#requirements-and-limitations)
+   * [General Schema](#general-schema)
+   * [Example](#example)
+ * [Performance](#performance)
  * [Testing](#testing)
    * [MySQL Data Types](#mysql-data-types)
    * [ClickHouse Data Types](#clickhouse-data-types)
@@ -18,23 +23,25 @@
 
 # Introduction
 
-Utility to read mysql data
+Utility to import data into ClickHouse from MySQL (mainly) and/or CSV files
 
 # Requirements
 
-This package is used for interacting with MySQL:
+Data reader requires **Python 3.x** with additional modules to be installed.
+
+`mysql-replication` package is used for communication with MySQL:
 [https://github.com/noplay/python-mysql-replication](https://github.com/noplay/python-mysql-replication)
 ```bash
 pip install mysql-replication
 ```
 
-This package is used for interacting with ClickHouse:
+`clickhouse-driver` package is used for communication with ClickHouse:
 [https://github.com/mymarilyn/clickhouse-driver](https://github.com/mymarilyn/clickhouse-driver)
 ```bash
 pip install clickhouse-driver
 ```
 
-You need (at least one of) the `SUPER`, `REPLICATION CLIENT` privilege(s) for this operation
+Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
 
 ```sql
 CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
@@ -52,7 +59,7 @@ GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'*'       
 FLUSH PRIVILEGES;
 ```
 
-MySQL config options required:
+Also the following MySQL config options are required:
 ```ini
 [mysqld]
 server-id		 = 1
@@ -61,6 +68,67 @@ expire_logs_days = 10
 max_binlog_size  = 100M
 binlog-format    = row #Very important if you want to receive write, update and delete row events
 ```
+
+# Operation
+
+## Requirements and Limitations
+
+Data reader understands INSERT SQL statements only. In practice this means that:
+  * You need to create required table in ClickHouse before starting data read procedure. More on how to create target ClickHouse table: [MySQL -> ClickHouse Data Types Mapping](#mysql---clickhouse-data-types-mapping)
+  * UPDATE statements are not handled - meaning UPDATEs within MySQL would not be relayed into ClickHouse
+  * DELETE statements are not handled - meaning DELETEs within MySQL would not be relayed into ClickHouse
+  * DDL statements are not handled. For example, source table structure change can lead to insertion errors 
+
+## General schema
+
+  * Step 1. Data Reader reads data from the source event-by-event (for MySQL binlog) or line-by-line (file).
+  * Step 2. **OPTIONAL** Caching in memory pool. Since ClickHouse prefers to get data in bundles (row-by-row insertion is extremely slow), we need to introduce some caching.
+  Cache can be flushed by either of:
+    * number of rows in cache
+    * number of events in cache 
+    * time elapsed
+    * data source depleted
+  * Step 3. **OPTIONAL** Writing CSV file. Sometimes it is useful to have data also represented as a file
+  * Step 4. Writing data into ClickHouse. Depending on the configuration of the previous steps data are written into ClickHouse by either of:
+    * directly event-by-event or line-by-line
+    * from memory cache as a bulk insert operation
+    * from CSV file via `clickhouse-client` 
+    
+## Example
+
+Let's walk over test example of tool launch command line options
+ 
+```bash
+$PYTHON main.py ${*:1} \
+    --src-resume \
+    --src-wait \
+    --nice-pause=1 \
+    --log-level=info \
+    --log-file=ontime.log \
+    --src-host=127.0.0.1 \
+    --src-user=root \
+    --dst-host=127.0.0.1 \
+    --csvpool \
+    --csvpool-file-path-prefix=qwe_ \
+    --mempool-max-flush-interval=60 \
+    --mempool-max-events-num=1000
+```
+Options description
+  * `--src-resume` - resume data loading from the previous point. When the tool starts - resume from the end of the log 
+  * `--src-wait` - wait for new data to come
+  * `--nice-pause=1` - when no data available sleep for 1 second
+  * `--log-level=info` - log verbosity
+  * `--log-file=ontime.log` - log file name
+  * `--src-host=127.0.0.1` - MySQL source host
+  * `--src-user=root` - MySQL source user (remember about PRIVILEGES for this user)
+  * `--dst-host=127.0.0.1` - ClickHouse host
+  * `--csvpool` - make pool of csv files (assumes `--mempool` also)
+  * `--csvpool-file-path-prefix=qwe_` - put these CSV files having `qwe_` prefix in `CWD`
+  * `--mempool-max-flush-interval=60` - flush mempool at least every 60 seconds
+  * `--mempool-max-events-num=1000` - flush mempool at least each 1000 events (not rows, but events)
+
+# Performance
+
 
 # Testing
 
@@ -844,32 +912,15 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 ### Import Data
 
 ```bash
-ls|sort|head -n 100
-
-i=1
-for file in $(ls *.csv|sort|head -n 100); do
-    echo "$i. Copy $file"
-    cp -f $file ontime.csv
-    echo "$i. Import $file"
-    mysqlimport \
-        --ignore-lines=1 \
-        --fields-terminated-by=, \
-        --fields-enclosed-by=\" \
-        --local \
-        -u root \
-        airline ontime.csv
-    rm -f ontime.csv
-    i=$((i+1))
-done
-
 #!/bin/bash
 files_to_import_num=3
 i=1
 for file in $(ls /mnt/nas/work/ontime/*.csv|sort|head -n $files_to_import_num); do
-    echo "$i. Prepare $file"
+    echo "$i. Prepare. Make link to $file"
     rm -f ontime
     ln -s $file ontime
-    echo "$i. Import $file"
+    
+    echo "$i. Import. $file"
     time mysqlimport \
         --ignore-lines=1 \
         --fields-terminated-by=, \
@@ -877,9 +928,9 @@ for file in $(ls /mnt/nas/work/ontime/*.csv|sort|head -n $files_to_import_num); 
         --local \
         -u root \
         airline ontime
+        
+    echo "$i. Cleanup. $file"
     rm -f ontime
     i=$((i+1))
 done
-
-
 ```
