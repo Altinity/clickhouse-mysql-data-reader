@@ -45,7 +45,7 @@ pip install clickhouse-driver
 
 Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
 
-```sql
+```mysql
 CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
 CREATE USER 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
 CREATE USER 'reader'@'*' IDENTIFIED BY 'qwerty';
@@ -65,7 +65,7 @@ Also the following MySQL config options are required:
 ```ini
 [mysqld]
 server-id		 = 1
-log_bin			 = /var/log/mysql/mysql-bin.log
+log_bin			 = /var/lib/mysql/bin.log
 expire_logs_days = 10
 max_binlog_size  = 100M
 binlog-format    = row #Very important if you want to receive write, update and delete row events
@@ -293,7 +293,7 @@ We have to separate test table into several ones because of this error, produced
 ERROR 1118 (42000): Row size too large. The maximum row size for the used table type, not counting BLOBs, is 65535. This includes storage overhead, check the manual. You have to change some columns to TEXT or BLOBs
 ```
 
-```sql
+```mysql
 CREATE TABLE datatypes(
 
     bit_1 BIT(1),
@@ -397,12 +397,12 @@ CREATE TABLE long_varbinary_datatypes(
 ```
 
 
-```sql
+```mysql
 -- in order to be able to set timestamp = '1970-01-01 00:00:01'
 set time_zone='+00:00';
 ```
 
-```sql
+```mysql
 -- MIN values
 INSERT INTO datatypes SET
 
@@ -500,7 +500,7 @@ INSERT INTO long_varbinary_datatypes SET
 ;
 ```
 
-```sql
+```mysql
 -- MAX values
 INSERT INTO datatypes SET
 
@@ -722,12 +722,24 @@ Main Steps
 
 #### airline.ontime Data Set in CSV files
 Run [download script](run_airline_ontime_data_download.sh)
+
 You may want to adjust dirs where to keep `ZIP` and `CSV` file
+
 In `run_airline_ontime_data_download.sh` edit these lines:
 ```bash
 ZIP_FILES_DIR="zip"
 CSV_FILES_DIR="csv"
 ```
+You may want to adjust number of files to download (In case downloading all it may take some time).
+
+Specify year and months range as you wish:
+```bash
+...
+echo "Download files into $ZIP_FILES_DIR"
+for year in `seq 1987 2017`; do
+	for month in `seq 1 12`; do
+...
+``` 
 
 ```bash
 ./run_airline_ontime_data_download.sh
@@ -737,7 +749,7 @@ Downloading can take some time.
 #### airline.ontime MySQL Table
 Create MySQL table of the following structure:
 
-```sql
+```mysql
 CREATE DATABASE IF NOT EXISTS `airline`;
 CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
   `Year`                 SMALLINT UNSIGNED, -- maps to UInt16,
@@ -971,6 +983,7 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 
 #### airline.ontime Data Reader
 Run [datareader script](run_airline_ontime_data_reader.sh)
+
 You may want to adjust `PYTHON` path and source and target hosts and usernames
 ```bash
 PYTHON=python3.6
@@ -989,6 +1002,7 @@ PYTHON=/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy
 
 #### airline.ontime Data Importer
 Run [data importer script](run_airline_ontime_import.sh)
+
 You may want to adjust `CSV` files location, number of imported files and MySQL user/password used for import
 ```bash
 # looking for csv files in this dir
