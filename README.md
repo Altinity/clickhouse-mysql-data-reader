@@ -66,8 +66,8 @@ Also the following MySQL config options are required:
 [mysqld]
 server-id		 = 1
 log_bin			 = /var/lib/mysql/bin.log
-expire_logs_days = 10
-max_binlog_size  = 100M
+expire_logs_days = 30
+max_binlog_size  = 768M
 binlog-format    = row #Very important if you want to receive write, update and delete row events
 ```
 
@@ -98,7 +98,8 @@ Data reader understands INSERT SQL statements only. In practice this means that:
     
 ## Example
 
-Let's walk over test example of tool launch command line options
+Let's walk over test example of tool launch command line options. 
+This code snippet is taken from [datareader script](run_airline_ontime_data_reader.sh) shell file, described in more details in [airline.ontime Test Case](#airlineontime-test-case)
  
 ```bash
 $PYTHON main.py ${*:1} \
