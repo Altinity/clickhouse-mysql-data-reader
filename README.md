@@ -259,7 +259,10 @@ Now you can run data reader via `pypy`
 
 #### Date and Time Types
 
-  * `DATE` -> `Date` (for valid values) or `String` (`Date` Allows storing values from just after the beginning of the Unix Epoch to the upper threshold defined by a constant at the compilation stage (currently, this is until the year 2038, but it may be expanded to 2106))
+  * `DATE` -> `Date` (for valid values) or `String`
+  `Date` Allows storing values from just after the beginning of the Unix Epoch 
+  to the upper threshold defined by a constant at the compilation stage 
+  (currently, this is until the year 2038, but it may be expanded to 2106)
   * `DATETIME` -> `DateTime` (for valid values) or `String`
   * `TIMESTAMP` -> `DateTime`
   * `TIME` -> ????? (possibly `String`?)
@@ -281,9 +284,11 @@ Now you can run data reader via `pypy`
   * `LONGBLOB` -> `String`
   * `LONGTEXT` -> `String`
 
+#### Set Types
   * `ENUM` -> `Enum8`, `Enum16`
   * `SET` -> `Array(Int8)`
 
+#### Custom Types
   * `JSON` -> ?????? (possibly `String`?)
 
 
