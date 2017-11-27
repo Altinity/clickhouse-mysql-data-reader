@@ -10,50 +10,74 @@ class TableBuilder(object):
     connection = None
     cursor = None
 
-    def templates(self, host, user, password=None, db=None, tables=None):
+    host = None
+    port = None
+    user = None
+    password = None
+    dbs = None
+    tables = None
+
+    def __init__(self, host, port, user, password=None, dbs=None, tables=None):
+        self.host = host
+        self.port = port
+        self.user = user
+        self.password = password
+        self.dbs = dbs
+        self.tables = tables
+
+    def templates(self):
         """
         Create templates for specified MySQL tables. In case no tables specified all tables from specified db are templated
 
         :param host: string MySQL host
         :param user: string MySQL user
         :param password: string MySQL password
-        :param db: string MySQL datatabse/ May be omitted, in this case tables has to contain full table names, Ex.: db.table1
-        :param tables: string|list either comma-separated string or list of table names. May be short (in case db specified) or full (in the form db.table, in case no db specified)
+        :param dbs: list of string MySQL datatabse/ May be omitted, in this case tables has to contain full table names, Ex.: db.table1
+        :param tables: list of string list of table names. May be short (in case db specified) or full (in the form db.table, in case no db specified)
         :return: dict of CREATE TABLE () templates
         """
         res = {}
 
+        db = None
+
+        try:
+            db = self.dbs[0]
+        except:
+            pass
+
         # sanity check
-        if db is None and tables is None:
+        if db is None and self.tables is None:
             return res
 
         # MySQL connections
         self.connection = MySQLdb.connect(
-            host=host,
-            user=user,
-            passwd=password,
+            host=self.host,
+            user=self.user,
+            passwd=self.password,
             db=db,
         )
         self.cursor = self.connection.cursor()
 
         # in case to tables specified - list all tables of the DB specified
-        if db is not None and tables is None:
+        if db is not None and self.tables is None:
             self.cursor.execute("USE " + db)
-            tables = []
+            self.tables = []
             self.cursor.execute("SHOW TABLES")  # execute 'SHOW TABLES' (but data is not returned)
             for (table_name,) in self.cursor:
-                tables.append(table_name)
-
-        # tables can be something like 'db1, db2, db3'
-        # make [db1, db2, db3]
-        if isinstance(tables, str):
-            tables = [table.strip() for table in tables.split(',')]
+                self.tables.append(table_name)
 
         # create dict of table templates
-        for table in tables:
-            res[table] = self.create_table_template(table, db)
+        for table in self.tables:
+            if not db in res:
+                res[db] = {}
+            res[db][table] = self.create_table_template(table, db)
 
-        # {'table1': 'CREATE TABLE(...)...', 'table2': 'CREATE TABLE(...)...'}
+        # {
+        #   'db': {
+        #       'table1': 'CREATE TABLE(...)...',
+        #       'table2': 'CREATE TABLE(...)...',
+        #   }
+        # }
         return res
 
     def create_table_template(self, table_name, db=None):

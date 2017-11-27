@@ -33,11 +33,17 @@ class Main(Daemon):
 #        mp.set_start_method('forkserver')
 
     def run(self):
-        pumper = Pumper(
-            reader=self.config.reader(),
-            writer=self.config.writer(),
-        )
-        pumper.run()
+        if self.config.is_table_templates():
+            templates = self.config.table_builder().templates()
+            for db in templates:
+                for table in templates[db]:
+                    print(db, ':', table, ':', templates[db][table])
+        else:
+            pumper = Pumper(
+                reader=self.config.reader(),
+                writer=self.config.writer(),
+            )
+            pumper.run()
 
     def start(self):
         if self.config.is_daemon():

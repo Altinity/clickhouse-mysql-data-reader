@@ -13,7 +13,7 @@ from .objectbuilder import ObjectBuilder
 
 from .converter.csvwriteconverter import CSVWriteConverter
 from .converter.chwriteconverter import CHWriteConverter
-
+from .tablebuilder import TableBuilder
 
 class Config(object):
 
@@ -45,6 +45,12 @@ class Config(object):
 
     def is_pool(self):
         return self.config['app-config']['mempool']
+
+    def is_table_templates(self):
+        return self.config['app-config']['table-templates']
+
+    def table_builder(self):
+        return TableBuilder(**self.config['tablebuilder-config'])
 
     def reader(self):
         if self.config['reader-config']['file']['csv_file_path']:
