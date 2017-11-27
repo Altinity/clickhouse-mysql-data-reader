@@ -31,7 +31,12 @@ Utility to import data into ClickHouse from MySQL (mainly) and/or CSV files
 
 Data reader requires **Python 3.x** with additional modules to be installed.
 
-`mysql-replication` package is used for communication with MySQL:
+`MySQLdb` package is used for communication with MySQL:
+```bash
+pip install mysqlclient
+```
+
+`mysql-replication` package is used for communication with MySQL also:
 [https://github.com/noplay/python-mysql-replication](https://github.com/noplay/python-mysql-replication)
 ```bash
 pip install mysql-replication
@@ -42,6 +47,7 @@ pip install mysql-replication
 ```bash
 pip install clickhouse-driver
 ```
+
 
 Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
 
@@ -133,7 +139,7 @@ Options description
 # Performance
 
 `pypy` significantly improves performance. You should try it.
-For example you can start with [Portable PyPy distribution for Linux](https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux)
+For example you can start with [Portable PyPy distribution for Linux](https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux) - use (Python 3.x release)[https://github.com/squeaky-pl/portable-pypy#latest-python-35-release]
 Unpack it into your place of choice.
 
 ```bash
@@ -158,6 +164,17 @@ Install required modules
 ```bash
 pypy3.5-5.9-beta-linux_x86_64-portable/bin/pip3 install mysql-replication
 pypy3.5-5.9-beta-linux_x86_64-portable/bin/pip3 install clickhouse-driver
+```
+`mysqlclient` may require to install `libmysqlclient-dev` and `gcc`
+```bash
+pypy3.5-5.9-beta-linux_x86_64-portable/bin/pip3 install mysqlclient
+```
+Install them if need be
+```bash
+sudo apt-get install libmysqlclient-dev
+```
+```bash
+sudo apt-get install gcc
 ```
 
 Now you can run data reader via `pypy`
