@@ -146,6 +146,11 @@ class CLIOpts(object):
             action='store_true',
             help='Keep CSV pool files. Useful for debugging'
         )
+        argparser.add_argument(
+            '--table-templates',
+            action='store_true',
+            help='Prepare table templates.'
+        )
 
         argparser.add_argument(
             '--src-server-id',
@@ -262,12 +267,14 @@ class CLIOpts(object):
 
         # build options
         return Config ({
+
             'app-config': {
                 'config-file': args.config_file,
                 'log-file': args.log_file,
                 'log-level': CLIOpts.log_level_from_string(args.log_level),
                 'dry': args.dry,
                 'daemon': args.daemon,
+                'table-templates': args.table_templates,
                 'pid_file': args.pid_file,
                 'mempool': args.mempool or args.csvpool, # csvpool assumes mempool to be enabled
                 'mempool-max-events-num': args.mempool_max_events_num,
@@ -282,6 +289,15 @@ class CLIOpts(object):
                 'csv': {
                     'column_default_value': CLIOpts.join(args.csv_column_default_value),
                 },
+            },
+
+            'tablebuilder-config': {
+                'host': args.src_host,
+                'port': args.src_port,
+                'user': args.src_user,
+                'password': args.src_password,
+                'dbs': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
+                'tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
             },
 
             'reader-config': {
