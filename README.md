@@ -139,7 +139,8 @@ Options description
 # Performance
 
 `pypy` significantly improves performance. You should try it.
-For example you can start with [Portable PyPy distribution for Linux](https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux) - use (Python 3.x release)[https://github.com/squeaky-pl/portable-pypy#latest-python-35-release]
+For example you can start with [Portable PyPy distribution for Linux](https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux)
+ - use [Python 3.x release](https://github.com/squeaky-pl/portable-pypy#latest-python-35-release)
 Unpack it into your place of choice.
 
 ```bash
