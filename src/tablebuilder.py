@@ -17,7 +17,7 @@ class TableBuilder(object):
     dbs = None
     tables = None
 
-    def __init__(self, host, port, user, password=None, dbs=None, tables=None):
+    def __init__(self, host=None, port=None, user=None, password=None, dbs=None, tables=None):
         self.host = host
         self.port = port
         self.user = user
@@ -221,14 +221,15 @@ CREATE TABLE {0} (
         return ch_type
 
 if __name__ == '__main__':
-    tb = TableBuilder()
-    templates = tb.templates(
+    tb = TableBuilder(
         host='127.0.0.1',
         user='reader',
         password='qwerty',
-        db='db',
-#        tables='datatypes, enum_datatypes, json_datatypes',
+        dbs=['db'],
+        #        tables='datatypes, enum_datatypes, json_datatypes',
         tables=['datatypes', 'enum_datatypes', 'json_datatypes'],
     )
-    for table in templates:
-        print(table, '=', templates[table])
+    templates = tb.templates()
+    for db in templates:
+        for table in templates[db]:
+            print(table, '=', templates[db][table])
