@@ -4,15 +4,28 @@
 import logging
 import MySQLdb
 
+
 class TableBuilder(object):
 
     connection = None
     cursor = None
 
-    def template(self, host, user, password=None, db=None, tables=None):
+    def templates(self, host, user, password=None, db=None, tables=None):
+        """
+        Create templates for specified MySQL tables. In case no tables specified all tables from specified db are templated
+
+        :param host: string MySQL host
+        :param user: string MySQL user
+        :param password: string MySQL password
+        :param db: string MySQL datatabse/ May be omitted, in this case tables has to contain full table names, Ex.: db.table1
+        :param tables: string|list either comma-separated string or list of table names. May be short (in case db specified) or full (in the form db.table, in case no db specified)
+        :return: dict of CREATE TABLE () templates
+        """
+        res = {}
+
         # sanity check
         if db is None and tables is None:
-            return None
+            return res
 
         # MySQL connections
         self.connection = MySQLdb.connect(
@@ -36,10 +49,26 @@ class TableBuilder(object):
         if isinstance(tables, str):
             tables = [table.strip() for table in tables.split(',')]
 
+        # create dict of table templates
         for table in tables:
-            print(self.table(table, db))
+            res[table] = self.create_table_template(table, db)
 
-    def table(self, table_name, db=None):
+        # {'table1': 'CREATE TABLE(...)...', 'table2': 'CREATE TABLE(...)...'}
+        return res
+
+    def create_table_template(self, table_name, db=None):
+        """
+        Produce template for CH's
+        CREATE TABLE(
+            ...
+            columns specification
+            ...
+        ) ENGINE = MergeTree(_SPECIFY_DateField_HERE, (SPECIFY_INDEX_FIELD1, SPECIFY_INDEX_FIELD2, ...etc...), 8192)
+        for specified MySQL's table
+        :param table_name: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
+        :param db: string - name of the DB in MySQL
+        :return: string - almost-ready-to-use CREATE TABLE statement
+        """
 
         # `db`.`table` or just `table`
         name = '`{0}`.`{1}`'.format(db, table_name) if db else '`{0}`'.format(table_name)
@@ -52,10 +81,10 @@ class TableBuilder(object):
         for (_field, _type, _null, _key, _default, _extra,) in self.cursor:
             # Field | Type | Null | Key | Default | Extra
 
-            # build ready-to-sql column specification
+            # build ready-to-sql column specification Ex.:
             # `integer_1` Nullable(Int32)
             # `u_integer_1` Nullable(UInt32)
-            ch_columns.append('`{0}` {1}'.format(_field, self.map(mysql_type=_type, null=_null,)))
+            ch_columns.append('`{0}` {1}'.format(_field, self.map_type(mysql_type=_type, nullable=_null, )))
 
         sql = """
 CREATE TABLE {0} (
@@ -67,7 +96,17 @@ CREATE TABLE {0} (
         )
         return sql
 
-    def map(self, mysql_type, null=False):
+    def map_type(self, mysql_type, nullable=False):
+        """
+        Map MySQL type (as a string from DESC table statement) to CH type (as string)
+        :param mysql_type: string MySQL type (from DESC statement). Ex.: 'INT(10) UNSIGNED', 'BOOLEAN'
+        :param nullable: bool|string True|'yes' is this field nullable
+        :return: string CH's type specification directly usable in CREATE TABLE statement.  Ex.:
+            Nullable(Int32)
+            Nullable(UInt32)
+        """
+
+        # deal with UPPER CASE strings for simplicity
         mysql_type = mysql_type.upper()
 
         # Numeric Types
@@ -146,18 +185,20 @@ CREATE TABLE {0} (
             ch_type = 'UNKNOWN'
 
         # Deal with NULLs
-        if isinstance(null, bool):
-            if null:
+        if isinstance(nullable, bool):
+            # for bool - simple statement
+            if nullable:
                 ch_type = 'Nullable(' + ch_type + ')'
-        elif isinstance(null, str):
-            if null.upper() == "YES":
+        elif isinstance(nullable, str):
+            # also accept case-insencitive string 'yes'
+            if nullable.upper() == "YES":
                 ch_type = 'Nullable(' + ch_type + ')'
 
         return ch_type
 
 if __name__ == '__main__':
     tb = TableBuilder()
-    tb.template(
+    templates = tb.templates(
         host='127.0.0.1',
         user='reader',
         password='qwerty',
@@ -165,3 +206,5 @@ if __name__ == '__main__':
 #        tables='datatypes, enum_datatypes, json_datatypes',
         tables=['datatypes', 'enum_datatypes', 'json_datatypes'],
     )
+    for table in templates:
+        print(table, '=', templates[table])
