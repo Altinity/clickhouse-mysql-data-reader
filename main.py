@@ -9,6 +9,7 @@ import sys
 import multiprocessing as mp
 import logging
 import pprint
+import json
 
 if sys.version_info[0] < 3:
     raise "Must be using Python 3"
@@ -34,10 +35,14 @@ class Main(Daemon):
 
     def run(self):
         if self.config.is_table_templates():
-            templates = self.config.table_builder().templates()
+            templates = self.config.table_builder().templates(self.config.is_table_templates_json())
             for db in templates:
                 for table in templates[db]:
-                    print(db, ':', table, ':', templates[db][table])
+                    print(templates[db][table])
+
+        elif self.config.is_table_templates_json():
+            print(json.dumps(self.config.table_builder().templates(self.config.is_table_templates_json())))
+
         else:
             pumper = Pumper(
                 reader=self.config.reader(),

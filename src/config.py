@@ -49,6 +49,9 @@ class Config(object):
     def is_table_templates(self):
         return self.config['app-config']['table-templates']
 
+    def is_table_templates_json(self):
+        return self.config['app-config']['table-templates-json']
+
     def table_builder(self):
         return TableBuilder(**self.config['tablebuilder-config'])
 
