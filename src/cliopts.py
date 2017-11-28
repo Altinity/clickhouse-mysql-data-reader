@@ -151,6 +151,12 @@ class CLIOpts(object):
             action='store_true',
             help='Prepare table templates.'
         )
+        argparser.add_argument(
+            '--table-templates-json',
+            action='store_true',
+            help='Prepare table templates as JSON.'
+        )
+
 
         argparser.add_argument(
             '--src-server-id',
@@ -275,6 +281,7 @@ class CLIOpts(object):
                 'dry': args.dry,
                 'daemon': args.daemon,
                 'table-templates': args.table_templates,
+                'table-templates-json': args.table_templates_json,
                 'pid_file': args.pid_file,
                 'mempool': args.mempool or args.csvpool, # csvpool assumes mempool to be enabled
                 'mempool-max-events-num': args.mempool_max_events_num,

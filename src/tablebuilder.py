@@ -17,15 +17,113 @@ class TableBuilder(object):
     dbs = None
     tables = None
 
-    def __init__(self, host=None, port=None, user=None, password=None, dbs=None, tables=None):
+    def __init__(
+            self,
+            host=None,
+            port=None,
+            user=None,
+            password=None,
+            dbs=None,
+            tables=None
+    ):
         self.host = host
         self.port = port
         self.user = user
         self.password = password
-        self.dbs = dbs
-        self.tables = tables
+        self.dbs = [] if dbs is None else dbs
+        self.tables = [] if tables is None else tables
 
-    def templates(self):
+    def dbs_tables_lists(self):
+        """
+        :return:
+        {
+            'db1' : ['table1', 'table2', 'table3']
+            'db2' : ['table1', 'table2', 'table3']
+        }
+        """
+
+        if len(self.dbs) == 0:
+            # no dbs specified
+            # means we have to have
+            # at least 1 full table specified
+
+            if len(self.tables) == 0:
+                # nothing specified
+                return None
+
+            # verify that all tables have full name specified
+            for table in self.tables:
+                db, table = self.parse_full_table_name(table)
+                if db is None:
+                    # short table name found
+                    return None
+
+            dbs = {}
+            for table in self.tables:
+                db, table = self.parse_full_table_name(table)
+                if db not in dbs:
+                    dbs[db] = set()
+                dbs[db].add(table)
+
+            return dbs
+
+        elif len(self.dbs) == 1:
+            # one db specified
+
+            # verify that none table specified at all
+            if len(self.tables) == 0:
+                return {
+                    self.dbs[0]: self.tables_list(self.dbs[0])
+                }
+
+            # OR all tables have short name specification
+            # meaning they all belong to this table
+            for table in self.tables:
+                db, table = self.parse_full_table_name(table)
+                if db is not None:
+                    # long table name found
+                    return None
+
+            return {
+                self.dbs[0]: self.tables
+            }
+
+        else:
+            # multiple dbs specified
+            # verify that no tables specified
+            if len(self.tables) > 0:
+                return None
+
+            dbs = {}
+            for db in self.dbs:
+                dbs[db] = self.tables_list(db)
+
+            return dbs
+
+        return None
+
+    def tables_list(self, db):
+        """
+        :param db:
+        :return: ['table1', 'table2', etc]
+        """
+        self.connection = MySQLdb.connect(
+            host=self.host,
+            user=self.user,
+            passwd=self.password,
+            db=db,
+        )
+        self.cursor = self.connection.cursor()
+        self.cursor.execute("USE " + db)
+        tables = []
+        self.cursor.execute("SHOW TABLES")  # execute 'SHOW TABLES' (but data is not returned)
+        for (table_name,) in self.cursor:
+            tables.append(table_name)
+
+        return tables
+
+
+    def templates(self, json=False):
         """
         Create templates for specified MySQL tables. In case no tables specified all tables from specified db are templated
 
@@ -36,20 +134,70 @@ class TableBuilder(object):
         :param tables: list of string list of table names. May be short (in case db specified) or full (in the form db.table, in case no db specified)
         :return: dict of CREATE TABLE () templates
         """
-        res = {}
+        dbs = self.dbs_tables_lists()
 
-        db = None
+        if dbs is None:
+            return None
 
-        try:
-            db = self.dbs[0]
-        except:
-            pass
+        templates = {}
+        for db in dbs:
+            templates[db] = {}
+            for table in dbs[db]:
+                templates[db][table] = self.create_table_description(db=db, table=table, json=json)
 
-        # sanity check
-        if db is None and self.tables is None:
-            return res
+        return templates
 
-        # MySQL connections
+    def create_table_description(self, db=None, table=None, json=False):
+        columns_description = self.create_table_columns_description(db=db, table=table)
+        sql_template = self.create_table_sql_template(db=db, table=table, columns_descrption=columns_description)
+        if json:
+            return {
+                "template": sql_template,
+                "fields": columns_description,
+            }
+        else:
+            return sql_template
+
+    def create_table_sql_template(self, db=None, table=None, columns_descrption=None):
+        """
+        Produce template for CH's
+        CREATE TABLE(
+            ...
+            columns specification
+            ...
+        ) ENGINE = MergeTree(_<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
+        for specified MySQL's table
+        :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
+        :param db: string - name of the DB in MySQL
+        :return: string - almost-ready-to-use CREATE TABLE statement
+        """
+
+        ch_columns = []
+        for column_description in columns_descrption:
+            ch_columns.append('`{0}` {1}'.format(column_description['field'], column_description['clickhouse_type']))
+
+        sql = """CREATE TABLE {0} (
+    {1}
+) ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
+""".format(
+            self.create_full_table_name(db=db, table=table),
+            ",\n    ".join(ch_columns)
+        )
+        return sql
+
+    def create_table_columns_description(self, db=None, table=None, ):
+        # list of table columns specifications
+        # [{    'field': 'f1',
+        #        'mysql_type': 'int',
+        #        'clickhouse_type': 'UInt32'
+        #        'nullable': True,
+        #        'key': 'PRI',
+        #        'default': 'CURRENT TIMESTAMP',
+        #        'extra': 'on update CURRENT_TIMESTAMP',
+        # }, {}, {}]
+        columns_description = []
+
+        # issue 'DESCRIBE table' statement
         self.connection = MySQLdb.connect(
             host=self.host,
             user=self.user,
@@ -57,74 +205,52 @@ class TableBuilder(object):
             db=db,
         )
         self.cursor = self.connection.cursor()
-
-        # in case to tables specified - list all tables of the DB specified
-        if db is not None and self.tables is None:
-            self.cursor.execute("USE " + db)
-            self.tables = []
-            self.cursor.execute("SHOW TABLES")  # execute 'SHOW TABLES' (but data is not returned)
-            for (table_name,) in self.cursor:
-                self.tables.append(table_name)
-
-        # create dict of table templates
-        for table in self.tables:
-            if not db in res:
-                res[db] = {}
-            res[db][table] = self.create_table_template(table, db)
-
-        # {
-        #   'db': {
-        #       'table1': 'CREATE TABLE(...)...',
-        #       'table2': 'CREATE TABLE(...)...',
-        #   }
-        # }
-        return res
-
-    def create_table_template(self, table_name, db=None):
-        """
-        Produce template for CH's
-        CREATE TABLE(
-            ...
-            columns specification
-            ...
-        ) ENGINE = MergeTree(_SPECIFY_DateField_HERE, (SPECIFY_INDEX_FIELD1, SPECIFY_INDEX_FIELD2, ...etc...), 8192)
-        for specified MySQL's table
-        :param table_name: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
-        :param db: string - name of the DB in MySQL
-        :return: string - almost-ready-to-use CREATE TABLE statement
-        """
-
-        # `db`.`table` or just `table`
-        name = '`{0}`.`{1}`'.format(db, table_name) if db else '`{0}`'.format(table_name)
-
-        # list of ready-to-sql CH columns
-        ch_columns = []
-
-        # issue 'DESCRIBE table' statement
-        self.cursor.execute("DESC {0}".format(name))
+        self.cursor.execute("DESC {0}".format(self.create_full_table_name(db=db, table=table)))
         for (_field, _type, _null, _key, _default, _extra,) in self.cursor:
             # Field | Type | Null | Key | Default | Extra
 
             # build ready-to-sql column specification Ex.:
             # `integer_1` Nullable(Int32)
             # `u_integer_1` Nullable(UInt32)
-            ch_columns.append('`{0}` {1}'.format(_field, self.map_type(mysql_type=_type, nullable=_null, )))
+            columns_description.append({
+                'field': _field,
+                'mysql_type': _type,
+                'clickhouse_type': self.map_type(mysql_type=_type, nullable=self.is_field_nullable(_null)),
+                'nullable': self.is_field_nullable(_null),
+                'key': _key,
+                'default': _default,
+                'extra': _extra,
+            })
 
-        sql = """
-CREATE TABLE {0} (
-    {1}
-) ENGINE = MergeTree(_SPECIFY_DateField_HERE, (SPECIFY_INDEX_FIELD1, SPECIFY_INDEX_FIELD2, ...etc...), 8192)
-""".format(
-            name,
-            ",\n    ".join(ch_columns)
-        )
-        return sql
+        return columns_description
+
+    def create_full_table_name(self, db=None, table=None):
+        # `db`.`table` or just `table`
+        return '`{0}`.`{1}`'.format(db, table) if db else '`{0}`'.format(table)
+
+    def parse_full_table_name(self, full_name):
+        db, dot, name = full_name.partition('.')
+        if not dot:
+            name = db
+            db = None
+
+        return db if db is None else db.strip('`'), name.strip('`')
+
+
+    def is_field_nullable(self, nullable):
+        # Deal with NULLs
+        if isinstance(nullable, bool):
+            # for bool - simple statement
+            return nullable
+        elif isinstance(nullable, str):
+            # also accept case-insensitive string 'yes'
+            return True if nullable.upper() == "YES" else False
 
     def map_type(self, mysql_type, nullable=False):
         """
         Map MySQL type (as a string from DESC table statement) to CH type (as string)
         :param mysql_type: string MySQL type (from DESC statement). Ex.: 'INT(10) UNSIGNED', 'BOOLEAN'
-        :param nullable: bool|string True|'yes' is this field nullable
+        :param nullable: bool is this field nullable
         :return: string CH's type specification directly usable in CREATE TABLE statement.  Ex.:
             Nullable(Int32)
             Nullable(UInt32)
@@ -209,14 +335,8 @@ CREATE TABLE {0} (
             ch_type = 'UNKNOWN'
 
         # Deal with NULLs
-        if isinstance(nullable, bool):
-            # for bool - simple statement
-            if nullable:
-                ch_type = 'Nullable(' + ch_type + ')'
-        elif isinstance(nullable, str):
-            # also accept case-insencitive string 'yes'
-            if nullable.upper() == "YES":
-                ch_type = 'Nullable(' + ch_type + ')'
+        if nullable:
+            ch_type = 'Nullable(' + ch_type + ')'
 
         return ch_type
 
