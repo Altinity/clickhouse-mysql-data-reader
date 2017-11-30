@@ -108,7 +108,7 @@ Let's walk over test example of tool launch command line options.
 This code snippet is taken from [datareader script](run_airline_ontime_data_reader.sh) shell file, described in more details in [airline.ontime Test Case](#airlineontime-test-case)
  
 ```bash
-$PYTHON main.py ${*:1} \
+$PYTHON clickhouse-mysql ${*:1} \
     --src-resume \
     --src-wait \
     --nice-pause=1 \
@@ -180,7 +180,7 @@ sudo apt-get install gcc
 
 Now you can run data reader via `pypy`
 ```bash
-/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy main.py
+/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy clickhouse-mysql
 ```
 
 # Testing
