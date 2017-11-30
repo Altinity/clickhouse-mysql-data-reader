@@ -30,22 +30,24 @@ Utility to import data into ClickHouse from MySQL (mainly) and/or CSV files
 # Requirements
 
 Data reader requires **Python 3.x** with additional modules to be installed.
+In most distributions Python 3.x have `pip` utility named as `pip3`, so we'll use this naming. 
+However, you may have it called differently.
 
 `MySQLdb` package is used for communication with MySQL:
 ```bash
-pip install mysqlclient
+pip3 install mysqlclient
 ```
 
 `mysql-replication` package is used for communication with MySQL also:
 [https://github.com/noplay/python-mysql-replication](https://github.com/noplay/python-mysql-replication)
 ```bash
-pip install mysql-replication
+pip3 install mysql-replication
 ```
 
 `clickhouse-driver` package is used for communication with ClickHouse:
 [https://github.com/mymarilyn/clickhouse-driver](https://github.com/mymarilyn/clickhouse-driver)
 ```bash
-pip install clickhouse-driver
+pip3 install clickhouse-driver
 ```
 
 
