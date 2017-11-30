@@ -264,19 +264,19 @@ class TableBuilder(object):
             ch_type = 'String'
         elif mysql_type.startswith('TINYINT'):
             ch_type = 'UInt8' if mysql_type.endswith('UNSIGNED') else 'Int8'
-        elif mysql_type.startswith('BOOL') or mysql_type.startswith('BOOLEAN'):
+        elif mysql_type.startswith('BOOLEAN') or mysql_type.startswith('BOOL'):
             ch_type = 'UInt8'
         elif mysql_type.startswith('SMALLINT'):
             ch_type = 'UInt16' if mysql_type.endswith('UNSIGNED') else 'Int16'
         elif mysql_type.startswith('MEDIUMINT'):
             ch_type = 'UInt32' if mysql_type.endswith('UNSIGNED') else 'Int32'
-        elif mysql_type.startswith('INT') or mysql_type.startswith('INTEGER'):
+        elif mysql_type.startswith('INTEGER') or mysql_type.startswith('INT'):
             ch_type = 'UInt32' if mysql_type.endswith('UNSIGNED') else 'Int32'
         elif mysql_type.startswith('BIGINT'):
             ch_type = 'UInt64' if mysql_type.endswith('UNSIGNED') else 'Int64'
         elif mysql_type.startswith('SERIAL'):
             ch_type = 'UInt64'
-        elif mysql_type.startswith('DEC') or mysql_type.startswith('DECIMAL') or mysql_type.startswith('FIXED') or mysql_type.startswith('NUMERIC'):
+        elif mysql_type.startswith('DECIMAL') or mysql_type.startswith('DEC') or mysql_type.startswith('FIXED') or mysql_type.startswith('NUMERIC'):
             ch_type = 'String'
         elif mysql_type.startswith('FLOAT'):
             ch_type = 'Float32'
@@ -284,10 +284,10 @@ class TableBuilder(object):
             ch_type = 'Float64'
 
         # Date and Time Types
-        elif mysql_type.startswith('DATE'):
-            ch_type = 'Date'
         elif mysql_type.startswith('DATETIME'):
             ch_type = 'DateTime'
+        elif mysql_type.startswith('DATE'):
+            ch_type = 'Date'
         elif mysql_type.startswith('TIMESTAMP'):
             ch_type = 'DateTime'
         elif mysql_type.startswith('TIME'):
