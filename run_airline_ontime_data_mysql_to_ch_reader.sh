@@ -21,7 +21,7 @@ $PYTHON main.py ${*:1} \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --mempool-max-flush-interval=60 \
-    --mempool-max-events-num=1000
+    --mempool-max-events-num=10000
 
 #	--mempool
 #   --mempool-max-events-num=3
