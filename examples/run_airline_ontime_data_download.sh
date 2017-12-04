@@ -1,8 +1,8 @@
 #!/bin/bash
 # download airline.ontime test dataset
 
-ZIP_FILES_DIR="zip"
-CSV_FILES_DIR="csv"
+ZIP_FILES_DIR=$(pwd)"/zip"
+CSV_FILES_DIR=$(pwd)"/csv"
 
 echo "Check required commands availability"
 if command -v wget && command -v unzip && command -v clickhouse-client && command -v wc && command -v awk; then
@@ -15,7 +15,7 @@ fi
 echo "Download dataset"
 
 echo "Create dir $ZIP_FILES_DIR for downloading zip files"
-mkdir "$ZIP_FILES_DIR"
+mkdir -p "$ZIP_FILES_DIR"
 
 if [ ! -d "$ZIP_FILES_DIR" ]; then
 	"Can' use dir: $ZIP_FILES_DIR - not available"
@@ -32,7 +32,7 @@ done
 
 echo "Unzip dataset"
 
-mkdir "$CSV_FILES_DIR"
+mkdir -p "$CSV_FILES_DIR"
 
 if [ ! -d "$CSV_FILES_DIR" ]; then
 	"Can' use dir: $CSV_FILES_DIR - not available"
