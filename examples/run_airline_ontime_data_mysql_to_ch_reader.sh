@@ -9,7 +9,7 @@ sudo bash -c "echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse"
 PYTHON=python3.6
 PYTHON=/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy
 
-$PYTHON clickhouse-mysql ${*:1} \
+$PYTHON ../clickhouse-mysql ${*:1} \
     --src-resume \
     --src-wait \
     --nice-pause=1 \
