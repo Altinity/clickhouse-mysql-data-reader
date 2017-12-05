@@ -156,7 +156,11 @@ class CLIOpts(object):
             action='store_true',
             help='Prepare table templates as JSON.'
         )
-
+        argparser.add_argument(
+            '--table-migrate',
+            action='store_true',
+            help='Migrate table(s).'
+        )
 
         argparser.add_argument(
             '--src-server-id',
@@ -282,6 +286,7 @@ class CLIOpts(object):
                 'daemon': args.daemon,
                 'table-templates': args.table_templates,
                 'table-templates-json': args.table_templates_json,
+                'table-migrate': args.table_migrate,
                 'pid_file': args.pid_file,
                 'mempool': args.mempool or args.csvpool, # csvpool assumes mempool to be enabled
                 'mempool-max-events-num': args.mempool_max_events_num,
@@ -298,13 +303,36 @@ class CLIOpts(object):
                 },
             },
 
-            'tablebuilder-config': {
-                'host': args.src_host,
-                'port': args.src_port,
-                'user': args.src_user,
-                'password': args.src_password,
-                'dbs': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
-                'tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+            'table-builder-config': {
+                'mysql': {
+                    'host': args.src_host,
+                    'port': args.src_port,
+                    'user': args.src_user,
+                    'password': args.src_password,
+                    'dbs': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
+                    'tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+                },
+            },
+
+            'table-migrator-config': {
+                'mysql': {
+                    'host': args.src_host,
+                    'port': args.src_port,
+                    'user': args.src_user,
+                    'password': args.src_password,
+                    'dbs': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
+                    'tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+                },
+                'clickhouse': {
+                    'connection_settings': {
+                        'host': args.dst_host,
+                        'port': args.dst_port,
+                        'user': args.dst_user,
+                        'password': args.dst_password,
+                    },
+                    'dst_schema': args.dst_schema,
+                    'dst_table': args.dst_table,
+                },
             },
 
             'reader-config': {

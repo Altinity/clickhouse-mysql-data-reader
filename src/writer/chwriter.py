@@ -3,7 +3,9 @@
 
 from clickhouse_driver.client import Client
 from .writer import Writer
+from ..event.event import Event
 import logging
+import sys
 
 
 class CHWriter(Writer):
@@ -46,12 +48,16 @@ class CHWriter(Writer):
         event_converted = None
         for event in events:
             event_converted = self.convert(event)
-            for row in event_converted:
-                rows.append(row)
+            if isinstance(event_converted, Event):
+                for row in event_converted:
+                    rows.append(row)
+            else:
+                rows.append(event_converted)
 
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = self.dst_table if self.dst_table else event_converted.table
 
+        sql = ''
         try:
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
                 schema,
@@ -59,10 +65,13 @@ class CHWriter(Writer):
                 ', '.join(map(lambda column: '`%s`' % column, rows[0].keys()))
             )
             self.client.execute(sql, rows)
-        except:
-            print('QUERY FAILED -------------------------')
-            print(sql)
-            print(rows)
+        except Exception as ex:
+            print('QUERY FAILED:')
+            print('ex=', ex)
+            print('sql=', sql)
+            print('rows=', rows)
+            sys.exit(0)
+
 
 
 if __name__ == '__main__':
