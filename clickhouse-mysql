@@ -15,7 +15,6 @@ if sys.version_info[0] < 3:
     raise "Must be using Python 3"
 
 
-
 class Main(Daemon):
 
     config = None
@@ -42,6 +41,11 @@ class Main(Daemon):
 
         elif self.config.is_table_templates_json():
             print(json.dumps(self.config.table_builder().templates(self.config.is_table_templates_json())))
+
+        elif self.config.is_table_migrate():
+            migrator = self.config.table_migrator()
+            migrator.chwriter = self.config.writer()
+            migrator.migrate()
 
         else:
             pumper = Pumper(

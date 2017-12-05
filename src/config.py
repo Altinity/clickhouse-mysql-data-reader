@@ -14,6 +14,7 @@ from .objectbuilder import ObjectBuilder
 from .converter.csvwriteconverter import CSVWriteConverter
 from .converter.chwriteconverter import CHWriteConverter
 from .tablebuilder import TableBuilder
+from .tablemigrator import TableMigrator
 
 class Config(object):
 
@@ -53,7 +54,13 @@ class Config(object):
         return self.config['app-config']['table-templates-json']
 
     def table_builder(self):
-        return TableBuilder(**self.config['tablebuilder-config'])
+        return TableBuilder(**self.config['table-builder-config']['mysql'])
+
+    def is_table_migrate(self):
+        return self.config['app-config']['table-migrate']
+
+    def table_migrator(self):
+        return TableMigrator(**self.config['table-builder-config']['mysql'])
 
     def reader(self):
         if self.config['reader-config']['file']['csv_file_path']:
