@@ -1,127 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import logging
-import MySQLdb
+from .tableprocessor import TableProcessor
 
 
-class TableBuilder(object):
-
-    connection = None
-    cursor = None
-
-    host = None
-    port = None
-    user = None
-    password = None
-    dbs = None
-    tables = None
-
-    def __init__(
-            self,
-            host=None,
-            port=None,
-            user=None,
-            password=None,
-            dbs=None,
-            tables=None
-    ):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
-        self.dbs = [] if dbs is None else dbs
-        self.tables = [] if tables is None else tables
-
-    def dbs_tables_lists(self):
-        """
-        :return:
-        {
-            'db1' : ['table1', 'table2', 'table3']
-            'db2' : ['table1', 'table2', 'table3']
-        }
-        """
-
-        if len(self.dbs) == 0:
-            # no dbs specified
-            # means we have to have
-            # at least 1 full table specified
-
-            if len(self.tables) == 0:
-                # nothing specified
-                return None
-
-            # verify that all tables have full name specified
-            for table in self.tables:
-                db, table = self.parse_full_table_name(table)
-                if db is None:
-                    # short table name found
-                    return None
-
-            dbs = {}
-            for table in self.tables:
-                db, table = self.parse_full_table_name(table)
-                if db not in dbs:
-                    dbs[db] = set()
-                dbs[db].add(table)
-
-            return dbs
-
-        elif len(self.dbs) == 1:
-            # one db specified
-
-            # verify that none table specified at all
-            if len(self.tables) == 0:
-                return {
-                    self.dbs[0]: self.tables_list(self.dbs[0])
-                }
-
-            # OR all tables have short name specification
-            # meaning they all belong to this table
-            for table in self.tables:
-                db, table = self.parse_full_table_name(table)
-                if db is not None:
-                    # long table name found
-                    return None
-
-            return {
-                self.dbs[0]: self.tables
-            }
-
-        else:
-            # multiple dbs specified
-            # verify that no tables specified
-            if len(self.tables) > 0:
-                return None
-
-            dbs = {}
-            for db in self.dbs:
-                dbs[db] = self.tables_list(db)
-
-            return dbs
-
-        return None
-
-    def tables_list(self, db):
-        """
-        :param db:
-        :return: ['table1', 'table2', etc]
-        """
-        self.connection = MySQLdb.connect(
-            host=self.host,
-            user=self.user,
-            passwd=self.password,
-            db=db,
-        )
-        self.cursor = self.connection.cursor()
-        self.cursor.execute("USE " + db)
-        tables = []
-        self.cursor.execute("SHOW TABLES")  # execute 'SHOW TABLES' (but data is not returned)
-        for (table_name,) in self.cursor:
-            tables.append(table_name)
-
-        return tables
-
+class TableBuilder(TableProcessor):
 
     def templates(self, json=False):
         """
@@ -198,13 +81,7 @@ class TableBuilder(object):
         columns_description = []
 
         # issue 'DESCRIBE table' statement
-        self.connection = MySQLdb.connect(
-            host=self.host,
-            user=self.user,
-            passwd=self.password,
-            db=db,
-        )
-        self.cursor = self.connection.cursor()
+        self.connect(db=db)
         self.cursor.execute("DESC {0}".format(self.create_full_table_name(db=db, table=table)))
         for (_field, _type, _null, _key, _default, _extra,) in self.cursor:
             # Field | Type | Null | Key | Default | Extra
@@ -224,21 +101,12 @@ class TableBuilder(object):
 
         return columns_description
 
-    def create_full_table_name(self, db=None, table=None):
-        # `db`.`table` or just `table`
-        return '`{0}`.`{1}`'.format(db, table) if db else '`{0}`'.format(table)
-
-    def parse_full_table_name(self, full_name):
-        db, dot, name = full_name.partition('.')
-        if not dot:
-            name = db
-            db = None
-
-        return db if db is None else db.strip('`'), name.strip('`')
-
-
     def is_field_nullable(self, nullable):
-        # Deal with NULLs
+        """
+        Chack whether `nullable` can be interpreted as True
+        :param nullable: bool, string
+        :return: bool
+        """
         if isinstance(nullable, bool):
             # for bool - simple statement
             return nullable

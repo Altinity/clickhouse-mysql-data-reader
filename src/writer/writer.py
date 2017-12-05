@@ -28,12 +28,12 @@ class Writer(object):
             # no value - return empty list
             return []
 
-        elif isinstance(obj_or_list, list):
+        elif isinstance(obj_or_list, list) or isinstance(obj_or_list, tuple) or isinstance(obj_or_list, set):
             if len(obj_or_list) < 1:
-                # list is empty - nothing to do
+                # list/set/tuple is empty - nothing to do
                 return []
             else:
-                # list is good
+                # list/set/tuple is good
                 return obj_or_list
 
         else:
