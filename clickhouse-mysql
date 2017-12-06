@@ -45,6 +45,7 @@ class Main(Daemon):
         elif self.config.is_table_migrate():
             migrator = self.config.table_migrator()
             migrator.chwriter = self.config.writer()
+            migrator.pool_max_rows_num = self.config.mempool_max_rows_num()
             migrator.migrate()
 
         else:
