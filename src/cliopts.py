@@ -125,6 +125,12 @@ class CLIOpts(object):
             help='Max events number to pool - triggering pool flush'
         )
         argparser.add_argument(
+            '--mempool-max-rows-num',
+            type=int,
+            default=100000,
+            help='Max rows number to pool - triggering pool flush'
+        )
+        argparser.add_argument(
             '--mempool-max-flush-interval',
             type=int,
             default=60,
@@ -290,6 +296,7 @@ class CLIOpts(object):
                 'pid_file': args.pid_file,
                 'mempool': args.mempool or args.csvpool, # csvpool assumes mempool to be enabled
                 'mempool-max-events-num': args.mempool_max_events_num,
+                'mempool-max-rows-num': args.mempool_max_rows_num,
                 'mempool-max-flush-interval': args.mempool_max_flush_interval,
                 'csvpool': args.csvpool,
             },

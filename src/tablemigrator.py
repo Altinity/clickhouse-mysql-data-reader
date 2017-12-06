@@ -11,6 +11,7 @@ class TableMigrator(TableProcessor):
 
     cursorclass = SSDictCursor
     chwriter = None
+    pool_max_rows_num = 100000
 
     def migrate(self):
         dbs = self.dbs_tables_lists()
@@ -27,7 +28,7 @@ class TableMigrator(TableProcessor):
         self.cursor.execute("SELECT * FROM {0}".format(self.create_full_table_name(db=db, table=table)))
         cnt = 0;
         while True:
-            rows = self.cursor.fetchmany(10000)
+            rows = self.cursor.fetchmany(self.pool_max_rows_num)
             if not rows:
                 break
             self.chwriter.dst_schema = db
