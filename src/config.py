@@ -41,6 +41,12 @@ class Config(object):
     def pid_file(self):
         return self.config['app-config']['pid_file']
 
+    def mempool_max_events_num(self):
+        return self.config['app-config']['mempool-max-events-num']
+
+    def mempool_max_rows_num(self):
+        return self.config['app-config']['mempool-max-rows-num']
+
     def is_daemon(self):
         return self.config['app-config']['daemon']
 
