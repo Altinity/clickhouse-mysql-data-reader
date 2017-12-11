@@ -60,6 +60,7 @@ setup(
     # cross-platform support for pip to create the appropriate form of executable
     entry_points={
         'console_scripts': [
+            # executable name=what to call
             'clickhouse-mysql=clickhouse_mysql:main',
         ],
     },
