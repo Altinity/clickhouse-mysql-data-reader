@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .writer import Writer
-from ..event.event import Event
 import csv
 import os.path
 import logging
+
+from .writer import Writer
+from ..event.event import Event
 
 
 class CSVWriter(Writer):

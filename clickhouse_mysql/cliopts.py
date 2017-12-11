@@ -2,8 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import argparse
-from .config import Config
 import logging
+
+from .config import Config
 
 
 class CLIOpts(object):

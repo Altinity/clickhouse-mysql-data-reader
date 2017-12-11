@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from clickhouse_driver.client import Client
-from .writer import Writer
-from ..event.event import Event
 import logging
 import sys
+
+from clickhouse_driver.client import Client
+
+from .writer import Writer
+from ..event.event import Event
 
 
 class CHWriter(Writer):

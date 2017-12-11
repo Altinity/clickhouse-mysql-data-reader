@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .writer import Writer
-
 import os
 import time
 import logging
+
+from .writer import Writer
+
 
 class CHCSVWriter(Writer):
 

@@ -1,18 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from src.cliopts import CLIOpts
-from src.pumper import Pumper
-from src.daemon import Daemon
+from .cliopts import CLIOpts
+from .pumper import Pumper
+from .daemon import Daemon
 
 import sys
 import multiprocessing as mp
 import logging
 import pprint
 import json
-
-if sys.version_info[0] < 3:
-    raise "Must be using Python 3"
 
 
 class Main(Daemon):

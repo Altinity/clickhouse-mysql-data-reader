@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .writer import Writer
 import multiprocessing as mp
 import logging
+
+from .writer import Writer
 
 
 class ProcessWriter(Writer):
