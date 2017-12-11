@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+
 from .writer import Writer
 from ..event.event import Event
 from ..pool.bbpool import BBPool
-import logging
 
 
 class PoolWriter(Writer):
