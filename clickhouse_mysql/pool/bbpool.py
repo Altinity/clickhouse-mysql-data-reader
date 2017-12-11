@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 
 import time
+import logging
 
 from .pool import Pool
 from ..objectbuilder import ObjectBuilder
-import logging
 
 
 # Buckets Belts' Index Generator

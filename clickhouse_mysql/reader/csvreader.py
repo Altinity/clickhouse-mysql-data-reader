@@ -1,11 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import csv
+import os
+
 from .reader import Reader
 from ..event.event import Event
 from ..converter.csvreadconverter import CSVReadConverter
-import csv
-import os
 
 
 class CSVReader(Reader):

@@ -1,13 +1,16 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .reader import Reader
-from ..event.event import Event
-from pymysqlreplication import BinLogStreamReader
-from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
-#from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 import time
 import logging
+
+from pymysqlreplication import BinLogStreamReader
+from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
+
+from .reader import Reader
+from ..event.event import Event
+#from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
+
 
 class MySQLReader(Reader):
 
