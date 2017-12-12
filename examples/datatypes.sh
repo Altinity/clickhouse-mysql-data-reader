@@ -2,7 +2,15 @@
 
 sudo bash -c "echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse"
 
-python3 ../clickhouse-mysql ${*:1} \
+PYTHON=""
+PYTHON="python3.6"
+PYTHON="python3"
+PYTHON="/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy"
+
+CH_MYSQL="/usr/bin/clickhouse-mysql"
+CH_MYSQL="-m clickhouse_mysql.main"
+
+$PYTHON $CH_MYSQL ${*:1} \
     --src-resume \
     --src-wait \
     --src-host=127.0.0.1 \
