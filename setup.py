@@ -46,7 +46,11 @@ setup(
     keywords='clickhouse mysql data migration',
 
     # list of packages to be included into project
-    packages=find_packages(exclude=['contrib', 'docs', 'tests']),
+    packages=find_packages(exclude=[
+        'contrib',
+        'docs',
+        'tests',
+    ]),
 
     # run-time dependencies
     # these will be installed by pip
