@@ -20,10 +20,10 @@ $PYTHON $CH_MYSQL ${*:1} \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --csv-column-default-value \
-            date_1=2000-01-01 \
-            datetime_1=2000-01-01\ 01:02:03 \
-            time_1=2001-01-01\ 01:02:03 \
-            timestamp_1=2002-01-01\ 01:02:03 \
+        date_1=2000-01-01 \
+        datetime_1=2000-01-01\ 01:02:03 \
+        time_1=2001-01-01\ 01:02:03 \
+        timestamp_1=2002-01-01\ 01:02:03 \
     --mempool-max-flush-interval=600 \
     --mempool-max-events-num=900000
 
