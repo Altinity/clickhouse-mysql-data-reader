@@ -1,5 +1,4 @@
 #!/bin/bash
-# read airline.ontime test dataset from MySQL and write it to CH
 
 # ugly stub to suppress unsufficient sockets
 #sudo bash -c "echo 1 > /proc/sys/net/ipv4/tcp_tw_reuse"
