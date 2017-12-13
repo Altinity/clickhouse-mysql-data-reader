@@ -3,6 +3,7 @@
 
 import time
 import logging
+import sys
 
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
@@ -109,52 +110,56 @@ class MySQLReader(Reader):
 
 
                 # fetch available events from MySQL
-                for mysql_event in self.binlog_stream:
-                    if isinstance(mysql_event, WriteRowsEvent):
+                try:
+                    for mysql_event in self.binlog_stream:
+                        if isinstance(mysql_event, WriteRowsEvent):
 
-                        rows_num_per_event = len(mysql_event.rows)
-                        if (rows_num_per_event_min is None) or (rows_num_per_event < rows_num_per_event_min):
-                            rows_num_per_event_min = rows_num_per_event
-                        if (rows_num_per_event_max is None) or (rows_num_per_event > rows_num_per_event_max):
-                            rows_num_per_event_max = rows_num_per_event
+                            rows_num_per_event = len(mysql_event.rows)
+                            if (rows_num_per_event_min is None) or (rows_num_per_event < rows_num_per_event_min):
+                                rows_num_per_event_min = rows_num_per_event
+                            if (rows_num_per_event_max is None) or (rows_num_per_event > rows_num_per_event_max):
+                                rows_num_per_event_max = rows_num_per_event
 
-                        if self.subscribers('WriteRowsEvent'):
-                            self.write_rows_event_num += 1
-                            logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
-                            rows_num += len(mysql_event.rows)
-                            rows_num_since_interim_performance_report += len(mysql_event.rows)
-                            event = Event()
-                            event.schema = mysql_event.schema
-                            event.table = mysql_event.table
-                            event.mysql_event = mysql_event
-                            self.notify('WriteRowsEvent', event=event)
-
-                        if self.subscribers('WriteRowsEvent.EachRow'):
-                            self.write_rows_event_each_row_num += 1
-                            logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
-                            for row in mysql_event.rows:
-                                rows_num += 1
-                                rows_num_since_interim_performance_report += 1
+                            if self.subscribers('WriteRowsEvent'):
+                                self.write_rows_event_num += 1
+                                logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
+                                rows_num += len(mysql_event.rows)
+                                rows_num_since_interim_performance_report += len(mysql_event.rows)
                                 event = Event()
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
-                                event.row = row['values']
-                                self.notify('WriteRowsEvent.EachRow', event=event)
+                                event.mysql_event = mysql_event
+                                self.notify('WriteRowsEvent', event=event)
 
-                        if rows_num_since_interim_performance_report >= 100000:
-                            # speed report each N rows
-                            self.performance_report(
-                                start=start,
-                                rows_num=rows_num,
-                                rows_num_per_event_min=rows_num_per_event_min,
-                                rows_num_per_event_max=rows_num_per_event_max,
-                            )
-                            rows_num_since_interim_performance_report = 0
-                            rows_num_per_event_min = None
-                            rows_num_per_event_max = None
-                    else:
-                        # skip non-insert events
-                        pass
+                            if self.subscribers('WriteRowsEvent.EachRow'):
+                                self.write_rows_event_each_row_num += 1
+                                logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
+                                for row in mysql_event.rows:
+                                    rows_num += 1
+                                    rows_num_since_interim_performance_report += 1
+                                    event = Event()
+                                    event.schema = mysql_event.schema
+                                    event.table = mysql_event.table
+                                    event.row = row['values']
+                                    self.notify('WriteRowsEvent.EachRow', event=event)
+
+                            if rows_num_since_interim_performance_report >= 100000:
+                                # speed report each N rows
+                                self.performance_report(
+                                    start=start,
+                                    rows_num=rows_num,
+                                    rows_num_per_event_min=rows_num_per_event_min,
+                                    rows_num_per_event_max=rows_num_per_event_max,
+                                )
+                                rows_num_since_interim_performance_report = 0
+                                rows_num_per_event_min = None
+                                rows_num_per_event_max = None
+                        else:
+                            # skip non-insert events
+                            pass
+                except Exception as ex:
+                    logging.critical(ex)
+                    sys.exit(1)
 
                 # all events fetched (or none of them available)
 
