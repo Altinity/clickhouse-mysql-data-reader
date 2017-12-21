@@ -10,6 +10,7 @@ from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, Delete
 
 from .reader import Reader
 from ..event.event import Event
+from ..tableprocessor import TableProcessor
 #from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
 
@@ -48,11 +49,30 @@ class MySQLReader(Reader):
         self.server_id = server_id
         self.log_file = log_file,
         self.log_pos = log_pos
-        self.only_schemas = only_schemas
-        self.only_tables = only_tables
+        self.only_schemas = None if not TableProcessor.extract_dbs(only_schemas, only_tables) else TableProcessor.extract_dbs(only_schemas, only_tables)
+        self.only_tables = None if only_tables is None else TableProcessor.extract_tables(only_tables)
         self.blocking = blocking
         self.resume_stream = resume_stream
         self.nice_pause = nice_pause
+
+        logging.info("raw dbs list len=%d", 0 if only_schemas is None else len(only_schemas))
+        if only_schemas is not None:
+            for schema in only_schemas:
+                logging.info(schema)
+        logging.info("dbs list len=%d", 0 if self.only_schemas is None else len(self.only_schemas))
+        if self.only_schemas is not None:
+            for schema in self.only_schemas:
+                logging.info(schema)
+
+        logging.info("raw tables list len=%d", 0 if only_tables is None else len(only_tables))
+        if only_tables is not None:
+            for table in only_tables:
+                logging.info(table)
+        logging.info("tables list len=%d", 0 if self.only_tables is None else len(self.only_tables))
+        if self.only_tables is not None:
+            for table in self.only_tables:
+                logging.info(table)
+
         self.binlog_stream = BinLogStreamReader(
             # MySQL server - data source
             connection_settings=self.connection_settings,
