@@ -159,6 +159,11 @@ class CLIOpts(object):
             help='Prepare table templates.'
         )
         argparser.add_argument(
+            '--table-templates-with-create-database',
+            action='store_true',
+            help='Prepare table templates. Prepend each template with CREATE DATABASE statement'
+        )
+        argparser.add_argument(
             '--table-templates-json',
             action='store_true',
             help='Prepare table templates as JSON.'
@@ -291,7 +296,8 @@ class CLIOpts(object):
                 'log-level': CLIOpts.log_level_from_string(args.log_level),
                 'dry': args.dry,
                 'daemon': args.daemon,
-                'table-templates': args.table_templates,
+                'table-templates': args.table_templates or args.table_templates_with_create_database,
+                'table-templates-with-create-database': args.table_templates_with_create_database,
                 'table-templates-json': args.table_templates_json,
                 'table-migrate': args.table_migrate,
                 'pid_file': args.pid_file,
