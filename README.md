@@ -54,18 +54,12 @@ pip3 install clickhouse-driver
 Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
 
 ```mysql
-CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
+CREATE USER 'reader'@'%' IDENTIFIED BY 'qwerty';
 CREATE USER 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
-CREATE USER 'reader'@'*' IDENTIFIED BY 'qwerty';
-
-GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'localhost';
+CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'%';
 GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'127.0.0.1';
-GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'*';
-FLUSH PRIVILEGES;
-
-GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'localhost' IDENTIFIED BY 'qwerty';
-GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
-GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'*'         IDENTIFIED BY 'qwerty';
+GRANT REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'localhost';
 FLUSH PRIVILEGES;
 ```
 
