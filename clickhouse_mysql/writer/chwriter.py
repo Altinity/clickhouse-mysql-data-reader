@@ -42,13 +42,20 @@ class CHWriter(Writer):
 
         events = self.listify(event_or_events)
         if len(events) < 1:
+            logging.warning('No events to insert. class: %s', __class__)
             return
+
+        # assume we have at least one Event
 
         logging.debug('class:%s insert %d rows', __class__, len(events))
 
         rows = []
         event_converted = None
         for event in events:
+            if not event.verify:
+                logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(), __class__)
+                continue # for event
+
             event_converted = self.convert(event)
             if isinstance(event_converted, Event):
                 for row in event_converted:
