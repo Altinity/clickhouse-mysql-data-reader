@@ -72,7 +72,10 @@ class CSVWriter(Writer):
 
         events = self.listify(event_or_events)
         if len(events) < 1:
+            logging.warning('No events to insert. class: %s', __class__)
             return
+
+        # assume we have at least one Event
 
         logging.debug('class:%s insert %d events', __class__, len(events))
 
@@ -80,17 +83,26 @@ class CSVWriter(Writer):
             self.open()
 
         if not self.writer:
-            self.fieldnames = sorted(events[0].column_names())
+            # pick any event from the list
+            event = events[0]
+            if not event.verify:
+                logging.warning('Event verification failed. Skip insert(). Event: %s Class: %s', event.meta(), __class__)
+                return
+
+            self.fieldnames = sorted(event.column_names())
             if self.dst_schema is None:
-                self.dst_schema = events[0].schema
+                self.dst_schema = event.schema
             if self.dst_table is None:
-                self.dst_table = events[0].table
+                self.dst_table = event.table
 
             self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
             if not self.header_written:
                 self.writer.writeheader()
 
         for event in events:
+            if not event.verify:
+                logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(), __class__)
+                continue # for event
             for row in event:
                 self.writer.writerow(self.convert(row))
 

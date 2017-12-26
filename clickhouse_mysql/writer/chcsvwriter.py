@@ -33,7 +33,10 @@ class CHCSVWriter(Writer):
 
         events = self.listify(event_or_events)
         if len(events) < 1:
+            logging.warning('No events to insert. class: %s', __class__)
             return
+
+        # assume we have at least one Event
 
         logging.debug('class:%s insert %d rows', __class__, len(events))
 

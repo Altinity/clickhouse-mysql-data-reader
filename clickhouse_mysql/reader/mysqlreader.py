@@ -55,20 +55,20 @@ class MySQLReader(Reader):
         self.resume_stream = resume_stream
         self.nice_pause = nice_pause
 
-        logging.info("raw dbs list len=%d", 0 if only_schemas is None else len(only_schemas))
+        logging.info("raw dbs list. len()=%d", 0 if only_schemas is None else len(only_schemas))
         if only_schemas is not None:
             for schema in only_schemas:
                 logging.info(schema)
-        logging.info("dbs list len=%d", 0 if self.only_schemas is None else len(self.only_schemas))
+        logging.info("normalised dbs list. len()=%d", 0 if self.only_schemas is None else len(self.only_schemas))
         if self.only_schemas is not None:
             for schema in self.only_schemas:
                 logging.info(schema)
 
-        logging.info("raw tables list len=%d", 0 if only_tables is None else len(only_tables))
+        logging.info("raw tables list. len()=%d", 0 if only_tables is None else len(only_tables))
         if only_tables is not None:
             for table in only_tables:
                 logging.info(table)
-        logging.info("tables list len=%d", 0 if self.only_tables is None else len(self.only_tables))
+        logging.info("normalised tables list. len()=%d", 0 if self.only_tables is None else len(self.only_tables))
         if self.only_tables is not None:
             for table in self.only_tables:
                 logging.info(table)
@@ -94,7 +94,7 @@ class MySQLReader(Reader):
         )
 
     def performance_report(self, start, rows_num, rows_num_per_event_min=None, rows_num_per_event_max=None, now=None):
-        # time to calc stat
+        # log performace report
 
         if now is None:
             now = time.time()
@@ -103,7 +103,7 @@ class MySQLReader(Reader):
         if window_size > 0:
             rows_per_sec = rows_num / window_size
             logging.info(
-                'PERF - rows_per_sec:%f rows_per_event_min: %d rows_per_event_max: %d for last %d rows %f sec',
+                'PERF - %f rows/sec, min(rows/event)=%d max(rows/event)=%d for last %d rows %f sec',
                 rows_per_sec,
                 rows_num_per_event_min if rows_num_per_event_min is not None else -1,
                 rows_num_per_event_max if rows_num_per_event_max is not None else -1,
@@ -111,10 +111,12 @@ class MySQLReader(Reader):
                 window_size,
             )
         else:
-            logging.info("PERF - rows window size=0 can not calc performance for this window")
+            logging.info("PERF - can not calc performance for time size=0")
 
 
     def read(self):
+        # main function - read data from source
+
         start_timestamp = int(time.time())
         # fetch events
         try:
@@ -128,12 +130,12 @@ class MySQLReader(Reader):
                 rows_num_per_event_min = None
                 rows_num_per_event_max = None
 
-
                 # fetch available events from MySQL
                 try:
                     for mysql_event in self.binlog_stream:
                         if isinstance(mysql_event, WriteRowsEvent):
 
+                            # statistics
                             rows_num_per_event = len(mysql_event.rows)
                             if (rows_num_per_event_min is None) or (rows_num_per_event < rows_num_per_event_min):
                                 rows_num_per_event_min = rows_num_per_event
@@ -141,22 +143,35 @@ class MySQLReader(Reader):
                                 rows_num_per_event_max = rows_num_per_event
 
                             if self.subscribers('WriteRowsEvent'):
+                                # dispatch event to subscribers
+
+                                # statistics
                                 self.write_rows_event_num += 1
-                                logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
                                 rows_num += len(mysql_event.rows)
                                 rows_num_since_interim_performance_report += len(mysql_event.rows)
+                                logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
+
+                                # dispatch Event
                                 event = Event()
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
-                                event.mysql_event = mysql_event
+                                event.pymysqlreplication_event = mysql_event
                                 self.notify('WriteRowsEvent', event=event)
 
                             if self.subscribers('WriteRowsEvent.EachRow'):
+                                # dispatch event to subscribers
+
+                                # statistics
                                 self.write_rows_event_each_row_num += 1
                                 logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
+
+                                # dispatch Event per each row
                                 for row in mysql_event.rows:
+                                    # statistics
                                     rows_num += 1
                                     rows_num_since_interim_performance_report += 1
+
+                                    # dispatch Event
                                     event = Event()
                                     event.schema = mysql_event.schema
                                     event.table = mysql_event.table
@@ -191,9 +206,10 @@ class MySQLReader(Reader):
                         self.performance_report(start, rows_num, now)
 
                 if not self.blocking:
+                    # do not wait for more data - all done
                     break # while True
 
-                # blocking
+                # blocking - wait for more data
                 if self.nice_pause > 0:
                     time.sleep(self.nice_pause)
 
@@ -208,9 +224,9 @@ class MySQLReader(Reader):
             pass
         end_timestamp = int(time.time())
 
-        print('start', start_timestamp)
-        print('end', end_timestamp)
-        print('len', end_timestamp - start_timestamp)
+        logging.info('start', start_timestamp)
+        logging.info('end', end_timestamp)
+        logging.info('len', end_timestamp - start_timestamp)
 
 if __name__ == '__main__':
     connection_settings = {
