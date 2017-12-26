@@ -73,6 +73,9 @@ class MySQLReader(Reader):
             for table in self.only_tables:
                 logging.info(table)
 
+        if not isinstance(self.server_id, int):
+            raise Exception("Please specify server_id of src server as int. Ex.: --src-server-id=1")
+
         self.binlog_stream = BinLogStreamReader(
             # MySQL server - data source
             connection_settings=self.connection_settings,
@@ -216,6 +219,8 @@ class MySQLReader(Reader):
                 self.notify('ReaderIdleEvent')
 
         except KeyboardInterrupt:
+            logging.info("Ctrl+C. Break.")
+        except:
             pass
 
         try:
@@ -224,9 +229,9 @@ class MySQLReader(Reader):
             pass
         end_timestamp = int(time.time())
 
-        logging.info('start', start_timestamp)
-        logging.info('end', end_timestamp)
-        logging.info('len', end_timestamp - start_timestamp)
+        logging.info('start %d', start_timestamp)
+        logging.info('end %d', end_timestamp)
+        logging.info('len %d', end_timestamp - start_timestamp)
 
 if __name__ == '__main__':
     connection_settings = {
