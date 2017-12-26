@@ -8,10 +8,8 @@ import traceback
 import pprint
 import json
 
-if sys.version_info >= (3, 5):
-    logging.info("Python version is OK")
-else:
-    logging.critical("Python version is NOT OK, need 3.5 at least")
+if sys.version_info < (3, 5):
+    print("Python version is NOT OK, need 3.5 at least")
     sys.exit(1)
 
 from .cliopts import CLIOpts
