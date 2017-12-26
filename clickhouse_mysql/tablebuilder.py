@@ -9,12 +9,6 @@ class TableBuilder(TableProcessor):
     def templates(self, json=False):
         """
         Create templates for specified MySQL tables. In case no tables specified all tables from specified db are templated
-
-        :param host: string MySQL host
-        :param user: string MySQL user
-        :param password: string MySQL password
-        :param dbs: list of string MySQL datatabse/ May be omitted, in this case tables has to contain full table names, Ex.: db.table1
-        :param tables: list of string list of table names. May be short (in case db specified) or full (in the form db.table, in case no db specified)
         :return: dict of CREATE TABLE () templates
         """
         dbs = self.dbs_tables_lists()
@@ -31,6 +25,13 @@ class TableBuilder(TableProcessor):
         return templates
 
     def create_table_description(self, db=None, table=None, json=False):
+        """
+        High-level function. Produce either JSON table description or text SQL CREATE TABLE() template
+        :param db: string name
+        :param table: string name
+        :param json: bool json description or SQL
+        :return: dict{"template":SQL, "felds": {}} or string SQL
+        """
         columns_description = self.create_table_columns_description(db=db, table=table)
         sql_template = self.create_table_sql_template(db=db, table=table, columns_descrption=columns_description)
         if json:

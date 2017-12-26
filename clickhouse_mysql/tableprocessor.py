@@ -32,6 +32,14 @@ class TableProcessor(object):
             dbs=None,
             tables=None
     ):
+        """
+        :param host: string MySQL host
+        :param port: int MySQL port
+        :param user: string MySQL user
+        :param password: string MySQL password
+        :param dbs: list of string MySQL datatabse/ May be omitted, in this case tables has to contain full table names, Ex.: db.table1
+        :param tables: list of string list of table names. May be short (in case db specified) or full (in the form db.table, in case no db specified)
+        """
         self.host = host
         self.port = port
         self.user = user
@@ -39,7 +47,11 @@ class TableProcessor(object):
         self.dbs = [] if dbs is None else dbs
         self.tables = [] if tables is None else tables
 
-    def connect(self, db):
+    def disconnect(self):
+        """
+        Destroy connection objects
+        :return:
+        """
         if self.cursor:
             try:
                 self.cursor.close()
@@ -48,16 +60,35 @@ class TableProcessor(object):
                 pass
 
         if self.connection:
-            del self.connection
+            try:
+                del self.connection
+            except:
+                pass
 
-        self.connection = MySQLdb.connect(
-            host=self.host,
-            user=self.user,
-            passwd=self.password,
-            db=db,
-            cursorclass=self.cursorclass,
-        )
-        self.cursor = self.connection.cursor()
+    def connect(self, db):
+        """
+        Connect to MySQL
+        :param db: string schema/db name
+        :return:
+        """
+
+        self.disconnect()
+        try:
+            self.connection = MySQLdb.connect(
+                host=self.host,
+                user=self.user,
+                passwd=self.password,
+                db=db,
+                cursorclass=self.cursorclass,
+            )
+            self.cursor = self.connection.cursor()
+        except:
+            raise Exception("Can not connect to the database host={} user={} password={} db={}".format(
+                self.host,
+                self.user,
+                self.password,
+                db
+            ))
 
     def dbs_tables_lists(self):
         """
@@ -95,12 +126,20 @@ class TableProcessor(object):
         :param db: database to list tables in
         :return: ['table1', 'table2', ...]
         """
-        self.connect(db=db)
-        self.cursor.execute("USE " + db)
-        self.cursor.execute("SHOW TABLES")
-        tables = []
-        for (table_name,) in self.cursor:
-            tables.append(table_name)
+        try:
+            self.connect(db=db)
+            self.cursor.execute("USE " + db)
+            self.cursor.execute("SHOW TABLES")
+            tables = []
+            for (table_name,) in self.cursor:
+                tables.append(table_name)
+        except:
+            raise Exception("Can not list tables on host={} user={} password={} db={}".format(
+                self.host,
+                self.user,
+                self.password,
+                db
+            ))
 
         return tables
 
@@ -226,12 +265,24 @@ class TableProcessor(object):
 
     @staticmethod
     def extract_dbs(dbs=[], tables=[]):
+        """
+        Extract db/schema names from list of dbs and tables - which can contain full names, as db.table - expanding list
+        provided as dbs[]
+        :param dbs: list of dbs
+        :param tables: list of tables with (otional) full names
+        :return: set of db names
+        """
         dbs_group = TableProcessor.group_tables(dbs=dbs, tables=tables, unsettled_tables_action=TableProcessor.ACTION_IGNORE_TABLE)
 
         return dbs_group.keys()
 
     @staticmethod
     def extract_tables(tables=[]):
+        """
+        Extract short tabke names from list of (possibly) full names
+        :param tables: list of (possibly) full names
+        :return: set of short names
+        """
         dbs_group = TableProcessor.group_tables(tables=tables, unsettled_tables_action=TableProcessor.ACTION_INCLUDE_TABLE)
         res = set()
         for db in dbs_group:
