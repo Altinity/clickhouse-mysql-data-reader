@@ -38,8 +38,8 @@ class Main(Daemon):
                 for db in templates:
                     for table in templates[db]:
                         if self.config.is_table_templates_with_create_database():
-                            print("CREATE DATABASE IF NOT EXISTS `" + db + "`;")
-                        print(templates[db][table] + ";")
+                            print("CREATE DATABASE IF NOT EXISTS `{}`;".format(db))
+                        print("{};".format(templates[db][table]))
 
             elif self.config.is_table_templates_json():
                 print(json.dumps(self.config.table_builder().templates(self.config.is_table_templates_json())))
