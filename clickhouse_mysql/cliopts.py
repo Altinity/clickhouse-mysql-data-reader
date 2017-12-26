@@ -45,22 +45,24 @@ class CLIOpts(object):
 
     @staticmethod
     def log_level_from_string(log_level_string):
+        """Convert string representation of a log level into logging.XXX constant"""
+
         level = log_level_string.upper()
 
         if level == 'CRITICAL':
             return logging.CRITICAL
-        elif level == 'ERROR':
+        if level == 'ERROR':
             return logging.ERROR
-        elif level == 'WARNING':
+        if level == 'WARNING':
             return logging.WARNING
-        elif level == 'INFO':
+        if level == 'INFO':
             return logging.INFO
-        elif level == 'DEBUG':
+        if level == 'DEBUG':
             return logging.DEBUG
-        elif level == 'NOTSET':
+        if level == 'NOTSET':
             return logging.NOTSET
-        else:
-            return logging.NOTSET
+
+        return logging.NOTSET
 
     @staticmethod
     def config():
@@ -166,114 +168,114 @@ class CLIOpts(object):
         argparser.add_argument(
             '--table-templates-json',
             action='store_true',
-            help='Prepare table templates as JSON.'
+            help='Prepare table templates as JSON. Useful for IPC'
         )
         argparser.add_argument(
             '--table-migrate',
             action='store_true',
-            help='Migrate table(s).'
+            help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse already! See --table-templates option(s) for help.'
         )
 
         argparser.add_argument(
             '--src-server-id',
             type=int,
-            default=1,
-            help='Set server_id to be used when reading from src'
+            default=None,
+            help='Set server_id to be used when reading date from MySQL src. Ex.: 1'
         )
         argparser.add_argument(
             '--src-host',
             type=str,
-            default='127.0.0.1',
-            help='Host to be used when reading from src'
+            default=None,
+            help='Host to be used when reading from src. Ex.: 127.0.0.1'
         )
         argparser.add_argument(
             '--src-port',
             type=int,
             default=3306,
-            help='Port to be used when reading from src'
+            help='Port to be used when reading from src. Ex.: 3306'
         )
         argparser.add_argument(
             '--src-user',
             type=str,
-            default='root',
-            help='Username to be used when reading from src'
+            default=None,
+            help='Username to be used when reading from src. Ex.: root'
         )
         argparser.add_argument(
             '--src-password',
             type=str,
             default='',
-            help='Password to be used when reading from src'
+            help='Password to be used when reading from src. Ex.: qwerty'
         )
         argparser.add_argument(
             '--src-only-schemas',
             type=str,
             default='',
-            help='Comma-separated list of schemas to be used when reading from src'
+            help='Comma-separated list of schemas to be used when reading from src. Ex.: db1,db2,db3'
         )
         argparser.add_argument(
             '--src-only-tables',
             type=str,
             default='',
-            help='Comma-separated list of tables to be used when reading from src'
+            help='Comma-separated list of tables to be used when reading from src. Ex.: table1,table2,table3'
         )
         argparser.add_argument(
             '--src-wait',
             action='store_true',
-            help='Wait for new records to come'
+            help='Wait indefinitely for new records to come.'
         )
         argparser.add_argument(
             '--src-resume',
             action='store_true',
-            help='Resume reading from previous position'
+            help='Resume reading from previous position.'
         )
         argparser.add_argument(
             '--src-file',
             type=str,
             default=None,
-            help='Source file to read data from'
+            help='Source file to read data from. CSV'
         )
 
         argparser.add_argument(
             '--dst-file',
             type=str,
             default=None,
-            help='Target file to be used when writing data'
+            help='Target file to be used when writing data. CSV'
         )
         argparser.add_argument(
             '--dst-host',
             type=str,
-            default='127.0.0.1',
-            help='Host to be used when writing to dst'
+            default=None,
+            help='Host to be used when writing to dst. Ex.: 127.0.0.1'
         )
         argparser.add_argument(
             '--dst-port',
             type=int,
             default=9000,
-            help='Port to be used when writing to dst'
+            help='Port to be used when writing to dst. Ex.: 9000'
         )
         argparser.add_argument(
             '--dst-user',
             type=str,
             default='default',
-            help='Username to be used when writing to dst'
+            help='Username to be used when writing to dst. Ex: default'
         )
         argparser.add_argument(
             '--dst-password',
             type=str,
             default='',
-            help='Password to be used when writing to dst'
+            help='Password to be used when writing to dst. Ex.: qwerty'
         )
         argparser.add_argument(
             '--dst-schema',
             type=str,
             default=None,
-            help='Database/schema to be used when writing to dst'
+            help='Database/schema to be used when writing to dst. Ex.: db1'
         )
         argparser.add_argument(
             '--dst-table',
             type=str,
             default=None,
-            help='Table to be used when writing to dst'
+            help='Table to be used when writing to dst. Ex.: table1'
         )
 
         argparser.add_argument(
@@ -282,13 +284,13 @@ class CLIOpts(object):
             nargs='*',
             action='append',
             default=None,
-            help='Table to be used when writing to dst'
+            help='Set of key=value pairs for columns default values. Ex.: date_1=2000-01-01 timestamp_1=2002-01-01\ 01:02:03'
         )
 
         args = argparser.parse_args()
 
         # build options
-        return Config ({
+        return Config({
 
             'app-config': {
                 'config-file': args.config_file,
