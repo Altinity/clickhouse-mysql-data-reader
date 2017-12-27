@@ -7,7 +7,7 @@ setup(
     name="clickhouse-mysql",
 
     # version should comply with PEP440
-    version='0.0.201712271',
+    version='0.0.201712272',
 
     description='ClickHouse Data Reader',
     long_description='ClickHouse Data Reader',
@@ -35,9 +35,6 @@ setup(
         'License :: OSI Approved :: MIT License',
 
         # supported Python versions
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.3',
-        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
     ],
