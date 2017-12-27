@@ -48,7 +48,7 @@ sudo yum install gcc
 
 Install datareader
 ```bash
-sudo pip3.6 install clickhouse-mysql
+sudo pip3 install clickhouse-mysql
 ```
 
 Now we are able to call datareader as an app
