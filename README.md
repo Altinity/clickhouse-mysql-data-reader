@@ -5,7 +5,9 @@
 # Table of Contents
 
  * [Introduction](#introduction)
- * [Requirements](#requirements)
+ * [Requirements and Installation](#requirements-and-installation)
+   * [PyPi installation](#pypi-installation)
+   * [Clone Sources from GitHub](#clone-sources-from-github)
  * [Operation](#operation)
    * [Requirements and Limitations](#requirements-and-limitations)
    * [Operation General Schema](#operation-general-schema)
@@ -27,11 +29,38 @@
 
 Utility to import data into ClickHouse from MySQL (mainly) and/or CSV files
 
-# Requirements
+# Requirements and Installation
 
-Data reader requires **Python 3.x** with additional modules to be installed.
-In most distributions Python 3.x have `pip` utility named as `pip3`, so we'll use this naming. 
+Datareader requires at least **Python 3.5** with additional modules to be installed.
+In most distributions Python 3 have `pip` utility named as `pip3`, so we'll use this naming. 
 However, you may have it called differently.
+
+Datareader can be installed either from `github` repo or from `pypi` repo.
+
+## PyPi installation
+In case you need just to use the app - this is the most convenient way to go.
+
+Install dependencies:
+```bash
+sudo yum install mysql-community-devel
+sudo yum install gcc
+```
+
+Install datareader
+```bash
+sudo pip3.6 install clickhouse-mysql
+```
+
+Now we are able to call datareader as an app
+```bash
+[user@localhost ~]$ which clickhouse-mysql
+/usr/bin/clickhouse-mysql
+```
+
+## Clone Sources from GitHub
+In case you'd like to play around with the sources this is the way to go.
+
+Install dependencies: 
 
 `MySQLdb` package is used for communication with MySQL:
 ```bash
@@ -50,6 +79,12 @@ pip3 install mysql-replication
 pip3 install clickhouse-driver
 ```
 
+Clone sources from github
+```bash
+git clone https://github.com/Altinity/clickhouse-mysql-data-reader
+```
+
+## MySQL setup
 
 Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
 
