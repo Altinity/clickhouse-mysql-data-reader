@@ -394,13 +394,13 @@ for year in `seq 1987 2017`; do
 Downloading can take some time. 
 
 ### airline.ontime MySQL Table
-Create MySQL table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_mysql.sql](clickhouse_mysql_example/airline_ontime_schema_mysql.sql):
+Create MySQL table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql):
 ```bash
 mysql -uroot -p < clickhouse_mysql_examples/airline_ontime_schema_mysql.sql
 ```
 
 ### airline.ontime ClickHouse Table
-Create ClickHouse table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_ch.sql](clickhouse_mysql_example/airline_ontime_schema_ch.sql):
+Create ClickHouse table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_ch.sql](clickhouse_mysql_examples/airline_ontime_schema_ch.sql):
 ```bash
 clickhouse-client -mn < clickhouse_mysql_examples/airline_ontime_schema_ch.sql
 ```
