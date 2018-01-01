@@ -3,8 +3,10 @@
 
 import logging
 import MySQLdb
+
 from MySQLdb.cursors import SSDictCursor
 from .tableprocessor import TableProcessor
+from .event.event import Event
 
 
 class TableMigrator(TableProcessor):
@@ -52,7 +54,9 @@ class TableMigrator(TableProcessor):
                     break
                 self.chwriter.dst_schema = db
                 self.chwriter.dst_table = table
-                self.chwriter.insert(rows)
+                event = Event()
+                event.rows = rows
+                self.chwriter.insert(event)
                 cnt += len(rows)
         except:
             raise Exception("Can not migrate table on host={} user={} password={} db={} table={} cnt={}".format(

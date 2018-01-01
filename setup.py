@@ -7,7 +7,7 @@ setup(
     name="clickhouse-mysql",
 
     # version should comply with PEP440
-    version='0.0.201801013',
+    version='0.0.201801015',
 
     description='ClickHouse Data Reader',
     long_description='ClickHouse Data Reader',
