@@ -52,7 +52,10 @@ setup(
 
     # list of additional package data to be attached to packages
     package_data={
-        'clickhouse_mysql': ['../clickhouse_mysql_examples/*.sh'],
+        'clickhouse_mysql': [
+            '../clickhouse_mysql_examples/*.sh',
+            '../clickhouse_mysql_examples/*.sql',
+        ],
     },
 
     # run-time dependencies
