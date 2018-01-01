@@ -101,11 +101,13 @@ FLUSH PRIVILEGES;
 Also the following MySQL config options are required:
 ```ini
 [mysqld]
-server-id		 = 1
-log_bin			 = /var/lib/mysql/bin.log
+# mandatory
+server-id        = 1
+log_bin          = /var/lib/mysql/bin.log
+binlog-format    = row # very important if you want to receive write, update and delete row events
+# optional
 expire_logs_days = 30
 max_binlog_size  = 768M
-binlog-format    = row #Very important if you want to receive write, update and delete row events
 ```
 
 # Operation
