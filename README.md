@@ -12,7 +12,12 @@
    * [Requirements and Limitations](#requirements-and-limitations)
    * [Operation General Schema](#operation-general-schema)
    * [Performance](#performance)
-   * [Example](#example)
+ * [Examples](#examples)
+   * [Base Example](#base-example)
+   * [MySQL Migration Case](#mysql-migration-case)
+     * [MySQL Migration Case - Create ClickHouse Table](#mysql-migration-case---create-clickhouse-table)
+     * [MySQL Migration Case - Migrate Existing Data](#mysql-migration-case---migrate-existing-data)
+     * [MySQL Migration Case - Listen For New Data](#mysql-migration-case---listen-for-new-data)
  * [Testing](#testing)
    * [Test Cases](#test-cases)
      * [airline.ontime Test Case](#airlineontime-test-case)
@@ -220,7 +225,7 @@ Options description
   * `--mempool-max-flush-interval=60` - flush mempool at least every 60 seconds
   * `--mempool-max-events-num=1000` - flush mempool at least each 1000 events (not rows, but events)
 
-## MySQL Table Migration Case
+## MySQL Migration Case
 
 Suppose we have airline.ontime table of the following structure:
 
@@ -236,7 +241,7 @@ mysql> SEELCT COUNT(*) FROM airline.ontime;
 MySQL is already configured as described earlier
 Let's migrate existing data and listen to newly coming data.
 
-### MySQL Table Migration Case - Create ClickHouse Table
+### MySQL Migration Case - Create ClickHouse Table
 
 Create ClickHouse table description
 ```bash
@@ -268,7 +273,7 @@ Create table in clickhouse
 clickhouse-client -mn < create_clickhouse.sql
 ```
 
-### MySQL Table Migration Case - Migrate Existing Data
+### MySQL Migration Case - Migrate Existing Data
 
 Lock MySQL in order to avoid new data coming while data migration is running. Keep `mysql` client open during the whole process
 ```mysql
@@ -298,7 +303,7 @@ FROM ontime
 └─────────┘
 ```
 
-### MySQL Table Migration Case - Listen For New Data
+### MySQL Migration Case - Listen For New Data
 
 Start `clickhouse-mysql` as a replication slave, so it'' listen for new data'
 ```bash
