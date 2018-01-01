@@ -197,7 +197,7 @@ Now you can run data reader via `pypy`
 ## Base Example
 
 Let's walk over test example of tool launch command line options. 
-This code snippet is taken from [datareader script](run_airline_ontime_data_reader.sh) shell file, described in more details in [airline.ontime Test Case](#airlineontime-test-case)
+This code snippet is taken from shell script (see more details in [airline.ontime Test Case](#airlineontime-test-case))
  
 ```bash
 $PYTHON clickhouse-mysql ${*:1} \
@@ -361,12 +361,12 @@ Main Steps
   * Download airline.ontime dataset
   * Create airline.ontime MySQL table
   * Create airline.ontime ClickHouse table
-  * Start data reader (migrate data MySQL -> ClickHouse)
-  * Start data importer (import data into MySQL)
+  * Start data reader (utility to migrate data MySQL -> ClickHouse)
+  * Start data importer (utility to import data into MySQL)
   * Check how data are loaded into ClickHouse
 
 ### airline.ontime Data Set in CSV files
-Run [download script](run_airline_ontime_data_download.sh)
+Run [download script](clickhouse_mysql_example/airline_ontime_data_download.sh)
 
 You may want to adjust dirs where to keep `ZIP` and `CSV` file
 
@@ -389,247 +389,24 @@ for year in `seq 1987 2017`; do
 ``` 
 
 ```bash
-./run_airline_ontime_data_download.sh
+./airline_ontime_data_download.sh
 ```
 Downloading can take some time. 
 
 ### airline.ontime MySQL Table
-Create MySQL table of the following structure:
-
-```mysql
-CREATE DATABASE IF NOT EXISTS `airline`;
-CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
-  `Year`                 SMALLINT UNSIGNED, -- maps to UInt16,
-  `Quarter`              TINYINT UNSIGNED, -- maps to UInt8,
-  `Month`                TINYINT UNSIGNED, -- maps to UInt8,
-  `DayofMonth`           TINYINT UNSIGNED, -- maps to UInt8,
-  `DayOfWeek`            TINYINT UNSIGNED, -- maps to UInt8,
-  `FlightDate`           DATE, -- maps to Date,
-  `UniqueCarrier`        LONGTEXT, -- maps to String,
-  `AirlineID`            INTEGER UNSIGNED, -- maps to UInt32,
-  `Carrier`              LONGTEXT, -- maps to String,
-  `TailNum`              LONGTEXT, -- maps to String,
-  `FlightNum`            LONGTEXT, -- maps to String,
-  `OriginAirportID`      INTEGER UNSIGNED, -- maps to UInt32,
-  `OriginAirportSeqID`   INTEGER UNSIGNED, -- maps to UInt32,
-  `OriginCityMarketID`   INTEGER UNSIGNED, -- maps to UInt32,
-  `Origin`               LONGTEXT, -- maps to String,
-  `OriginCityName`       LONGTEXT, -- maps to String,
-  `OriginState`          LONGTEXT, -- maps to String,
-  `OriginStateFips`      LONGTEXT, -- maps to String,
-  `OriginStateName`      LONGTEXT, -- maps to String,
-  `OriginWac`            INTEGER UNSIGNED, -- maps to UInt32,
-  `DestAirportID`        INTEGER UNSIGNED, -- maps to UInt32,
-  `DestAirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
-  `DestCityMarketID`     INTEGER UNSIGNED, -- maps to UInt32,
-  `Dest`                 LONGTEXT, -- maps to String,
-  `DestCityName`         LONGTEXT, -- maps to String,
-  `DestState`            LONGTEXT, -- maps to String,
-  `DestStateFips`        LONGTEXT, -- maps to String,
-  `DestStateName`        LONGTEXT, -- maps to String,
-  `DestWac`              INTEGER UNSIGNED, -- maps to UInt32,
-  `CRSDepTime`           INTEGER UNSIGNED, -- maps to UInt32,
-  `DepTime`              INTEGER UNSIGNED, -- maps to UInt32,
-  `DepDelay`             FLOAT, -- maps to Float32,
-  `DepDelayMinutes`      FLOAT, -- maps to Float32,
-  `DepDel15`             FLOAT, -- maps to Float32,
-  `DepartureDelayGroups` INTEGER, -- maps to Int32,
-  `DepTimeBlk`           LONGTEXT, -- maps to String,
-  `TaxiOut`              FLOAT, -- maps to Float32,
-  `WheelsOff`            INTEGER UNSIGNED, -- maps to UInt32,
-  `WheelsOn`             INTEGER UNSIGNED, -- maps to UInt32,
-  `TaxiIn`               FLOAT, -- maps to Float32,
-  `CRSArrTime`           INTEGER UNSIGNED, -- maps to UInt32,
-  `ArrTime`              INTEGER UNSIGNED, -- maps to UInt32,
-  `ArrDelay`             FLOAT, -- maps to Float32,
-  `ArrDelayMinutes`      FLOAT, -- maps to Float32,
-  `ArrDel15`             FLOAT, -- maps to Float32,
-  `ArrivalDelayGroups`   INTEGER, -- maps to Int32,
-  `ArrTimeBlk`           LONGTEXT, -- maps to String,
-  `Cancelled`            FLOAT, -- maps to Float32,
-  `CancellationCode`     LONGTEXT, -- maps to String,
-  `Diverted`             FLOAT, -- maps to Float32,
-  `CRSElapsedTime`       FLOAT, -- maps to Float32,
-  `ActualElapsedTime`    FLOAT, -- maps to Float32,
-  `AirTime`              FLOAT, -- maps to Float32,
-  `Flights`              FLOAT, -- maps to Float32,
-  `Distance`             FLOAT, -- maps to Float32,
-  `DistanceGroup`        FLOAT, -- maps to Float32,
-  `CarrierDelay`         FLOAT, -- maps to Float32,
-  `WeatherDelay`         FLOAT, -- maps to Float32,
-  `NASDelay`             FLOAT, -- maps to Float32,
-  `SecurityDelay`        FLOAT, -- maps to Float32,
-  `LateAircraftDelay`    FLOAT, -- maps to Float32,
-  `FirstDepTime`         LONGTEXT, -- maps to String,
-  `TotalAddGTime`        LONGTEXT, -- maps to String,
-  `LongestAddGTime`      LONGTEXT, -- maps to String,
-  `DivAirportLandings`   LONGTEXT, -- maps to String,
-  `DivReachedDest`       LONGTEXT, -- maps to String,
-  `DivActualElapsedTime` LONGTEXT, -- maps to String,
-  `DivArrDelay`          LONGTEXT, -- maps to String,
-  `DivDistance`          LONGTEXT, -- maps to String,
-  `Div1Airport`          LONGTEXT, -- maps to String,
-  `Div1AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
-  `Div1AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
-  `Div1WheelsOn`         LONGTEXT, -- maps to String,
-  `Div1TotalGTime`       LONGTEXT, -- maps to String,
-  `Div1LongestGTime`     LONGTEXT, -- maps to String,
-  `Div1WheelsOff`        LONGTEXT, -- maps to String,
-  `Div1TailNum`          LONGTEXT, -- maps to String,
-  `Div2Airport`          LONGTEXT, -- maps to String,
-  `Div2AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
-  `Div2AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
-  `Div2WheelsOn`         LONGTEXT, -- maps to String,
-  `Div2TotalGTime`       LONGTEXT, -- maps to String,
-  `Div2LongestGTime`     LONGTEXT, -- maps to String,
-  `Div2WheelsOff`        LONGTEXT, -- maps to String,
-  `Div2TailNum`          LONGTEXT, -- maps to String,
-  `Div3Airport`          LONGTEXT, -- maps to String,
-  `Div3AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
-  `Div3AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
-  `Div3WheelsOn`         LONGTEXT, -- maps to String,
-  `Div3TotalGTime`       LONGTEXT, -- maps to String,
-  `Div3LongestGTime`     LONGTEXT, -- maps to String,
-  `Div3WheelsOff`        LONGTEXT, -- maps to String,
-  `Div3TailNum`          LONGTEXT, -- maps to String,
-  `Div4Airport`          LONGTEXT, -- maps to String,
-  `Div4AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
-  `Div4AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
-  `Div4WheelsOn`         LONGTEXT, -- maps to String,
-  `Div4TotalGTime`       LONGTEXT, -- maps to String,
-  `Div4LongestGTime`     LONGTEXT, -- maps to String,
-  `Div4WheelsOff`        LONGTEXT, -- maps to String,
-  `Div4TailNum`          LONGTEXT, -- maps to String,
-  `Div5Airport`          LONGTEXT, -- maps to String,
-  `Div5AirportID`        INTEGER UNSIGNED, -- maps to UInt32,
-  `Div5AirportSeqID`     INTEGER UNSIGNED, -- maps to UInt32,
-  `Div5WheelsOn`         LONGTEXT, -- maps to String,
-  `Div5TotalGTime`       LONGTEXT, -- maps to String,
-  `Div5LongestGTime`     LONGTEXT, -- maps to String,
-  `Div5WheelsOff`        LONGTEXT, -- maps to String,
-  `Div5TailNum`          LONGTEXT  -- maps to String
-);
+Create MySQL table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_mysql.sql](clickhouse_mysql_example/airline_ontime_schema_mysql.sql):
+```bash
+mysql -uroot -p < clickhouse_mysql_example/airline_ontime_schema_mysql.sql
 ```
 
 ### airline.ontime ClickHouse Table
-Create ClickHouse table of the following structure:
-```sql
-CREATE DATABASE IF NOT EXISTS `airline`;
-CREATE TABLE IF NOT EXISTS `airline`.`ontime` ( 
-  `Year`                 UInt16,  
-  `Quarter`              UInt8,  
-  `Month`                UInt8,  
-  `DayofMonth`           UInt8,  
-  `DayOfWeek`            UInt8,  
-  `FlightDate`           Date,  
-  `UniqueCarrier`        String,  
-  `AirlineID`            UInt32,  
-  `Carrier`              String,  
-  `TailNum`              String,  
-  `FlightNum`            String,  
-  `OriginAirportID`      UInt32,  
-  `OriginAirportSeqID`   UInt32,  
-  `OriginCityMarketID`   UInt32,  
-  `Origin`               String,  
-  `OriginCityName`       String,  
-  `OriginState`          String,  
-  `OriginStateFips`      String,  
-  `OriginStateName`      String,  
-  `OriginWac`            UInt32,  
-  `DestAirportID`        UInt32,  
-  `DestAirportSeqID`     UInt32,  
-  `DestCityMarketID`     UInt32,  
-  `Dest`                 String,  
-  `DestCityName`         String,  
-  `DestState`            String,  
-  `DestStateFips`        String,  
-  `DestStateName`        String,  
-  `DestWac`              UInt32,  
-  `CRSDepTime`           UInt32,  
-  `DepTime`              UInt32,  
-  `DepDelay`             Float32,  
-  `DepDelayMinutes`      Float32,  
-  `DepDel15`             Float32,  
-  `DepartureDelayGroups` Int32,  
-  `DepTimeBlk`           String,  
-  `TaxiOut`              Float32,  
-  `WheelsOff`            UInt32,  
-  `WheelsOn`             UInt32,  
-  `TaxiIn`               Float32,  
-  `CRSArrTime`           UInt32,  
-  `ArrTime`              UInt32,  
-  `ArrDelay`             Float32,  
-  `ArrDelayMinutes`      Float32,  
-  `ArrDel15`             Float32,  
-  `ArrivalDelayGroups`   Int32,  
-  `ArrTimeBlk`           String,  
-  `Cancelled`            Float32,  
-  `CancellationCode`     String,  
-  `Diverted`             Float32,  
-  `CRSElapsedTime`       Float32,  
-  `ActualElapsedTime`    Float32,  
-  `AirTime`              Float32,  
-  `Flights`              Float32,  
-  `Distance`             Float32,  
-  `DistanceGroup`        Float32,  
-  `CarrierDelay`         Float32,  
-  `WeatherDelay`         Float32,  
-  `NASDelay`             Float32,  
-  `SecurityDelay`        Float32,  
-  `LateAircraftDelay`    Float32,  
-  `FirstDepTime`         String,  
-  `TotalAddGTime`        String,  
-  `LongestAddGTime`      String,  
-  `DivAirportLandings`   String,  
-  `DivReachedDest`       String,  
-  `DivActualElapsedTime` String,  
-  `DivArrDelay`          String,  
-  `DivDistance`          String,  
-  `Div1Airport`          String,  
-  `Div1AirportID`        UInt32,  
-  `Div1AirportSeqID`     UInt32,  
-  `Div1WheelsOn`         String,  
-  `Div1TotalGTime`       String,  
-  `Div1LongestGTime`     String,  
-  `Div1WheelsOff`        String,  
-  `Div1TailNum`          String,  
-  `Div2Airport`          String,  
-  `Div2AirportID`        UInt32,  
-  `Div2AirportSeqID`     UInt32,  
-  `Div2WheelsOn`         String,  
-  `Div2TotalGTime`       String,  
-  `Div2LongestGTime`     String,  
-  `Div2WheelsOff`        String,  
-  `Div2TailNum`          String,  
-  `Div3Airport`          String,  
-  `Div3AirportID`        UInt32,  
-  `Div3AirportSeqID`     UInt32,  
-  `Div3WheelsOn`         String,  
-  `Div3TotalGTime`       String,  
-  `Div3LongestGTime`     String,  
-  `Div3WheelsOff`        String,  
-  `Div3TailNum`          String,  
-  `Div4Airport`          String,  
-  `Div4AirportID`        UInt32,  
-  `Div4AirportSeqID`     UInt32,  
-  `Div4WheelsOn`         String,  
-  `Div4TotalGTime`       String,  
-  `Div4LongestGTime`     String,  
-  `Div4WheelsOff`        String,  
-  `Div4TailNum`          String,  
-  `Div5Airport`          String,  
-  `Div5AirportID`        UInt32,  
-  `Div5AirportSeqID`     UInt32,  
-  `Div5WheelsOn`         String,  
-  `Div5TotalGTime`       String,  
-  `Div5LongestGTime`     String,  
-  `Div5WheelsOff`        String,  
-  `Div5TailNum`          String
-) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month, DepDel15), 8192)
+Create ClickHouse table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_ch.sql](clickhouse_mysql_example/airline_ontime_schema_ch.sql):
+```bash
+clickhouse-client -mn < clickhouse_mysql_example/airline_ontime_schema_ch.sql
 ```
 
 ### airline.ontime Data Reader
-Run [datareader script](run_airline_ontime_data_reader.sh)
+Run [datareader script](clickhouse_mysql_examples/airline_ontime_data_mysql_to_ch_reader.sh)
 
 You may want to adjust `PYTHON` path and source and target hosts and usernames
 ```bash
@@ -646,11 +423,11 @@ PYTHON=/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy
 ...
 ```
 ```bash
-./run_airline_ontime_data_reader.sh
+./airline_ontime_data_mysql_to_ch_reader.sh
 ```
 
 ### airline.ontime Data Importer
-Run [data importer script](run_airline_ontime_import.sh)
+Run [data importer script](clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh)
 
 You may want to adjust `CSV` files location, number of imported files and MySQL user/password used for import
 ```bash
@@ -669,7 +446,7 @@ FILES_TO_IMPORT_NUM=3
 ```
 
 ```bash
-./run_airline_ontime_import.sh
+./airline_ontime_mysql_data_import.sh
 ``` 
 
 # Testing
