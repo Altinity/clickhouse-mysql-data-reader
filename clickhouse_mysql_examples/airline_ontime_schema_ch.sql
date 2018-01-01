@@ -109,4 +109,5 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
   `Div5LongestGTime`     Nullable(String),
   `Div5WheelsOff`        Nullable(String),
   `Div5TailNum`          Nullable(String)
-) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month), 8192)
+) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month), 8192);
+
