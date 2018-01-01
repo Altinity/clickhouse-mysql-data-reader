@@ -11,8 +11,13 @@
  * [Operation](#operation)
    * [Requirements and Limitations](#requirements-and-limitations)
    * [Operation General Schema](#operation-general-schema)
-   * [Example](#example)
- * [Performance](#performance)
+   * [Performance](#performance)
+ * [Examples](#examples)
+   * [Base Example](#base-example)
+   * [MySQL Migration Case](#mysql-migration-case)
+     * [MySQL Migration Case - Create ClickHouse Table](#mysql-migration-case---create-clickhouse-table)
+     * [MySQL Migration Case - Migrate Existing Data](#mysql-migration-case---migrate-existing-data)
+     * [MySQL Migration Case - Listen For New Data](#mysql-migration-case---listen-for-new-data)
  * [Testing](#testing)
    * [Test Cases](#test-cases)
      * [airline.ontime Test Case](#airlineontime-test-case)
@@ -135,41 +140,7 @@ Data reader understands INSERT SQL statements only. In practice this means that:
     * from memory cache as a bulk insert operation
     * from CSV file via `clickhouse-client` 
     
-## Example
-
-Let's walk over test example of tool launch command line options. 
-This code snippet is taken from [datareader script](run_airline_ontime_data_reader.sh) shell file, described in more details in [airline.ontime Test Case](#airlineontime-test-case)
- 
-```bash
-$PYTHON clickhouse-mysql ${*:1} \
-    --src-resume \
-    --src-wait \
-    --nice-pause=1 \
-    --log-level=info \
-    --log-file=ontime.log \
-    --src-host=127.0.0.1 \
-    --src-user=root \
-    --dst-host=127.0.0.1 \
-    --csvpool \
-    --csvpool-file-path-prefix=qwe_ \
-    --mempool-max-flush-interval=60 \
-    --mempool-max-events-num=1000
-```
-Options description
-  * `--src-resume` - resume data loading from the previous point. When the tool starts - resume from the end of the log 
-  * `--src-wait` - wait for new data to come
-  * `--nice-pause=1` - when no data available sleep for 1 second
-  * `--log-level=info` - log verbosity
-  * `--log-file=ontime.log` - log file name
-  * `--src-host=127.0.0.1` - MySQL source host
-  * `--src-user=root` - MySQL source user (remember about PRIVILEGES for this user)
-  * `--dst-host=127.0.0.1` - ClickHouse host
-  * `--csvpool` - make pool of csv files (assumes `--mempool` also)
-  * `--csvpool-file-path-prefix=qwe_` - put these CSV files having `qwe_` prefix in `CWD`
-  * `--mempool-max-flush-interval=60` - flush mempool at least every 60 seconds
-  * `--mempool-max-events-num=1000` - flush mempool at least each 1000 events (not rows, but events)
-
-# Performance
+## Performance
 
 `pypy` significantly improves performance. You should try it.
 For example you can start with [Portable PyPy distribution for Linux](https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux)
@@ -216,11 +187,171 @@ Now you can run data reader via `pypy`
 /home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy clickhouse-mysql
 ```
 
-# Testing
+# Examples
 
-## Test Cases
+## Base Example
 
-### airline.ontime Test Case
+Let's walk over test example of tool launch command line options. 
+This code snippet is taken from [datareader script](run_airline_ontime_data_reader.sh) shell file, described in more details in [airline.ontime Test Case](#airlineontime-test-case)
+ 
+```bash
+$PYTHON clickhouse-mysql ${*:1} \
+    --src-server-id=1 \
+    --src-resume \
+    --src-wait \
+    --nice-pause=1 \
+    --log-level=info \
+    --log-file=ontime.log \
+    --src-host=127.0.0.1 \
+    --src-user=root \
+    --dst-host=127.0.0.1 \
+    --csvpool \
+    --csvpool-file-path-prefix=qwe_ \
+    --mempool-max-flush-interval=60 \
+    --mempool-max-events-num=1000
+```
+Options description
+  * `--src-server-id` - Master's server id
+  * `--src-resume` - resume data loading from the previous point. When the tool starts - resume from the end of the log 
+  * `--src-wait` - wait for new data to come
+  * `--nice-pause=1` - when no data available sleep for 1 second
+  * `--log-level=info` - log verbosity
+  * `--log-file=ontime.log` - log file name
+  * `--src-host=127.0.0.1` - MySQL source host
+  * `--src-user=root` - MySQL source user (remember about PRIVILEGES for this user)
+  * `--dst-host=127.0.0.1` - ClickHouse host
+  * `--csvpool` - make pool of csv files (assumes `--mempool` also)
+  * `--csvpool-file-path-prefix=qwe_` - put these CSV files having `qwe_` prefix in `CWD`
+  * `--mempool-max-flush-interval=60` - flush mempool at least every 60 seconds
+  * `--mempool-max-events-num=1000` - flush mempool at least each 1000 events (not rows, but events)
+
+## MySQL Migration Case
+
+Suppose we have airline.ontime table of the following structure:
+
+```mysql
+mysql> SEELCT COUNT(*) FROM airline.ontime;
++----------+
+| count(*) |
++----------+
+|  7694964 |
++----------+
+```
+
+MySQL is already configured as described earlier
+Let's migrate existing data and listen to newly coming data.
+
+### MySQL Migration Case - Create ClickHouse Table
+
+Create ClickHouse table description
+```bash
+clickhouse-mysql \
+    --src-host=127.0.0.1 \
+    --src-user=reader \
+    --src-password=Qwerty1# \
+    --table-templates-with-create-database \
+    --src-only-table=airline.ontime > create_clickhouse.sql
+```
+We have table template stored in `create_clickhouse.sql` file.
+```bash
+vim create_clickhouse.sql
+```  
+Setup sharding field and promary key. Columns must not be `Nullable`
+```bash mysql
+...cut...
+    `Year` UInt16,
+...cut...    
+    `FlightDate` Date,
+...cut...    
+    `Month` UInt8,
+...cut...
+) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month), 8192)
+```
+
+Create table in clickhouse
+```bash
+clickhouse-client -mn < create_clickhouse.sql
+```
+
+### MySQL Migration Case - Migrate Existing Data
+
+Lock MySQL in order to avoid new data coming while data migration is running. Keep `mysql` client open during the whole process
+```mysql
+mysql> FLUSH TABLES WITH READ LOCK;
+```
+
+Migrate data
+```bash
+clickhouse-mysql \
+    --src-host=127.0.0.1 \
+    --src-user=reader \
+    --src-password=Qwerty1# \
+    --table-migrate \
+    --src-only-table=airline.ontime \
+    --dst-host=127.0.0.1
+```
+This may take some time.
+Check all data is in ClickHouse 
+```mysql
+:) select count(*) from ontime;
+
+SELECT count(*)
+FROM ontime
+
+┌─count()─┐
+│ 7694964 │
+└─────────┘
+```
+
+### MySQL Migration Case - Listen For New Data
+
+Start `clickhouse-mysql` as a replication slave, so it'' listen for new data'
+```bash
+clickhouse-mysql \
+    --src-server-id=1 \
+    --src-resume \
+    --src-wait \
+    --nice-pause=1 \
+    --src-host=127.0.0.1 \
+    --src-user=reader --src-password=Qwerty1# \
+    --src-only-table=airline.ontime \
+    --dst-host=127.0.0.1 \
+    --csvpool \
+    --csvpool-file-path-prefix=qwe_ \
+    --mempool-max-flush-interval=60 \
+    --mempool-max-events-num=10000
+```
+
+Allso new data to be inserted into MySQL
+```mysql
+mysql> UNLOCK TABLES;
+```
+
+Insert some data. For example, via `./airline_ontime_mysql_data_import.sh` script
+
+```mysql
+mysql> select count(*) from ontime;
++----------+
+| count(*) |
++----------+
+| 10259952 |
++----------+
+```
+
+Replication will be pumping data in background and in some time we'll se the following picture in ClickHouse
+```mysql
+:) select count(*) from airline.ontime;
+
+SELECT count(*)
+FROM airline.ontime
+
+┌──count()─┐
+│ 10259952 │
+└──────────┘
+```
+
+## airline.ontime Test Case
+
 Main Steps
   * Download airline.ontime dataset
   * Create airline.ontime MySQL table
@@ -229,7 +360,7 @@ Main Steps
   * Start data importer (import data into MySQL)
   * Check how data are loaded into ClickHouse
 
-#### airline.ontime Data Set in CSV files
+### airline.ontime Data Set in CSV files
 Run [download script](run_airline_ontime_data_download.sh)
 
 You may want to adjust dirs where to keep `ZIP` and `CSV` file
@@ -257,7 +388,7 @@ for year in `seq 1987 2017`; do
 ```
 Downloading can take some time. 
 
-#### airline.ontime MySQL Table
+### airline.ontime MySQL Table
 Create MySQL table of the following structure:
 
 ```mysql
@@ -375,7 +506,7 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 );
 ```
 
-#### airline.ontime ClickHouse Table
+### airline.ontime ClickHouse Table
 Create ClickHouse table of the following structure:
 ```sql
 CREATE DATABASE IF NOT EXISTS `airline`;
@@ -492,7 +623,7 @@ CREATE TABLE IF NOT EXISTS `airline`.`ontime` (
 ) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month, DepDel15), 8192)
 ```
 
-#### airline.ontime Data Reader
+### airline.ontime Data Reader
 Run [datareader script](run_airline_ontime_data_reader.sh)
 
 You may want to adjust `PYTHON` path and source and target hosts and usernames
@@ -513,7 +644,7 @@ PYTHON=/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy
 ./run_airline_ontime_data_reader.sh
 ```
 
-#### airline.ontime Data Importer
+### airline.ontime Data Importer
 Run [data importer script](run_airline_ontime_import.sh)
 
 You may want to adjust `CSV` files location, number of imported files and MySQL user/password used for import
@@ -535,6 +666,8 @@ FILES_TO_IMPORT_NUM=3
 ```bash
 ./run_airline_ontime_import.sh
 ``` 
+
+# Testing
 
 ## Testing General Schema
 
