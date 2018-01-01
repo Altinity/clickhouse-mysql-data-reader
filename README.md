@@ -232,10 +232,10 @@ Options description
 
 ## MySQL Migration Case
 
-Suppose we have airline.ontime table of the following structure:
+Suppose we have airline.ontime table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
 
 ```mysql
-mysql> SEELCT COUNT(*) FROM airline.ontime;
+mysql> SELECT COUNT(*) FROM airline.ontime;
 +----------+
 | count(*) |
 +----------+
@@ -243,7 +243,7 @@ mysql> SEELCT COUNT(*) FROM airline.ontime;
 +----------+
 ```
 
-MySQL is already configured as described earlier
+MySQL is already configured as [described earlier](#mysql-setup).
 Let's migrate existing data and listen to newly coming data.
 
 ### MySQL Migration Case - Create ClickHouse Table
@@ -298,10 +298,10 @@ clickhouse-mysql \
 This may take some time.
 Check all data is in ClickHouse 
 ```mysql
-:) select count(*) from ontime;
+:) select count(*) from airline.ontime;
 
 SELECT count(*)
-FROM ontime
+FROM airline.ontime
 
 ┌─count()─┐
 │ 7694964 │
@@ -310,7 +310,7 @@ FROM ontime
 
 ### MySQL Migration Case - Listen For New Data
 
-Start `clickhouse-mysql` as a replication slave, so it'' listen for new data'
+Start `clickhouse-mysql` as a replication slave, so it will listen for new data coming:
 ```bash
 clickhouse-mysql \
     --src-server-id=1 \
@@ -327,15 +327,16 @@ clickhouse-mysql \
     --mempool-max-events-num=10000
 ```
 
-Allso new data to be inserted into MySQL
+Allow new data to be inserted into MySQL
+
 ```mysql
 mysql> UNLOCK TABLES;
 ```
 
-Insert some data. For example, via `./airline_ontime_mysql_data_import.sh` script
+Insert some data. For example, via [clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh](clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh) script
 
 ```mysql
-mysql> select count(*) from ontime;
+mysql> SELECT COUNT(*) FROM airline.ontime;
 +----------+
 | count(*) |
 +----------+
@@ -394,13 +395,13 @@ for year in `seq 1987 2017`; do
 Downloading can take some time. 
 
 ### airline.ontime MySQL Table
-Create MySQL table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql):
+Create MySQL table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql):
 ```bash
 mysql -uroot -p < clickhouse_mysql_examples/airline_ontime_schema_mysql.sql
 ```
 
 ### airline.ontime ClickHouse Table
-Create ClickHouse table of the [following structure - clickhouse_mysql_example/airline_ontime_schema_ch.sql](clickhouse_mysql_examples/airline_ontime_schema_ch.sql):
+Create ClickHouse table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_ch.sql](clickhouse_mysql_examples/airline_ontime_schema_ch.sql):
 ```bash
 clickhouse-client -mn < clickhouse_mysql_examples/airline_ontime_schema_ch.sql
 ```
