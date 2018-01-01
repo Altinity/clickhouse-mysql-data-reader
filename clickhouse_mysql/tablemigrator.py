@@ -27,11 +27,11 @@ class TableMigrator(TableProcessor):
         logging.info("List for migration:")
         for db in dbs:
             for table in dbs[db]:
-                logging.info("  {}.{}")(db, table)
+                logging.info("  {}.{}".format(db, table))
 
         for db in dbs:
             for table in dbs[db]:
-                logging.info("Start migration {}.{}")(db, table)
+                logging.info("Start migration {}.{}".format(db, table))
                 self.migrate_table(db=db, table=table)
 
     def migrate_table(self, db=None, table=None, ):
