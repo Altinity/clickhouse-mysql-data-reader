@@ -8,6 +8,9 @@ import ast
 class CSVReadConverter(Converter):
 
     def row(self, row):
+        if row is None:
+            return None
+
         for column in row:
             if row[column] == '':
                 row[column] = None

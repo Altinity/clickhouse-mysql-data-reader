@@ -26,6 +26,9 @@ class CHWriteConverter(Converter):
     ]
 
     def row(self, row):
+        if row is None:
+            return None
+
         columns_to_delete = []
 
         for column in row:

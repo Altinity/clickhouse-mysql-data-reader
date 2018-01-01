@@ -57,11 +57,8 @@ class CHWriter(Writer):
                 continue # for event
 
             event_converted = self.convert(event)
-            if isinstance(event_converted, Event):
-                for row in event_converted:
-                    rows.append(row)
-            else:
-                rows.append(event_converted)
+            for row in event_converted:
+                rows.append(row)
 
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = self.dst_table if self.dst_table else event_converted.table
