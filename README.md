@@ -370,7 +370,7 @@ Run [download script](clickhouse_mysql_examples/airline_ontime_data_download.sh)
 
 You may want to adjust dirs where to keep `ZIP` and `CSV` file
 
-In `run_airline_ontime_data_download.sh` edit these lines:
+In `airline_ontime_data_download.sh` edit these lines:
 ```bash
 ...
 ZIP_FILES_DIR="zip"
