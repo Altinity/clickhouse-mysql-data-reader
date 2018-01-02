@@ -118,6 +118,8 @@ binlog-format    = row # very important if you want to receive write, update and
 # optional
 expire_logs_days = 30
 max_binlog_size  = 768M
+# setup listen address
+bind-address     = 0.0.0.0
 ```
 
 # Operation
@@ -147,7 +149,7 @@ Data reader understands INSERT SQL statements only. In practice this means that:
     
 ## Performance
 
-`pypy` significantly improves performance. You should try it.
+`pypy` significantly improves performance. You should try it. Really. Up to **10 times performance boost** can be achieved.
 For example you can start with [Portable PyPy distribution for Linux](https://github.com/squeaky-pl/portable-pypy#portable-pypy-distribution-for-linux)
  - use [Python 3.x release](https://github.com/squeaky-pl/portable-pypy#latest-python-35-release)
 Unpack it into your place of choice.
@@ -232,7 +234,7 @@ Options description
 
 ## MySQL Migration Case
 
-Suppose we have airline.ontime table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
+Suppose we have `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
 
 ```mysql
 mysql> SELECT COUNT(*) FROM airline.ontime;
@@ -261,7 +263,7 @@ We have table template stored in `create_clickhouse.sql` file.
 ```bash
 vim create_clickhouse.sql
 ```  
-Setup sharding field and promary key. Columns must not be `Nullable`
+Setup sharding field and primary key. These columns must not be `Nullable`
 ```bash mysql
 ...cut...
     `Year` UInt16,
@@ -273,7 +275,7 @@ Setup sharding field and promary key. Columns must not be `Nullable`
 ) ENGINE = MergeTree(FlightDate, (FlightDate, Year, Month), 8192)
 ```
 
-Create table in clickhouse
+Create table in ClickHouse
 ```bash
 clickhouse-client -mn < create_clickhouse.sql
 ```
@@ -327,13 +329,13 @@ clickhouse-mysql \
     --mempool-max-events-num=10000
 ```
 
-Allow new data to be inserted into MySQL
+Allow new data to be inserted into MySQL - i.e. unlock tables.
 
 ```mysql
 mysql> UNLOCK TABLES;
 ```
 
-Insert some data. For example, via [clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh](clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh) script
+Insert some data into MySQL. For example, via [clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh](clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh) script
 
 ```mysql
 mysql> SELECT COUNT(*) FROM airline.ontime;
@@ -344,7 +346,7 @@ mysql> SELECT COUNT(*) FROM airline.ontime;
 +----------+
 ```
 
-Replication will be pumping data in background and in some time we'll se the following picture in ClickHouse
+Replication will be pumping data from MySQL into ClickHouse in background and in some time we'll see the following picture in ClickHouse:
 ```mysql
 :) select count(*) from airline.ontime;
 

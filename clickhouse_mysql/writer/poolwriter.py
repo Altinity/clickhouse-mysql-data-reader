@@ -9,6 +9,7 @@ from ..pool.bbpool import BBPool
 
 
 class PoolWriter(Writer):
+    """Write with caching in Pool"""
 
     writer_builder = None
     max_pool_size = None
@@ -31,6 +32,7 @@ class PoolWriter(Writer):
         )
 
     def insert(self, event_or_events):
+        """Insert data into Pool"""
         logging.debug('class:%s insert', __class__)
         self.pool.insert(event_or_events)
 

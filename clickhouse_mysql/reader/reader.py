@@ -5,6 +5,7 @@ from ..observable import Observable
 
 
 class Reader(Observable):
+    """Read data from source and notify observers"""
 
     converter = None
 
