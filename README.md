@@ -234,7 +234,7 @@ Options description
 
 ## MySQL Migration Case
 
-Suppose we have `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
+Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
 
 ```mysql
 mysql> SELECT COUNT(*) FROM airline.ontime;
@@ -246,7 +246,7 @@ mysql> SELECT COUNT(*) FROM airline.ontime;
 ```
 
 MySQL is already configured as [described earlier](#mysql-setup).
-Let's migrate existing data and listen to newly coming data.
+Let's migrate existing data to ClickHouse and listen for newly coming data in order to migrate them to CLickHouse on-the-fly.
 
 ### MySQL Migration Case - Create ClickHouse Table
 
