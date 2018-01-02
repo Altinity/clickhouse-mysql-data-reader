@@ -9,6 +9,7 @@ from .writer import Writer
 
 
 class CHCSVWriter(Writer):
+    """Write into ClickHouse via CSV file and clickhouse-client tool"""
 
     host = None
     port = None

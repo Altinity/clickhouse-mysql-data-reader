@@ -15,6 +15,7 @@ from ..tableprocessor import TableProcessor
 
 
 class MySQLReader(Reader):
+    """Read data from MySQL as replication slave"""
 
     connection_settings = None
     server_id = None

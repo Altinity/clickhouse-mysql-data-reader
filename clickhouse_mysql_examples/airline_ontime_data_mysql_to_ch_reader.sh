@@ -14,12 +14,13 @@ PYTHON="python3"
 CH_MYSQL="/usr/bin/clickhouse-mysql"
 CH_MYSQL="-m clickhouse_mysql.main"
 
-if [ ! -d "clickhouse_mysql" ]; then
+if [ ! -d "clickhouse_mysql" ] && [ -d "../clickhouse_mysql" ]; then
     # no clickhouse_mysql dir available - step out of examples dir
     cd ..
 fi
 
 $PYTHON $CH_MYSQL ${*:1} \
+    --src-server-id=1 \
     --src-resume \
     --src-wait \
     --nice-pause=1 \

@@ -8,7 +8,7 @@ from .writer import Writer
 
 
 class ProcessWriter(Writer):
-
+    """Start write procedure as a separated process"""
     args = None
 
     def __init__(self, **kwargs):
@@ -25,6 +25,8 @@ class ProcessWriter(Writer):
         pass
 
     def process(self, event_or_events=None):
+        """Separate process body to be run"""
+
         logging.debug('class:%s process()', __class__)
         writer = self.next_writer_builder.get()
         writer.insert(event_or_events)
@@ -42,6 +44,9 @@ class ProcessWriter(Writer):
         #       row: {'id': 3, 'a': 3}
         #   },
         # ]
+
+        # start separated process with event_or_events to be inserted
+
         logging.debug('class:%s insert', __class__)
         process = mp.Process(target=self.process, args=(event_or_events,))
 
