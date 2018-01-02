@@ -10,6 +10,7 @@ from ..converter.csvreadconverter import CSVReadConverter
 
 
 class CSVReader(Reader):
+    """Read data from CSV files"""
 
     csv_file_path = None
     csvfile = None

@@ -2,13 +2,14 @@
 # import airline.ontime test dataset into MySQL
 
 # looking for csv files in this dir
-FILES_TO_IMPORT_DIR="/mnt/nas/work/ontime"
+#FILES_TO_IMPORT_DIR="/mnt/nas/work/ontime"
+FILES_TO_IMPORT_DIR="csv"
 
 # how many files to skip from the beginning of the list
 FILES_TO_SKIP_NUM=0
 
 # how many files to import
-FILES_TO_IMPORT_NUM=3
+FILES_TO_IMPORT_NUM=10
 
 # which file would be the first to import
 FILE_TO_START_IMPORT_FROM=$((FILES_TO_SKIP_NUM+1))

@@ -11,6 +11,7 @@ from ..event.event import Event
 
 
 class CHWriter(Writer):
+    """ClickHouse writer"""
 
     client = None
     dst_schema = None

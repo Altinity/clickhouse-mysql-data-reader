@@ -22,7 +22,7 @@ class Writer(object):
         pass
 
     def listify(self, obj_or_list):
-        """Ensure list"""
+        """Ensure list - create a list from an object as [obj] or keep a list if it is already a list"""
 
         if obj_or_list is None:
             # no value - return empty list
@@ -41,6 +41,7 @@ class Writer(object):
             return [obj_or_list]
 
     def convert(self, data):
+        """Convert an object if we have a converter or just return object 'as is' otherwise"""
         return self.converter_builder.get().convert(data) if self.converter_builder else data
 
     def insert(self, event_or_events=None):

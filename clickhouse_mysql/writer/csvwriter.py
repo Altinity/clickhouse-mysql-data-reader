@@ -10,6 +10,7 @@ from ..event.event import Event
 
 
 class CSVWriter(Writer):
+    """Write CSV files"""
 
     file = None
     path = None
