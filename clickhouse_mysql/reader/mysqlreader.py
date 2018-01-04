@@ -241,8 +241,14 @@ class MySQLReader(Reader):
                             # skip non-insert events
                             pass
                 except Exception as ex:
-                    logging.critical(ex)
-                    sys.exit(1)
+                    if self.blocking:
+                        # we'd like to continue waiting for data
+                        # report and continue cycle
+                        logging.warning(ex)
+                    else:
+                        # do not continue, report error and exit
+                        logging.critical(ex)
+                        sys.exit(1)
 
                 # all events fetched (or none of them available)
 
