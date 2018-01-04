@@ -207,16 +207,24 @@ class CLIOpts(object):
             help='Password to be used when reading from src. Ex.: qwerty'
         )
         argparser.add_argument(
-            '--src-only-schemas',
+            '--src-schemas',
             type=str,
             default='',
             help='Comma-separated list of schemas to be used when reading from src. Ex.: db1,db2,db3'
         )
         argparser.add_argument(
-            '--src-only-tables',
+            '--src-tables',
             type=str,
             default='',
             help='Comma-separated list of tables to be used when reading from src. Ex.: table1,table2,table3'
+        )
+        argparser.add_argument(
+            '--src-tables-prefixes',
+            type=str,
+            default='',
+            help='Comma-separated list of table prefixes to be used when reading from src.'
+                 'Useful when we need to process unknown-in-advance tables, say day-named log tables, as log_2017_12_27'
+                 'Ex.: mylog_,anotherlog_,extralog_3'
         )
         argparser.add_argument(
             '--src-wait',
@@ -325,8 +333,8 @@ class CLIOpts(object):
                     'port': args.src_port,
                     'user': args.src_user,
                     'password': args.src_password,
-                    'dbs': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
-                    'tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+                    'dbs': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
+                    'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
                 },
             },
 
@@ -336,8 +344,8 @@ class CLIOpts(object):
                     'port': args.src_port,
                     'user': args.src_user,
                     'password': args.src_password,
-                    'dbs': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
-                    'tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+                    'dbs': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
+                    'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
                 },
                 'clickhouse': {
                     'connection_settings': {
@@ -360,8 +368,9 @@ class CLIOpts(object):
                         'passwd': args.src_password,
                     },
                     'server_id': args.src_server_id,
-                    'only_schemas': [x for x in args.src_only_schemas.split(',') if x] if args.src_only_schemas else None,
-                    'only_tables': [x for x in args.src_only_tables.split(',') if x] if args.src_only_tables else None,
+                    'schemas': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
+                    'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
+                    'tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
                     'blocking': args.src_wait,
                     'resume_stream': args.src_resume,
                     'nice_pause': 0 if args.nice_pause is None else args.nice_pause,

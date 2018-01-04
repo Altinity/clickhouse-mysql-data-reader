@@ -15,13 +15,17 @@ if [ ! -d "clickhouse_mysql" ]; then
 fi
 
 $PYTHON $CH_MYSQL ${*:1} \
+    --src-server-id=1 \
     --src-resume \
     --src-wait \
     --nice-pause=1 \
-    --log-level=info \
+    --log-level=debug \
     --src-host=127.0.0.1 \
-    --src-user=root \
+    --src-user=reader \
+    --src-password=qwerty \
+    --src-tables-prefix=log_2018 \
     --dst-host=127.0.0.1 \
+    --dst-table=logunified \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --mempool-max-flush-interval=60 \
