@@ -11,18 +11,20 @@ from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, Delete
 from .reader import Reader
 from ..event.event import Event
 from ..tableprocessor import TableProcessor
+from ..util import Util
 #from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
 
 class MySQLReader(Reader):
-    """Read data from MySQL as replication slave"""
+    """Read data from MySQL as replication ls"""
 
     connection_settings = None
     server_id = None
     log_file = None
     log_pos = None
-    only_schemas = None
-    only_tables = None
+    schemas = None
+    tables = None
+    tables_prefixes = None
     blocking = None
     resume_stream = None
     binlog_stream = None
@@ -37,8 +39,9 @@ class MySQLReader(Reader):
             server_id,
             log_file=None,
             log_pos=None,
-            only_schemas=None,
-            only_tables=None,
+            schemas=None,
+            tables=None,
+            tables_prefixes=None,
             blocking=None,
             resume_stream=None,
             nice_pause=None,
@@ -50,28 +53,38 @@ class MySQLReader(Reader):
         self.server_id = server_id
         self.log_file = log_file,
         self.log_pos = log_pos
-        self.only_schemas = None if not TableProcessor.extract_dbs(only_schemas, only_tables) else TableProcessor.extract_dbs(only_schemas, only_tables)
-        self.only_tables = None if only_tables is None else TableProcessor.extract_tables(only_tables)
+        self.schemas = None if not TableProcessor.extract_dbs(schemas, Util.join_lists(tables, tables_prefixes)) else TableProcessor.extract_dbs(schemas, Util.join_lists(tables, tables_prefixes))
+        self.tables = None if tables is None else TableProcessor.extract_tables(tables)
+        self.tables_prefixes = None if tables_prefixes is None else TableProcessor.extract_tables(tables_prefixes)
         self.blocking = blocking
         self.resume_stream = resume_stream
         self.nice_pause = nice_pause
 
-        logging.info("raw dbs list. len()=%d", 0 if only_schemas is None else len(only_schemas))
-        if only_schemas is not None:
-            for schema in only_schemas:
+        logging.info("raw dbs list. len()=%d", 0 if schemas is None else len(schemas))
+        if schemas is not None:
+            for schema in schemas:
                 logging.info(schema)
-        logging.info("normalised dbs list. len()=%d", 0 if self.only_schemas is None else len(self.only_schemas))
-        if self.only_schemas is not None:
-            for schema in self.only_schemas:
+        logging.info("normalised dbs list. len()=%d", 0 if self.schemas is None else len(self.schemas))
+        if self.schemas is not None:
+            for schema in self.schemas:
                 logging.info(schema)
 
-        logging.info("raw tables list. len()=%d", 0 if only_tables is None else len(only_tables))
-        if only_tables is not None:
-            for table in only_tables:
+        logging.info("raw tables list. len()=%d", 0 if tables is None else len(tables))
+        if tables is not None:
+            for table in tables:
                 logging.info(table)
-        logging.info("normalised tables list. len()=%d", 0 if self.only_tables is None else len(self.only_tables))
-        if self.only_tables is not None:
-            for table in self.only_tables:
+        logging.info("normalised tables list. len()=%d", 0 if self.tables is None else len(self.tables))
+        if self.tables is not None:
+            for table in self.tables:
+                logging.info(table)
+
+        logging.info("raw tables-prefixes list. len()=%d", 0 if tables_prefixes is None else len(tables_prefixes))
+        if tables_prefixes is not None:
+            for table in tables_prefixes:
+                logging.info(table)
+        logging.info("normalised tables-prefixes list. len()=%d", 0 if self.tables_prefixes is None else len(self.tables_prefixes))
+        if self.tables_prefixes is not None:
+            for table in self.tables_prefixes:
                 logging.info(table)
 
         if not isinstance(self.server_id, int):
@@ -88,8 +101,9 @@ class MySQLReader(Reader):
             #    UpdateRowsEvent,
             #    DeleteRowsEvent
             ],
-            only_schemas=self.only_schemas,
-            only_tables=self.only_tables,
+            only_schemas=self.schemas,
+            # in case we have any prefixes - this means we need to listen to all tables within specified schemas
+            only_tables=self.tables if not self.tables_prefixes else None,
             log_file=self.log_file,
             log_pos=self.log_pos,
             freeze_schema=True, # If true do not support ALTER TABLE. It's faster.
@@ -98,7 +112,7 @@ class MySQLReader(Reader):
         )
 
     def performance_report(self, start, rows_num, rows_num_per_event_min=None, rows_num_per_event_max=None, now=None):
-        # log performace report
+        # log performance report
 
         if now is None:
             now = time.time()
@@ -117,6 +131,26 @@ class MySQLReader(Reader):
         else:
             logging.info("PERF - can not calc performance for time size=0")
 
+    def is_table_listened(self, table):
+        """
+        Check whether table name in either directly listed in tables or starts with prefix listed in tables_prefixes
+        :param table: table name
+        :return: bool is table listened
+        """
+
+        # check direct table name match
+        if self.tables:
+            if table in self.tables:
+                return True
+
+        # check prefixes
+        if self.tables_prefixes:
+            for prefix in self.tables_prefixes:
+                if table.startswith(prefix):
+                    # table name starts with prefix list
+                    return True
+
+        return False
 
     def read(self):
         # main function - read data from source
@@ -137,7 +171,17 @@ class MySQLReader(Reader):
                 # fetch available events from MySQL
                 try:
                     for mysql_event in self.binlog_stream:
+                        # new event has come
+                        # check what to do with it
                         if isinstance(mysql_event, WriteRowsEvent):
+
+                            if self.tables_prefixes:
+                                # we have prefixes specified
+                                # need to find whether current event is produced by table in 'looking-into-tables' list
+                                if not self.is_table_listened(mysql_event.table):
+                                    # this table is not listened
+                                    # skip event
+                                    continue # for bonlog_stream
 
                             # statistics
                             rows_num_per_event = len(mysql_event.rows)
