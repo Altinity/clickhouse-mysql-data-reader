@@ -21,6 +21,7 @@ class PoolWriter(Writer):
             max_pool_size=10000,
             max_flush_interval=60
     ):
+        logging.info("PoolWriter()")
         self.writer_builder = writer_builder
         self.max_pool_size = max_pool_size
         self.max_flush_interval = max_flush_interval

@@ -25,11 +25,34 @@ class CHWriter(Writer):
             next_writer_builder=None,
             converter_builder=None,
     ):
+        logging.info("CHWriter() connection_settings={} dst_schema={} dst_table={}".format(connection_settings, dst_schema, dst_table))
+        self.verify_connection_settings(connection_settings)
         super().__init__(next_writer_builder=next_writer_builder, converter_builder=converter_builder)
 
         self.client = Client(**connection_settings)
         self.dst_schema = dst_schema
         self.dst_table = dst_table
+
+    def verify_connection_settings(self, connection_settings):
+        if not connection_settings:
+            logging.critical("Need CH connection settings")
+            sys.exit(0)
+
+        if 'host' not in connection_settings:
+            logging.critical("Need CH host in connection settings")
+            sys.exit(0)
+
+        if not connection_settings['host']:
+            logging.critical("Need CH host in connection settings")
+            sys.exit(0)
+
+        if 'port' not in connection_settings:
+            logging.critical("Need CH port in connection settings")
+            sys.exit(0)
+
+        if not connection_settings['port']:
+            logging.critical("Need CH port in connection settings")
+            sys.exit(0)
 
     def insert(self, event_or_events=None):
         # event_or_events = [
@@ -63,6 +86,7 @@ class CHWriter(Writer):
 
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = self.dst_table if self.dst_table else event_converted.table
+        logging.info("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema, self.dst_table))
 
         sql = ''
         try:
@@ -73,10 +97,10 @@ class CHWriter(Writer):
             )
             self.client.execute(sql, rows)
         except Exception as ex:
-            print('QUERY FAILED:')
-            print('ex=', ex)
-            print('sql=', sql)
-            print('rows=', rows)
+            logging.critical('QUERY FAILED')
+            logging.critical('ex={}'.format(ex))
+            logging.critical('sql={}'.format(sql))
+            logging.critical('rows={}'.format(rows))
             sys.exit(0)
 
 

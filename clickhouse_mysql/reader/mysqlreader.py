@@ -156,7 +156,7 @@ class MySQLReader(Reader):
         # main function - read data from source
 
         start_timestamp = int(time.time())
-        first_row = True
+        first_rows_passed = []
         # fetch events
         try:
             while True:
@@ -205,9 +205,10 @@ class MySQLReader(Reader):
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
                                 event.pymysqlreplication_event = mysql_event
-                                if first_row:
+                                if "{}.{}".format(event.schema, event.table) not in first_rows_passed:
                                     Util.log_row(event.first_row(), "first row in replication")
-                                    first_row = False
+                                    first_rows_passed.append("{}.{}".format(event.schema, event.table))
+                                logging.info(first_rows_passed)
                                 self.notify('WriteRowsEvent', event=event)
 
                             if self.subscribers('WriteRowsEvent.EachRow'):
@@ -228,9 +229,10 @@ class MySQLReader(Reader):
                                     event.schema = mysql_event.schema
                                     event.table = mysql_event.table
                                     event.row = row['values']
-                                    if first_row:
+                                    if "{}.{}".format(event.schema, event.table) not in first_rows_passed:
                                         Util.log_row(event.first_row(), "first row in replication")
-                                        first_row = False
+                                        first_rows_passed.append("{}.{}".format(event.schema, event.table))
+                                    logging.info(first_rows_passed)
                                     self.notify('WriteRowsEvent.EachRow', event=event)
 
                             if rows_num_since_interim_performance_report >= 100000:
