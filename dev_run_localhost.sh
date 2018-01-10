@@ -19,7 +19,7 @@ $PYTHON $CH_MYSQL ${*:1} \
     --src-resume \
     --src-wait \
     --nice-pause=1 \
-    --log-level=debug \
+    --log-level=info \
     --src-host=127.0.0.1 \
     --src-user=reader \
     --src-password=qwerty \
