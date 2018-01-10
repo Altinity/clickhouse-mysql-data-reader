@@ -219,6 +219,12 @@ class CLIOpts(object):
             help='Comma-separated list of tables to be used when reading from src. Ex.: table1,table2,table3'
         )
         argparser.add_argument(
+            '--src-tables-where-clauses',
+            type=str,
+            default='',
+            help='Comma-separated list of WHERE clauses for tables to be migrated. Ex.: db1.t1="a=1 and b=2",db2.t2="c=3 and k=4"'
+        )
+        argparser.add_argument(
             '--src-tables-prefixes',
             type=str,
             default='',
@@ -346,6 +352,7 @@ class CLIOpts(object):
                     'password': args.src_password,
                     'dbs': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
                     'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
+                    'tables_where_clauses': [x for x in args.src_tables_where_clauses.split(',') if x] if args.src_tables_where_clauses else None,
                 },
                 'clickhouse': {
                     'connection_settings': {

@@ -11,16 +11,27 @@ from .writer import Writer
 class CHCSVWriter(Writer):
     """Write into ClickHouse via CSV file and clickhouse-client tool"""
 
+    dst_schema = None
+    dst_table = None
+
     host = None
     port = None
     user = None
     password = None
 
-    def __init__(self, host=None, port=None, user=None, password=None):
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
+    def __init__(
+            self,
+            connection_settings,
+            dst_schema=None,
+            dst_table=None,
+    ):
+        logging.info("CHCSWriter() connection_settings={} dst_schema={} dst_table={}".format(connection_settings, dst_schema, dst_table))
+        self.host = connection_settings['host']
+        self.port = connection_settings['port']
+        self.user = connection_settings['user']
+        self.password = connection_settings['password']
+        self.dst_schema = dst_schema
+        self.dst_table = dst_table
 
     def insert(self, event_or_events=None):
         # event_or_events = [
@@ -42,9 +53,12 @@ class CHCSVWriter(Writer):
         logging.debug('class:%s insert %d rows', __class__, len(events))
 
         for event in events:
+            schema = self.dst_schema if self.dst_schema else event.schema
+            table = self.dst_table if self.dst_table else event.table
+
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) FORMAT CSV'.format(
-                event.schema,
-                event.table,
+                schema,
+                table,
                 ', '.join(map(lambda column: '`%s`' % column, event.fieldnames)),
             )
 
