@@ -66,6 +66,9 @@ class Event(object):
             # local-kept data
             return item
 
+    def first_row(self):
+        return next(iter(self or []), None)
+
     def verify(self):
         # verify Event has correct data structure
 
