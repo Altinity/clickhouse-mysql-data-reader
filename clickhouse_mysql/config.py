@@ -69,7 +69,7 @@ class Config(object):
         return self.config['app-config']['table-migrate']
 
     def table_migrator(self):
-        return TableMigrator(**self.config['table-builder-config']['mysql'])
+        return TableMigrator(**self.config['table-migrator-config']['mysql'])
 
     def reader(self):
         if self.config['reader-config']['file']['csv_file_path']:
@@ -94,7 +94,7 @@ class Config(object):
                     **self.config['writer-config']['file'],
                     'next_writer_builder': ObjectBuilder(
                         class_name=CHCSVWriter,
-                        constructor_params=self.config['writer-config']['clickhouse']['connection_settings']
+                        constructor_params=self.config['writer-config']['clickhouse']
                     ),
                     'converter_builder': self.converter_builder(),
                 })

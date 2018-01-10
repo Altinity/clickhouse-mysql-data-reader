@@ -34,6 +34,20 @@ class CSVWriter(Writer):
             next_writer_builder=None,
             converter_builder=None,
     ):
+        logging.info("CSVWriter() "
+            "csv_file_path={} "
+            "csv_file_path_prefix={} "
+            "csv_file_path_suffix_parts={} "
+            "csv_keep_file={} "
+            "dst_schema={} "
+            "dst_table={} ".format(
+            csv_file_path,
+            csv_file_path_prefix,
+            csv_file_path_suffix_parts,
+            csv_keep_file,
+            dst_schema,
+            dst_table,
+        ))
         super().__init__(next_writer_builder=next_writer_builder, converter_builder=converter_builder)
 
         self.path = csv_file_path
@@ -45,6 +59,8 @@ class CSVWriter(Writer):
         if self.path is None:
             self.path = self.path_prefix + '_'.join(self.path_suffix_parts) + '.csv'
             self.delete = not csv_keep_file
+
+        logging.info("CSVWriter() self.path={}".format(self.path))
 
     def __del__(self):
         self.destroy()
