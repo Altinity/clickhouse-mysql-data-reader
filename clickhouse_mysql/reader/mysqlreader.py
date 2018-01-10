@@ -156,6 +156,7 @@ class MySQLReader(Reader):
         # main function - read data from source
 
         start_timestamp = int(time.time())
+        first_row = True
         # fetch events
         try:
             while True:
@@ -181,7 +182,7 @@ class MySQLReader(Reader):
                                 if not self.is_table_listened(mysql_event.table):
                                     # this table is not listened
                                     # skip event
-                                    continue # for bonlog_stream
+                                    continue # for binlog_stream
 
                             # statistics
                             rows_num_per_event = len(mysql_event.rows)
@@ -204,6 +205,9 @@ class MySQLReader(Reader):
                                 event.schema = mysql_event.schema
                                 event.table = mysql_event.table
                                 event.pymysqlreplication_event = mysql_event
+                                if first_row:
+                                    Util.log_row(event.first_row(), "first row in replication")
+                                    first_row = False
                                 self.notify('WriteRowsEvent', event=event)
 
                             if self.subscribers('WriteRowsEvent.EachRow'):
@@ -224,6 +228,9 @@ class MySQLReader(Reader):
                                     event.schema = mysql_event.schema
                                     event.table = mysql_event.table
                                     event.row = row['values']
+                                    if first_row:
+                                        Util.log_row(event.first_row(), "first row in replication")
+                                        first_row = False
                                     self.notify('WriteRowsEvent.EachRow', event=event)
 
                             if rows_num_since_interim_performance_report >= 100000:
