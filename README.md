@@ -6,8 +6,8 @@
 
  * [Introduction](#introduction)
  * [Requirements and Installation](#requirements-and-installation)
-   * [PyPi installation](#pypi-installation)
-   * [Clone Sources from GitHub](#clone-sources-from-github)
+   * [PyPi Installation](#pypi-installation)
+   * [GitHub-based Installation - Clone Sources](#github-based-installation---clone-sources)
    * [MySQL setup](#mysql-setup)
  * [Operation](#operation)
    * [Requirements and Limitations](#requirements-and-limitations)
@@ -15,10 +15,14 @@
    * [Performance](#performance)
  * [Examples](#examples)
    * [Base Example](#base-example)
-   * [MySQL Migration Case](#mysql-migration-case)
-     * [MySQL Migration Case - Create ClickHouse Table](#mysql-migration-case---create-clickhouse-table)
-     * [MySQL Migration Case - Migrate Existing Data](#mysql-migration-case---migrate-existing-data)
-     * [MySQL Migration Case - Listen For New Data](#mysql-migration-case---listen-for-new-data)
+   * [MySQL Migration Case 1 - with Tables Lock](#mysql-migration-case-1---with-tables-lock)
+     * [MySQL Migration Case 1 - Create ClickHouse Table](#mysql-migration-case-1---create-clickhouse-table)
+     * [MySQL Migration Case 1 - Migrate Existing Data](#mysql-migration-case-1---migrate-existing-data)
+     * [MySQL Migration Case 1 - Listen For New Data](#mysql-migration-case-1---listen-for-new-data)
+   * [MySQL Migration Case 2 - without Tables Lock](#mysql-migration-case-2---without-tables-lock)
+     * [MySQL Migration Case 2 - Create ClickHouse Table](#mysql-migration-case-2---create-clickhouse-table)
+     * [MySQL Migration Case 2 - Listen For New Data](#mysql-migration-case-2---listen-for-new-data)
+     * [MySQL Migration Case 2 - Migrate Existing Data](#mysql-migration-case-2---migrate-existing-data)
    * [airline.ontime Test Case](#airlineontime-test-case)
      * [airline.ontime Data Set in CSV files](#airlineontime-data-set-in-csv-files)
      * [airline.ontime MySQL Table](#airlineontime-mysql-table)
@@ -47,7 +51,7 @@ However, you may have it called differently.
 
 Datareader can be installed either from `github` repo or from `pypi` repo.
 
-## PyPi installation
+## PyPi Installation
 In case you need just to use the app - this is the most convenient way to go.
 
 Install dependencies:
@@ -67,7 +71,7 @@ Now we are able to call datareader as an app
 /usr/bin/clickhouse-mysql
 ```
 
-## Clone Sources from GitHub
+## GitHub-based Installation - Clone Sources
 In case you'd like to play around with the sources this is the way to go.
 
 Install dependencies: 
@@ -232,7 +236,7 @@ Options description
   * `--mempool-max-flush-interval=60` - flush mempool at least every 60 seconds
   * `--mempool-max-events-num=1000` - flush mempool at least each 1000 events (not rows, but events)
 
-## MySQL Migration Case
+## MySQL Migration Case 1 - with Tables Lock
 
 Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
 
@@ -248,7 +252,7 @@ mysql> SELECT COUNT(*) FROM airline.ontime;
 MySQL is already configured as [described earlier](#mysql-setup).
 Let's migrate existing data to ClickHouse and listen for newly coming data in order to migrate them to CLickHouse on-the-fly.
 
-### MySQL Migration Case - Create ClickHouse Table
+### MySQL Migration Case 1 - Create ClickHouse Table
 
 Create ClickHouse table description
 ```bash
@@ -280,7 +284,7 @@ Create table in ClickHouse
 clickhouse-client -mn < create_clickhouse.sql
 ```
 
-### MySQL Migration Case - Migrate Existing Data
+### MySQL Migration Case 1 - Migrate Existing Data
 
 Lock MySQL in order to avoid new data coming while data migration is running. Keep `mysql` client open during the whole process
 ```mysql
@@ -310,7 +314,7 @@ FROM airline.ontime
 └─────────┘
 ```
 
-### MySQL Migration Case - Listen For New Data
+### MySQL Migration Case 1 - Listen For New Data
 
 Start `clickhouse-mysql` as a replication slave, so it will listen for new data coming:
 ```bash
@@ -357,6 +361,11 @@ FROM airline.ontime
 │ 10259952 │
 └──────────┘
 ```
+
+## MySQL Migration Case 2 - without Tables Lock
+### MySQL Migration Case 2 - Create ClickHouse Table
+### MySQL Migration Case 2 - Listen For New Data
+### MySQL Migration Case 2 - Migrate Existing Data
 
 ## airline.ontime Test Case
 
