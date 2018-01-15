@@ -206,7 +206,7 @@ class MySQLReader(Reader):
                                 event.table = mysql_event.table
                                 event.pymysqlreplication_event = mysql_event
                                 if "{}.{}".format(event.schema, event.table) not in first_rows_passed:
-                                    Util.log_row(event.first_row(), "first row in replication")
+                                    Util.log_row(event.first_row(), "first row in replication {}.{}".format(mysql_event.schema, mysql_event.table))
                                     first_rows_passed.append("{}.{}".format(event.schema, event.table))
                                 logging.info(first_rows_passed)
                                 self.notify('WriteRowsEvent', event=event)
@@ -230,7 +230,7 @@ class MySQLReader(Reader):
                                     event.table = mysql_event.table
                                     event.row = row['values']
                                     if "{}.{}".format(event.schema, event.table) not in first_rows_passed:
-                                        Util.log_row(event.first_row(), "first row in replication")
+                                        Util.log_row(event.first_row(), "first row in replication {}.{}".format(mysql_event.schema, mysql_event.table))
                                         first_rows_passed.append("{}.{}".format(event.schema, event.table))
                                     logging.info(first_rows_passed)
                                     self.notify('WriteRowsEvent.EachRow', event=event)

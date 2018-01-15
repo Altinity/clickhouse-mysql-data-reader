@@ -341,6 +341,7 @@ class CLIOpts(object):
                     'password': args.src_password,
                     'dbs': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
                     'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
+                    'tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
                 },
             },
 
@@ -352,6 +353,7 @@ class CLIOpts(object):
                     'password': args.src_password,
                     'dbs': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
                     'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
+                    'tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
                     'tables_where_clauses': [x for x in args.src_tables_where_clauses.split(',') if x] if args.src_tables_where_clauses else None,
                 },
                 'clickhouse': {

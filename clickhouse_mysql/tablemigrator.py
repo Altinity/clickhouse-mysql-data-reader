@@ -24,6 +24,7 @@ class TableMigrator(TableProcessor):
             password=None,
             dbs=None,
             tables=None,
+            tables_prefixes=None,
             tables_where_clauses=None,
     ):
         super().__init__(
@@ -33,6 +34,7 @@ class TableMigrator(TableProcessor):
             password=password,
             dbs=dbs,
             tables=tables,
+            tables_prefixes=tables_prefixes,
         )
 
         if not tables_where_clauses:

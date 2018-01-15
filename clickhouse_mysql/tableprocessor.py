@@ -18,6 +18,7 @@ class TableProcessor(object):
     password = None
     dbs = None
     tables = None
+    tables_prefixes = None
 
     ACTION_FAIL = 1
     ACTION_IGNORE_TABLE = 2
@@ -30,15 +31,17 @@ class TableProcessor(object):
             user=None,
             password=None,
             dbs=None,
-            tables=None
+            tables=None,
+            tables_prefixes=None,
     ):
         """
         :param host: string MySQL host
         :param port: int MySQL port
         :param user: string MySQL user
         :param password: string MySQL password
-        :param dbs: list of string MySQL datatabse/ May be omitted, in this case tables has to contain full table names, Ex.: db.table1
-        :param tables: list of string list of table names. May be short (in case db specified) or full (in the form db.table, in case no db specified)
+        :param dbs: list of string MySQL datatabse. May be omitted, in this case tables has to contain full table names, Ex.: db.table1
+        :param tables: list of string list of table names. Table names may be short or full form
+        :param tables_prefixes: list of string list of table prefixes. May be short or full form
         """
         self.host = host
         self.port = port
@@ -46,6 +49,7 @@ class TableProcessor(object):
         self.password = password
         self.dbs = [] if dbs is None else dbs
         self.tables = [] if tables is None else tables
+        self.tables_prefixes = [] if tables_prefixes is None else tables_prefixes
 
     def disconnect(self):
         """
@@ -82,6 +86,12 @@ class TableProcessor(object):
                 cursorclass=self.cursorclass,
             )
             self.cursor = self.connection.cursor()
+            logging.debug("Connect to the database host={} user={} password={} db={}".format(
+                self.host,
+                self.user,
+                self.password,
+                db
+            ))
         except:
             raise Exception("Can not connect to the database host={} user={} password={} db={}".format(
                 self.host,
@@ -100,23 +110,49 @@ class TableProcessor(object):
         :return:
         {
             'db1' : ('table1', 'table2', ...),
-            'db2' : (),
-            'db3' : ('table1', ),
+            'db2' : (all tables listed in 'db2'),
+            'db3' : ('table1', ...),
         }
         """
 
-        # prepare initial list of tables for each db
+        # process explicitly specified tables
+        # prepare list of tables for each db
         res = TableProcessor.group_tables(self.dbs, self.tables)
         if res is None:
-            # can't group tables
+            logging.warning("Can't group tables for explicitly specified db/tables")
             return None
+        else:
+            logging.debug("{} group tables for explicitly specified db/tables".format(res))
 
+        # process implicitly specified tables - when db name only specified and we add all tables from this db
         # for dbs with no tables list specified - meaning all tables - list tables directly from DB
         for db in res:
             if not res[db]:
                 # no tables in db, try to add all tables from DB
-                res[db].add(self.tables_list(db))
+                tables = self.tables_list(db)
+                res[db].add(tables)
+                logging.debug("add {} tables to {} db".format(tables, db))
 
+        # process tables specified with prefix
+        # prepare list of prefixes
+        prefixes = TableProcessor.group_tables(tables=self.tables_prefixes)
+        logging.debug("{} group tables for prefix specified db/tables".format(prefixes))
+        for db, prefixes in prefixes.items():
+            for prefix in prefixes:
+                # match all tables for specified prefix
+                tables_match = self.tables_match(db, prefix)
+                if tables_match:
+                    logging.debug("{} tables match prefix {}.{}".format(tables_match, db, prefix))
+                    # we have tables which match specified prefix
+                    for table in tables_match:
+                        # ensure {'db': set()}
+                        if db not in res:
+                            res[db] = set()
+                        # add table to the set of tables
+                        res[db].add(table)
+                else:
+                    logging.debug("No tables match prefix {}.{}".format(db, prefix))
+        # dict of sets
         return res
 
     def tables_list(self, db):
@@ -128,11 +164,21 @@ class TableProcessor(object):
         """
         try:
             self.connect(db=db)
-            self.cursor.execute("USE " + db)
-            self.cursor.execute("SHOW TABLES")
+
+            sql = "USE " + db
+            logging.debug(sql)
+            self.cursor.execute(sql)
+
+            sql = "SHOW TABLES"
+            logging.debug(sql)
+            self.cursor.execute(sql)
+
             tables = []
-            for (table_name,) in self.cursor:
+            for row in self.cursor:
+                logging.debug("table: {}".format(row))
+                table_name = row['Tables_in_db']
                 tables.append(table_name)
+
         except:
             raise Exception("Can not list tables on host={} user={} password={} db={}".format(
                 self.host,
@@ -142,6 +188,25 @@ class TableProcessor(object):
             ))
 
         return tables
+
+    def tables_match(self, db, prefix):
+        """
+        List tables which match specified prefix
+
+        :param db: database to match tables in
+        :param prefix: prefix to match tables
+        :return: ['table1', 'table2', ...]
+        """
+        res = []
+        # list all tables in db
+        tables = self.tables_list(db)
+        logging.debug("{} tables {}".format(db, tables))
+        for table in tables:
+            logging.debug("check {}.{} match prefix {}".format(db, table, prefix))
+            if table.startswith(prefix):
+                res.append(table)
+                logging.debug("{}.{} match prefix {}".format(db, table, prefix))
+        return res
 
     @staticmethod
     def create_full_table_name(db=None, table=None):
@@ -193,14 +258,17 @@ class TableProcessor(object):
         For convenient iteration over all tables
         :param dbs [ db1, db2, ... ]
         :param tables [ db1.table1, table2, ... ]
-        :param unsettled_tables_action ignore table in case can't decide which db it belongs to.
-            In case True specified function proceeds
-            In case False specified function returns None meaning "can't group tables"
+        :param unsettled_tables_action what to do with a table in case can't decide which db it belongs to.
+            See ACTION_* values for full list of possible actions
+            ACTION_FAIL - return None
+            ACTION_IGNORE_TABLE - ignore table
+            ACTION_INCLUDE_TABLE - add table to special db called '_' (just in order to include it somewhere)
         :return:
         {
             'db1' : ('table1', 'table2', ...),
             'db2' : (),
             'db3' : ('table1', ...),
+            '_' : ('tableX', 'tableY', ...),
         }
         OR
         None
@@ -227,6 +295,7 @@ class TableProcessor(object):
                 full_name_tables.add(table)
             else:
                 short_name_tables.add(table)
+
         # now - what to do with short-name tables
         # if there is only one db name in dbs list we can treat this short tables as belonging to this one table
         # but if there is none OR many dbs listed, where those short-named tables should be included?
@@ -246,6 +315,8 @@ class TableProcessor(object):
                     # fail process
                     return None
                 else:
+                    # include table
+                    # use fake '_' db for this
                     if '_' not in res:
                         res['_'] = set()
                     res['_'].update(short_name_tables)
