@@ -364,7 +364,7 @@ FROM airline.ontime
 
 ## MySQL Migration Case 2 - without Tables Lock
 Suppose we'd like to migrate multiple log tables of the same structure named as `log_XXX` - i.e. all of them has `log_` name prefix
-into one ClickHouse table names `logunified` of the following structure
+into one ClickHouse table named `logunified` of the following structure
 ```sql
 DESCRIBE TABLE logunified
 
@@ -417,8 +417,9 @@ Pay attention to
     --src-tables-prefixes=log_ \
     --dst-table=logunified \
 ```
+Replication data from multiple tables into one destination table `--dst-table=logunified`. 
 
-Monitor logs for `first row in replication` notification of the following structure
+Monitor logs for `first row in replication` notification of the following structure:
 ```bash
 INFO:first row in replication db.log_201801_2
 column: id=1727834
@@ -455,6 +456,19 @@ Values for where clause in  `db.log_201801_1.sql` are fetched from `first row in
 ```bash
 cat db.log_201801_1.sql 
 id < 1727831
+```
+
+Result:
+```sql
+:) select count(*) from logunified;
+
+SELECT count(*)
+FROM logunified 
+
+┌──count()─┐
+│ 12915568 │
+└──────────┘
+
 ```
 
 ## airline.ontime Test Case
