@@ -363,7 +363,7 @@ FROM airline.ontime
 ```
 
 ## MySQL Migration Case 2 - without Tables Lock
-Suppose we'd like to migrate multiple log tables of the same structure named as `log_XXX` - i.e. all of them has `log_` name prefix
+Suppose we'd like to migrate multiple log tables of the same structure named as `log_XXX` - i.e. all of them have `log_` name prefix
 into one ClickHouse table named `logunified` of the following structure
 ```sql
 DESCRIBE TABLE logunified
