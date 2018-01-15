@@ -363,9 +363,99 @@ FROM airline.ontime
 ```
 
 ## MySQL Migration Case 2 - without Tables Lock
+Suppose we'd like to migrate multiple log tables of the same structure named as `log_XXX` - i.e. all of them has `log_` name prefix
+into one ClickHouse table names `logunified` of the following structure
+```sql
+DESCRIBE TABLE logunified
+
+┌─name─┬─type───┬─default_type─┬─default_expression─┐
+│ id   │ UInt64 │              │                    │
+│ day  │ Date   │              │                    │
+│ str  │ String │              │                    │
+└──────┴────────┴──────────────┴────────────────────┘
+```
+Log tables by nature are `INSERT`-only tables. Let's migrate these tables.
+ 
 ### MySQL Migration Case 2 - Create ClickHouse Table
+Prepare tables templates in `create_clickhouse.sql` file 
+```bash
+clickhouse-mysql \
+    --src-host=127.0.0.1 \
+    --src-user=reader \
+    --src-password=qwerty \
+    --table-templates-with-create-database \
+    --src-tables-prefixes=db.log_ > create_clickhouse.sql
+```
+Edit templates
+```bash
+vim create_clickhouse.sql
+```
+And create tables in ClickHouse
+```bash
+
+clickhouse-client -mn < create_clickhouse.sql
+```
+
 ### MySQL Migration Case 2 - Listen For New Data
+```bash
+clickhouse-mysql \
+    --src-server-id=1 \
+    --src-resume \
+    --src-wait \
+    --nice-pause=1 \
+    --log-level=info \
+    --src-host=127.0.0.1 \
+    --src-user=reader \
+    --src-password=qwerty \
+    --src-tables-prefixes=log_ \
+    --dst-host=127.0.0.1 \
+    --dst-table=logunified \
+    --csvpool
+```
+Pay attention to 
+```bash
+    --src-tables-prefixes=log_ \
+    --dst-table=logunified \
+```
+
+Monitor logs for `first row in replication` notification of the following structure
+```bash
+INFO:first row in replication db.log_201801_2
+column: id=1727834
+column: day=2018-01-20
+column: str=data event 3
+```
+These records help us to create SQL statement for Data Migration process. 
+Sure, we can peek into MySQL database manually in order to understand what records would be the last to be copied by migration process.
+
 ### MySQL Migration Case 2 - Migrate Existing Data
+
+```bash
+clickhouse-mysql \
+     --src-host=127.0.0.1 \
+     --src-user=reader \
+     --src-password=qwerty \
+     --table-migrate \
+     --src-tables-prefixes=db.log_ \
+     --src-tables-where-clauses=db.log_201801_1=db.log_201801_1.sql,db.log_201801_2=db.log_201801_2.sql,db.log_201801_3=db.log_201801_3.sql \
+     --dst-host=127.0.0.1 \
+     --dst-table=logunified \
+     --csvpool
+```
+
+Pay attention to
+```bash
+     --src-tables-prefixes=db.log_ \
+     --src-tables-where-clauses=db.log_201801_1=db.log_201801_1.sql,db.log_201801_2=db.log_201801_2.sql,db.log_201801_3=db.log_201801_3.sql \
+     --dst-table=logunified \
+```
+Migration subset of data described in `--src-tables-where-clauses` files from multiple tables into one destination table `--dst-table=logunified` 
+
+Values for where clause in  `db.log_201801_1.sql` are fetched from `first row in replication` log: `INFO:first row in replication db.log_201801_1` 
+```bash
+cat db.log_201801_1.sql 
+id < 1727831
+```
 
 ## airline.ontime Test Case
 
