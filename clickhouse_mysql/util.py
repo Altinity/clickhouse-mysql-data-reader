@@ -19,12 +19,10 @@ class Util(object):
     @staticmethod
     def log_row(row, header="log row"):
         log_row = header + "\n";
-        log_row += "log row start\n"
         if isinstance(row, dict):
             for column, value in row.items():
-                log_row += "row: {}={}\n".format(column, value)
+                log_row += "column: {}={}\n".format(column, value)
         else:
             for value in row:
-                log_row += "row: {}\n".format(value)
-        log_row += "log row end"
+                log_row += "value: {}\n".format(value)
         logging.info(log_row)
