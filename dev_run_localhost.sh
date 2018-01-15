@@ -23,7 +23,7 @@ $PYTHON $CH_MYSQL ${*:1} \
     --src-host=127.0.0.1 \
     --src-user=reader \
     --src-password=qwerty \
-    --src-tables-prefixes=log_2018 \
+    --src-tables-prefixes=log_ \
     --dst-host=127.0.0.1 \
     --dst-table=logunified \
     --csvpool \
