@@ -5,10 +5,12 @@ from .converter import Converter
 
 import datetime
 import decimal
+import logging
 
 
 class CHWriteConverter(Converter):
 
+    # do not include empty columns into converted row
     delete_empty_columns = False
 
     types_to_convert = [
@@ -25,30 +27,37 @@ class CHWriteConverter(Converter):
         set,
     ]
 
+    def __init__(self):
+        logging.debug("CHWriteConverter __init__()")
+
+    def convert_column(self, column, value):
+        for _type in self.types_to_convert:
+            if isinstance(value, _type):
+                # print("Converting column", column, "of type", type(event.row[column]), event.row[column])
+                return str(value)
+        # print("Using asis column", column, "of type", type(event.row[column]))
+        return value
+
     def row(self, row):
+        """
+        Convert row
+        :param row: row to convert
+        :return:  converted row
+        """
         if row is None:
             return None
 
         columns_to_delete = []
 
         for column in row:
+            # convert column
+            row[column] = self.convert_colum(column, row[column])
+
+            # include empty column to the list of to be deleted columns
             if (row[column] is None) and self.delete_empty_columns:
-                # include empty column to the list of to be deleted columns
                 columns_to_delete.append(column)
-                # move to next column
-                continue
 
-            for t in self.types_to_convert:
-                if isinstance(row[column], t):
-                    # print("Converting column", column, "of type", type(event.row[column]), event.row[column])
-                    row[column] = str(row[column])
-                    # print("res", event.row[column])
-                    break
-            else:
-                # print("Using asis column", column, "of type", type(event.row[column]))
-                pass
-
-        # delete columns according to the list
+        # delete columns according to the list of columns to delete
         for column in columns_to_delete:
             row.pop(column)
 
