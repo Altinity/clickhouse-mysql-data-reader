@@ -4,9 +4,9 @@
 import csv
 import os
 
-from .reader import Reader
-from ..event.event import Event
-from ..converter.csvreadconverter import CSVReadConverter
+from clickhouse_mysql.reader.reader import Reader
+from clickhouse_mysql.event.event import Event
+from clickhouse_mysql.converter.csvreadconverter import CSVReadConverter
 
 
 class CSVReader(Reader):

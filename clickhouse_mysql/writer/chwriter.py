@@ -6,8 +6,8 @@ import sys
 
 from clickhouse_driver.client import Client
 
-from .writer import Writer
-from ..event.event import Event
+from clickhouse_mysql.writer.writer import Writer
+from clickhouse_mysql.event.event import Event
 
 
 class CHWriter(Writer):

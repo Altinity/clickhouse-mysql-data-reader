@@ -1,20 +1,25 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .reader.mysqlreader import MySQLReader
-from .reader.csvreader import CSVReader
+from clickhouse_mysql.reader.mysqlreader import MySQLReader
+from clickhouse_mysql.reader.csvreader import CSVReader
 
-from .writer.chwriter import CHWriter
-from .writer.csvwriter import CSVWriter
-from .writer.chcsvwriter import CHCSVWriter
-from .writer.poolwriter import PoolWriter
-from .writer.processwriter import ProcessWriter
-from .objectbuilder import ObjectBuilder
+from clickhouse_mysql.writer.chwriter import CHWriter
+from clickhouse_mysql.writer.csvwriter import CSVWriter
+from clickhouse_mysql.writer.chcsvwriter import CHCSVWriter
+from clickhouse_mysql.writer.poolwriter import PoolWriter
+from clickhouse_mysql.writer.processwriter import ProcessWriter
+from clickhouse_mysql.objectbuilder import ObjectBuilder
 
-from .converter.csvwriteconverter import CSVWriteConverter
-from .converter.chwriteconverter import CHWriteConverter
-from .tablebuilder import TableBuilder
-from .tablemigrator import TableMigrator
+from clickhouse_mysql.converter.csvwriteconverter import CSVWriteConverter
+from clickhouse_mysql.converter.chwriteconverter import CHWriteConverter
+from clickhouse_mysql.tablebuilder import TableBuilder
+from clickhouse_mysql.tablemigrator import TableMigrator
+
+from clickhouse_mysql.util import Util
+
+CONVERTER_CSV = 1
+CONVERTER_CH = 2
 
 class Config(object):
 
@@ -77,15 +82,25 @@ class Config(object):
         else:
             return MySQLReader(**self.config['reader-config']['mysql'])
 
-    def converter_builder(self):
-        if not self.config['converter-config']['csv']['column_default_value']:
-            # no default values for CSV columns provided
-            return None
-
-        return ObjectBuilder(
-            instance=CSVWriteConverter(
-                defaults=self.config['converter-config']['csv']['column_default_value']
-            ))
+    def converter_builder(self, which):
+        if which == CONVERTER_CSV:
+            if not self.config['converter-config']['csv']['column_default_value']:
+                # no default values for CSV columns provided
+                return None
+            else:
+                # default values for CSV columns provided
+                return ObjectBuilder(
+                    instance=CSVWriteConverter(
+                        defaults=self.config['converter-config']['csv']['column_default_value']
+                    ))
+        elif which == CONVERTER_CH:
+            if not self.config['converter-config']['clickhouse']['converter_file'] or not self.config['converter-config']['clickhouse']['converter_class']:
+                # default converter
+                return ObjectBuilder(instance=CHWriteConverter())
+            else:
+                # explicitly specfied converter
+                _class = Util.class_from_file(self.config['converter-config']['clickhouse']['converter_file'], self.config['converter-config']['clickhouse']['converter_class'])
+                return ObjectBuilder(instance=_class())
 
     def writer_builder(self):
         if self.config['app-config']['csvpool']:
@@ -96,20 +111,20 @@ class Config(object):
                         class_name=CHCSVWriter,
                         constructor_params=self.config['writer-config']['clickhouse']
                     ),
-                    'converter_builder': self.converter_builder(),
+                    'converter_builder': self.converter_builder(CONVERTER_CSV),
                 })
             })
 
         elif self.config['writer-config']['file']['csv_file_path']:
             return ObjectBuilder(class_name=CSVWriter, constructor_params={
                 **self.config['writer-config']['file'],
-                'converter_builder': self.converter_builder(),
+                'converter_builder': self.converter_builder(CONVERTER_CSV),
             })
 
         else:
             return ObjectBuilder(class_name=CHWriter, constructor_params={
                 **self.config['writer-config']['clickhouse'],
-                'converter_builder': ObjectBuilder(instance=CHWriteConverter()),
+                'converter_builder': self.converter_builder(CONVERTER_CH),
             })
 
     def writer(self):
@@ -121,3 +136,17 @@ class Config(object):
             )
         else:
             return self.writer_builder().get()
+
+    def class_from_file(self, file, class_name):
+        """
+
+        :param file: /path/to/file.py
+        :param classname: CHWriteConverter
+        :return:
+        """
+        spec = importlib.util.spec_from_file_location("custom.module", file)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _class = globals()["custom.module.{}".format(class_name)]
+        instance = _class()
+        return instance

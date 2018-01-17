@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .tableprocessor import TableProcessor
+from clickhouse_mysql.tableprocessor import TableProcessor
 
 
 class TableBuilder(TableProcessor):

@@ -8,10 +8,10 @@ import sys
 from pymysqlreplication import BinLogStreamReader
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
 
-from .reader import Reader
-from ..event.event import Event
-from ..tableprocessor import TableProcessor
-from ..util import Util
+from clickhouse_mysql.reader.reader import Reader
+from clickhouse_mysql.event.event import Event
+from clickhouse_mysql.tableprocessor import TableProcessor
+from clickhouse_mysql.util import Util
 #from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
 
