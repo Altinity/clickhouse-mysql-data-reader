@@ -30,6 +30,7 @@ class Util(object):
                 log_row += "value: {}\n".format(value)
         logging.info(log_row)
 
+    @staticmethod
     def class_from_file(file_name, class_name):
         logging.info("sys.path")
         logging.info(pprint.pformat(sys.path))
