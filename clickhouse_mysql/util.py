@@ -3,6 +3,9 @@
 
 
 import logging
+import pprint
+import sys
+import importlib.util
 
 
 class Util(object):
@@ -26,3 +29,12 @@ class Util(object):
             for value in row:
                 log_row += "value: {}\n".format(value)
         logging.info(log_row)
+
+    def class_from_file(file_name, class_name):
+        logging.info("sys.path")
+        logging.info(pprint.pformat(sys.path))
+        spec = importlib.util.spec_from_file_location("file_module", file_name)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        _class = getattr(module, class_name)
+        return _class

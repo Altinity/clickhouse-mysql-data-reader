@@ -5,8 +5,8 @@ import csv
 import os.path
 import logging
 
-from .writer import Writer
-from ..event.event import Event
+from clickhouse_mysql.writer.writer import Writer
+from clickhouse_mysql.event.event import Event
 
 
 class CSVWriter(Writer):

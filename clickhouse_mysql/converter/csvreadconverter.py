@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .converter import Converter
+from clickhouse_mysql.converter.converter import Converter
 import ast
 
 

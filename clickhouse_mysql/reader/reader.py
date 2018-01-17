@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ..observable import Observable
+from clickhouse_mysql.observable import Observable
 
 
 class Reader(Observable):
