@@ -4,7 +4,7 @@
 import argparse
 import logging
 
-from .config import Config
+from clickhouse_mysql.config import Config
 
 
 class CLIOpts(object):
@@ -75,6 +75,9 @@ class CLIOpts(object):
             epilog='==============='
         )
 
+        #
+        # general app section
+        #
         argparser.add_argument(
             '--config-file',
             type=str,
@@ -176,6 +179,9 @@ class CLIOpts(object):
             help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse already! See --table-templates option(s) for help.'
         )
 
+        #
+        # src section
+        #
         argparser.add_argument(
             '--src-server-id',
             type=int,
@@ -249,6 +255,9 @@ class CLIOpts(object):
             help='Source file to read data from. CSV'
         )
 
+        #
+        # dst section
+        #
         argparser.add_argument(
             '--dst-file',
             type=str,
@@ -292,6 +301,9 @@ class CLIOpts(object):
             help='Table to be used when writing to dst. Ex.: table1'
         )
 
+        #
+        # converters section
+        #
         argparser.add_argument(
             '--csv-column-default-value',
             type=str,
@@ -299,6 +311,18 @@ class CLIOpts(object):
             action='append',
             default=None,
             help='Set of key=value pairs for columns default values. Ex.: date_1=2000-01-01 timestamp_1=2002-01-01\ 01:02:03'
+        )
+        argparser.add_argument(
+            '--ch-converter-file',
+            type=str,
+            default=None,
+            help='Filename where to search for CH converter class'
+        )
+        argparser.add_argument(
+            '--ch-converter-class',
+            type=str,
+            default=None,
+            help='Converter class name in --ch-converter-file file'
         )
 
         args = argparser.parse_args()
@@ -326,7 +350,8 @@ class CLIOpts(object):
 
             'converter-config': {
                 'clickhouse': {
-
+                    'converter_file': args.ch_converter_file,
+                    'converter_class': args.ch_converter_class,
                 },
                 'csv': {
                     'column_default_value': CLIOpts.join(args.csv_column_default_value),

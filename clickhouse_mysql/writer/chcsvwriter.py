@@ -5,7 +5,7 @@ import os
 import time
 import logging
 
-from .writer import Writer
+from clickhouse_mysql.writer.writer import Writer
 
 
 class CHCSVWriter(Writer):

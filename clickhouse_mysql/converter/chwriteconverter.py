@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from .converter import Converter
+from clickhouse_mysql.converter.converter import Converter
 
 import datetime
 import decimal
@@ -51,7 +51,7 @@ class CHWriteConverter(Converter):
 
         for column in row:
             # convert column
-            row[column] = self.convert_colum(column, row[column])
+            row[column] = self.convert_column(column, row[column])
 
             # include empty column to the list of to be deleted columns
             if (row[column] is None) and self.delete_empty_columns:

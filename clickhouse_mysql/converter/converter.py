@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from ..event.event import Event
+from clickhouse_mysql.event.event import Event
 
 
 class Converter(object):

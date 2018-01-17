@@ -5,8 +5,8 @@ import logging
 import MySQLdb
 
 from MySQLdb.cursors import SSDictCursor
-from .tableprocessor import TableProcessor
-from .event.event import Event
+from clickhouse_mysql.tableprocessor import TableProcessor
+from clickhouse_mysql.event.event import Event
 
 
 class TableMigrator(TableProcessor):

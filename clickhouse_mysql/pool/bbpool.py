@@ -4,8 +4,8 @@
 import time
 import logging
 
-from .pool import Pool
-from ..objectbuilder import ObjectBuilder
+from clickhouse_mysql.pool.pool import Pool
+from clickhouse_mysql.objectbuilder import ObjectBuilder
 
 
 # Buckets Belts' Index Generator

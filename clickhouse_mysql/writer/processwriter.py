@@ -4,7 +4,7 @@
 import multiprocessing as mp
 import logging
 
-from .writer import Writer
+from clickhouse_mysql.writer.writer import Writer
 
 
 class ProcessWriter(Writer):
