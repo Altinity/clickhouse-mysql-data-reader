@@ -25,7 +25,6 @@ class CSVWriteConverter(Converter):
             if (row[column] is None) and (column in self.defaults):
                 row[column] = self.defaults[column]
 
-        logging.debug(row)
         # delete columns according to the list of columns to skip
         for column in self.column_skip:
             if column in row:
