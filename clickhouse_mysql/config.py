@@ -84,23 +84,23 @@ class Config(object):
 
     def converter_builder(self, which):
         if which == CONVERTER_CSV:
-            if not self.config['converter-config']['csv']['column_default_value']:
-                # no default values for CSV columns provided
-                return None
-            else:
-                # default values for CSV columns provided
-                return ObjectBuilder(
-                    instance=CSVWriteConverter(
-                        defaults=self.config['converter-config']['csv']['column_default_value']
-                    ))
+            return ObjectBuilder(
+                instance=CSVWriteConverter(
+                    defaults=self.config['converter-config']['csv']['column_default_value'],
+                    column_skip=self.config['converter-config']['csv']['column_skip'],
+                ))
+
         elif which == CONVERTER_CH:
             if not self.config['converter-config']['clickhouse']['converter_file'] or not self.config['converter-config']['clickhouse']['converter_class']:
                 # default converter
-                return ObjectBuilder(instance=CHWriteConverter())
+                return ObjectBuilder(instance=CHWriteConverter(column_skip=self.config['converter-config']['clickhouse']['column_skip']))
             else:
-                # explicitly specfied converter
-                _class = Util.class_from_file(self.config['converter-config']['clickhouse']['converter_file'], self.config['converter-config']['clickhouse']['converter_class'])
-                return ObjectBuilder(instance=_class())
+                # explicitly specified converter
+                _class = Util.class_from_file(
+                    self.config['converter-config']['clickhouse']['converter_file'],
+                    self.config['converter-config']['clickhouse']['converter_class']
+                )
+                return ObjectBuilder(instance=_class(column_skip=self.config['converter-config']['clickhouse']['column_skip']))
 
     def writer_builder(self):
         if self.config['app-config']['csvpool']:

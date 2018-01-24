@@ -66,6 +66,10 @@ class Event(object):
             # local-kept data
             return item
 
+    def convert(self, converter):
+        self.row = converter.row(self.row)
+        self.rows = converter.rows(self.rows)
+
     def first_row(self):
         return next(iter(self or []), None)
 
@@ -149,11 +153,4 @@ class Event(object):
 
     def column_names(self):
         # fetch column names from data
-
-        if self.pymysqlreplication_event is not None:
-            return self.pymysqlreplication_event.rows[0]['values'].keys()
-
-        if self.row is not None:
-            return self.row.keys()
-
-        return self.rows[0].keys()
+        return self.first_row().keys()
