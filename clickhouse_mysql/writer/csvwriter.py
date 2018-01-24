@@ -4,6 +4,7 @@
 import csv
 import os.path
 import logging
+import copy
 
 from clickhouse_mysql.writer.writer import Writer
 from clickhouse_mysql.event.event import Event
@@ -106,7 +107,7 @@ class CSVWriter(Writer):
                 logging.warning('Event verification failed. Skip insert(). Event: %s Class: %s', event.meta(), __class__)
                 return
 
-            self.fieldnames = sorted(self.convert(event.first_row()).keys())
+            self.fieldnames = sorted(self.convert(copy.copy(event.first_row())).keys())
             if self.dst_schema is None:
                 self.dst_schema = event.schema
             if self.dst_table is None:
