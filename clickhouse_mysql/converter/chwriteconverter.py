@@ -27,10 +27,11 @@ class CHWriteConverter(Converter):
         set,
     ]
 
-    def __init__(self):
+    def __init__(self, column_skip):
         logging.debug("CHWriteConverter __init__()")
+        super().__init__(column_skip=column_skip)
 
-    def convert_column(self, column, value):
+    def column(self, column, value):
         for _type in self.types_to_convert:
             if isinstance(value, _type):
                 # print("Converting column", column, "of type", type(event.row[column]), event.row[column])
@@ -47,11 +48,17 @@ class CHWriteConverter(Converter):
         if row is None:
             return None
 
-        columns_to_delete = []
+        # init list of columns to delete
+        columns_to_delete = self.column_skip
 
         for column in row:
+
+            # skip columns already prepared for deletion
+            if column in columns_to_delete:
+                continue
+
             # convert column
-            row[column] = self.convert_column(column, row[column])
+            row[column] = self.column(column, row[column])
 
             # include empty column to the list of to be deleted columns
             if (row[column] is None) and self.delete_empty_columns:

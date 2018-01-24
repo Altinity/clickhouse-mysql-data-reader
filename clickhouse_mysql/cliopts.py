@@ -10,8 +10,9 @@ from clickhouse_mysql.config import Config
 class CLIOpts(object):
 
     @staticmethod
-    def join(lists_to_join):
-        """Join several lists into one
+    def join_into_dict(lists_to_join):
+        """
+        Join several lists into one dictionary
 
         :param lists_to_join: is a list of lists
         [['a=b', 'c=d'], ['e=f', 'z=x'], ]
@@ -42,6 +43,26 @@ class CLIOpts(object):
             return res
         else:
             return None
+
+    @staticmethod
+    def join(lists_to_join):
+        """
+        Join several lists into one
+        :param lists_to_join: is a list of lists
+        [['a', 'b'], ['c', 'd'], ['e', 'f']]
+        :return:
+        ['a', 'b', 'c', 'd', 'e', 'f']
+        """
+
+        if not isinstance(lists_to_join, list):
+            return None
+
+        res = []
+        for _list in lists_to_join:
+            for _item in _list:
+                res.append(_item)
+
+        return res
 
     @staticmethod
     def log_level_from_string(log_level_string):
@@ -305,12 +326,20 @@ class CLIOpts(object):
         # converters section
         #
         argparser.add_argument(
-            '--csv-column-default-value',
+            '--column-default-value',
             type=str,
             nargs='*',
             action='append',
             default=None,
             help='Set of key=value pairs for columns default values. Ex.: date_1=2000-01-01 timestamp_1=2002-01-01\ 01:02:03'
+        )
+        argparser.add_argument(
+            '--column-skip',
+            type=str,
+            nargs='*',
+            action='append',
+            default=None,
+            help='Set of column names to skip. Ex.: column1 column2'
         )
         argparser.add_argument(
             '--ch-converter-file',
@@ -352,9 +381,11 @@ class CLIOpts(object):
                 'clickhouse': {
                     'converter_file': args.ch_converter_file,
                     'converter_class': args.ch_converter_class,
+                    'column_skip': CLIOpts.join(args.column_skip),
                 },
                 'csv': {
-                    'column_default_value': CLIOpts.join(args.csv_column_default_value),
+                    'column_default_value': CLIOpts.join_into_dict(args.column_default_value),
+                    'column_skip': CLIOpts.join(args.column_skip),
                 },
             },
 
