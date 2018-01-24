@@ -28,11 +28,8 @@ class Converter(object):
 
         return res
 
-    def event(self, event):
-        return event.convert(self)
-
     def convert(self, event_or_row):
         if isinstance(event_or_row, Event):
-            return self.event(event_or_row)
+            return event_or_row.convert(self)
         else:
             return self.row(event_or_row)
