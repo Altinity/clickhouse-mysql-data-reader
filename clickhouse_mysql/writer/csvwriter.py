@@ -106,7 +106,7 @@ class CSVWriter(Writer):
                 logging.warning('Event verification failed. Skip insert(). Event: %s Class: %s', event.meta(), __class__)
                 return
 
-            self.fieldnames = sorted(event.column_names())
+            self.fieldnames = sorted(self.convert(event.first_row()).keys())
             if self.dst_schema is None:
                 self.dst_schema = event.schema
             if self.dst_table is None:

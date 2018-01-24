@@ -19,7 +19,7 @@ $PYTHON $CH_MYSQL ${*:1} \
     --dst-host=192.168.74.251 \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
-    --csv-column-default-value \
+    --column-default-value \
         date_1=2000-01-01 \
         datetime_1=2000-01-01\ 01:02:03 \
         time_1=2001-01-01\ 01:02:03 \
