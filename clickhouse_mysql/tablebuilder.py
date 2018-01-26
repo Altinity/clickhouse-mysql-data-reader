@@ -5,11 +5,23 @@ from clickhouse_mysql.tableprocessor import TableProcessor
 
 
 class TableBuilder(TableProcessor):
+    """
+    Build ClickHouse table(s)
+    """
 
     def templates(self, json=False):
         """
-        Create templates for specified MySQL tables. In case no tables specified all tables from specified db are templated
-        :return: dict of CREATE TABLE () templates
+        Create ClikHouse tables templates for specified MySQL tables.
+        In case no tables specified all tables from specified MySQL db are templated
+        :return: dict of ClickHouse's CREATE TABLE () templates
+        {
+            'db1': {
+                'table1': TABLE1_TEMPLATE,
+            },
+            'db2': {
+                'table2': TABLE2_TEMPLATE,
+            }
+        }
         """
         dbs = self.dbs_tables_lists()
 
@@ -26,11 +38,11 @@ class TableBuilder(TableProcessor):
 
     def create_table_description(self, db=None, table=None, json=False):
         """
-        High-level function. Produce either JSON table description or text SQL CREATE TABLE() template
-        :param db: string name
-        :param table: string name
-        :param json: bool json description or SQL
-        :return: dict{"template":SQL, "felds": {}} or string SQL
+        High-level function. Produce either text ClickHouse's table SQL CREATE TABLE() template or JSON ClikcHouse's table description
+        :param db: string MySQL db name
+        :param table: string MySQL table name
+        :param json: bool what shold return - json description or ClickHouse's SQL template
+        :return: dict{"template":SQL, "fields": {}} or string SQL
         """
         columns_description = self.create_table_columns_description(db=db, table=table)
         sql_template = self.create_table_sql_template(db=db, table=table, columns_descrption=columns_description)
@@ -44,7 +56,7 @@ class TableBuilder(TableProcessor):
 
     def create_table_sql_template(self, db=None, table=None, columns_descrption=None):
         """
-        Produce template for CH's
+        Produce table template for ClickHouse
         CREATE TABLE(
             ...
             columns specification
@@ -53,7 +65,7 @@ class TableBuilder(TableProcessor):
         for specified MySQL's table
         :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
         :param db: string - name of the DB in MySQL
-        :return: string - almost-ready-to-use CREATE TABLE statement
+        :return: string - almost-ready-to-use ClickHouse CREATE TABLE statement
         """
 
         ch_columns = []
@@ -104,7 +116,7 @@ class TableBuilder(TableProcessor):
 
     def is_field_nullable(self, nullable):
         """
-        Chack whether `nullable` can be interpreted as True
+        Chack whether `nullable` value can be interpreted as True. Understand MySQL's "Yes" for nullable or just bool value
         :param nullable: bool, string
         :return: bool
         """
@@ -117,10 +129,10 @@ class TableBuilder(TableProcessor):
 
     def map_type(self, mysql_type, nullable=False):
         """
-        Map MySQL type (as a string from DESC table statement) to CH type (as string)
+        Map MySQL type (as a string from DESC table statement) to ClickHouse type (as string)
         :param mysql_type: string MySQL type (from DESC statement). Ex.: 'INT(10) UNSIGNED', 'BOOLEAN'
         :param nullable: bool is this field nullable
-        :return: string CH's type specification directly usable in CREATE TABLE statement.  Ex.:
+        :return: string ClickHouse type specification directly usable in CREATE TABLE statement.  Ex.:
             Nullable(Int32)
             Nullable(UInt32)
         """

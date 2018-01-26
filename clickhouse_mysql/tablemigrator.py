@@ -10,10 +10,24 @@ from clickhouse_mysql.event.event import Event
 
 
 class TableMigrator(TableProcessor):
+    """
+    Migrate data from MySQL to ClickHouse
+    """
 
     cursorclass = SSDictCursor
     chwriter = None
     pool_max_rows_num = 100000
+
+    # {
+    #   'db1': {
+    #       'table1': "a = 1 and b = 2"
+    #       'table2': "c = 1 and d = 2"
+    #   },
+    #   'db2': {
+    #       'table1': "e = 2 and f = 3"
+    #       'table2': "g = 1 and h = 2"
+    #   }
+    # }
     wheres = {}
 
     def __init__(
@@ -37,22 +51,29 @@ class TableMigrator(TableProcessor):
             tables_prefixes=tables_prefixes,
         )
 
+        # parse tables where clauses
         if not tables_where_clauses:
             return
 
-        # [ 'db1.t1=f1, 'db2.t2=f2']
+        # tables_where_clauses
+        # [ 'db1.t1=where_filename_1', 'db2.t2=where_filename_2']
+
+        # debug info
         logging.info("tables_where_clauses={}".format(tables_where_clauses))
         for table_where in tables_where_clauses:
             logging.info("table_where={}".format(table_where))
 
         for table_where_clause in tables_where_clauses:
+            # db1.t1=where_filename_1
             full_table_name, equals, where_file_name = table_where_clause.partition('=')
+
+            # sanity check
             if not full_table_name or not equals or not where_file_name:
                 continue
             if not TableProcessor.is_full_table_name(full_table_name):
                 continue
 
-            db, name = TableProcessor.parse_full_table_name(full_table_name)
+            # prepare the following data structure:
             # {
             #   'db1': {
             #       'table1': "a = 1 and b = 2"
@@ -63,14 +84,16 @@ class TableMigrator(TableProcessor):
             #       'table2': "g = 1 and h = 2"
             #   }
             # }
+            db, table = TableProcessor.parse_full_table_name(full_table_name)
             if not db in self.wheres:
                 self.wheres[db] = {}
-            self.wheres[db][name] = open(where_file_name,'r').read().strip("\n")
+            self.wheres[db][table] = open(where_file_name,'r').read().strip("\n")
 
+        # debug info
         logging.info("migration where clauses")
         for db, tables in self.wheres.items():
-            for name, where in tables.items():
-                logging.info("{}.{}.where={}".format(db, name, where))
+            for table, where in tables.items():
+                logging.info("{}.{}.where={}".format(db, table, where))
 
     def migrate(self):
         """
@@ -83,11 +106,13 @@ class TableMigrator(TableProcessor):
             logging.info("Nothing to migrate")
             return None
 
+        # debug info
         logging.info("List for migration:")
         for db in dbs:
             for table in dbs[db]:
                 logging.info("  {}.{}".format(db, table))
 
+        # migrate table-by-table
         for db in dbs:
             for table in dbs[db]:
                 logging.info("Start migration {}.{}".format(db, table))
@@ -101,9 +126,12 @@ class TableMigrator(TableProcessor):
         :return: number of migrated rows
         """
         self.connect(db=db)
+
+        # build SQL statement
         sql = "SELECT * FROM {0}".format(self.create_full_table_name(db=db, table=table))
         if db in self.wheres and table in self.wheres[db]:
             sql += " WHERE {}".format(self.wheres[db][table])
+
         try:
             logging.info("migrate_table. sql={}".format(sql))
             self.cursor.execute(sql)

@@ -4,6 +4,9 @@
 import time
 
 class Pumper(object):
+    """
+    Pump data - read data from reader and push into writer
+    """
 
     reader = None
     writer = None
@@ -14,6 +17,7 @@ class Pumper(object):
         self.writer = writer
 
         if self.reader:
+            # subscribe on reader's event notifications
             self.reader.subscribe({
                 'WriteRowsEvent': self.write_rows_event,
 #                'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
@@ -24,12 +28,23 @@ class Pumper(object):
         self.reader.read()
 
     def write_rows_event(self, event=None):
+        """
+        WriteRowsEvent handler
+        :param event:
+        """
         self.writer.insert(event)
 
     def write_rows_event_each_row(self, event=None):
+        """
+        WriteRowsEvent.EachRow handler
+        :param event:
+        """
         self.writer.insert(event)
 
     def reader_idle_event(self):
+        """
+        ReaderIdleEvent handler
+        """
         self.writer.flush()
 
 if __name__ == '__main__':

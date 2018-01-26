@@ -30,14 +30,20 @@ class Main(Daemon):
         if converter_folder not in sys.path:
             sys.path.insert(0, converter_folder)
 
+        # parse CLI options
         self.config = CLIOpts.config()
 
+        # first action after config available - setup requested logging level
         logging.basicConfig(
             filename=self.config.log_file(),
             level=self.config.log_level(),
             format='%(asctime)s/%(created)f:%(levelname)s:%(message)s'
         )
+
+        # and call parent
         super().__init__(pidfile=self.config.pid_file())
+
+        # some verbosity
         logging.info('Starting')
         logging.debug(pprint.pformat(self.config.config))
         logging.info("sys.path")
@@ -46,7 +52,10 @@ class Main(Daemon):
 
     def run(self):
         try:
+            # what action are we going to do
+
             if self.config.is_table_templates():
+                # we are going to prepare table templates
                 templates = self.config.table_builder().templates(self.config.is_table_templates_json())
 
                 for db in templates:
@@ -56,15 +65,18 @@ class Main(Daemon):
                         print("{};".format(templates[db][table]))
 
             elif self.config.is_table_templates_json():
+                # we are going to prepare table templates in JSON form
                 print(json.dumps(self.config.table_builder().templates(self.config.is_table_templates_json())))
 
             elif self.config.is_table_migrate():
+                # we are going to migrate data
                 migrator = self.config.table_migrator()
                 migrator.chwriter = self.config.writer()
                 migrator.pool_max_rows_num = self.config.mempool_max_rows_num()
                 migrator.migrate()
 
             else:
+                # we are going to pump slave data
                 pumper = Pumper(
                     reader=self.config.reader(),
                     writer=self.config.writer(),
