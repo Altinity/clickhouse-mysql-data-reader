@@ -7,7 +7,7 @@ setup(
     name="clickhouse-mysql",
 
     # version should comply with PEP440
-    version='0.0.201801171',
+    version='0.0.2018012601',
 
     description='ClickHouse Data Reader',
     long_description='ClickHouse Data Reader',
@@ -53,8 +53,11 @@ setup(
     # list of additional package data to be attached to packages
     package_data={
         'clickhouse_mysql': [
+            # examples
             '../clickhouse_mysql_examples/*.sh',
             '../clickhouse_mysql_examples/*.sql',
+            # converter examples
+            '../clickhouse_mysql_converter/*',
         ],
     },
 
