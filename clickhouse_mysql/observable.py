@@ -3,7 +3,9 @@
 
 
 class Observable(object):
-    # Implements Observable pattern
+    """
+    Implements Observable pattern
+    """
 
     # functions to be called when event to be notified upon
     event_handlers = {
