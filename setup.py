@@ -57,7 +57,7 @@ setup(
             '../clickhouse_mysql_examples/*.sh',
             '../clickhouse_mysql_examples/*.sql',
             # converter examples
-            '../clickhouse_mysql_converter/*',
+            '../clickhouse_mysql_converter/*.py',
         ],
     },
 
