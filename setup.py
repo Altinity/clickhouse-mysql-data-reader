@@ -7,10 +7,10 @@ setup(
     name="clickhouse-mysql",
 
     # version should comply with PEP440
-    version='0.0.2018012601',
+    version='0.0.2018012602',
 
-    description='ClickHouse Data Reader',
-    long_description='ClickHouse Data Reader',
+    description='MySQL to ClickHouse data migrator',
+    long_description='MySQL to ClickHouse data migrator',
 
     # homepage
     url="https://github.com/altinity/clickhouse-mysql-data-reader",
@@ -35,9 +35,11 @@ setup(
         'License :: OSI Approved :: MIT License',
 
         # supported Python versions
+        'Programming Language :: Python',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3 :: Only',
     ],
 
     # what does the project relate to?
