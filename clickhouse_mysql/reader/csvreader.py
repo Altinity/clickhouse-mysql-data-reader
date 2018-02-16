@@ -19,7 +19,12 @@ class CSVReader(Reader):
     has_header = False
     reader = None
 
-    def __init__(self, csv_file_path, converter=None, callbacks={}):
+    def __init__(
+            self,
+            csv_file_path,
+            converter=None,
+            callbacks={}
+    ):
         super().__init__(converter=converter, callbacks=callbacks)
 
         self.csv_file_path = csv_file_path

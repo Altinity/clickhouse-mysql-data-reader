@@ -13,9 +13,10 @@ if sys.version_info < (3, 5):
     print("Python version is NOT OK, need 3.5 at least")
     sys.exit(1)
 
-from clickhouse_mysql.cliopts import CLIOpts
+from clickhouse_mysql.clioptions import CLIOptions
 from clickhouse_mysql.pumper import Pumper
 from clickhouse_mysql.daemon import Daemon
+from clickhouse_mysql.config import Config
 
 
 class Main(Daemon):
@@ -31,7 +32,7 @@ class Main(Daemon):
             sys.path.insert(0, converter_folder)
 
         # parse CLI options
-        self.config = CLIOpts.config()
+        self.config = Config()
 
         # first action after config available - setup requested logging level
         logging.basicConfig(
@@ -45,7 +46,7 @@ class Main(Daemon):
 
         # some verbosity
         logging.info('Starting')
-        logging.debug(pprint.pformat(self.config.config))
+        logging.debug(self.config)
         logging.info("sys.path")
         logging.info(pprint.pformat(sys.path))
 #        mp.set_start_method('forkserver')
