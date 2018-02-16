@@ -3,14 +3,12 @@
 
 import argparse
 import logging
+import pprint
 
-from clickhouse_mysql.config import Config
 
-
-class CLIOpts(object):
-
+class Options(object):
     @staticmethod
-    def join_into_dict(lists_to_join):
+    def join_lists_into_dict(lists_to_join):
         """
         Join several lists into one dictionary
 
@@ -45,7 +43,7 @@ class CLIOpts(object):
             return None
 
     @staticmethod
-    def join(lists_to_join):
+    def join_lists(lists_to_join):
         """
         Join several lists into one
         :param lists_to_join: is a list of lists
@@ -68,25 +66,30 @@ class CLIOpts(object):
     def log_level_from_string(log_level_string):
         """Convert string representation of a log level into logging.XXX constant"""
 
-        level = log_level_string.upper()
+        if isinstance(log_level_string, str):
+            level = log_level_string.upper()
 
-        if level == 'CRITICAL':
-            return logging.CRITICAL
-        if level == 'ERROR':
-            return logging.ERROR
-        if level == 'WARNING':
-            return logging.WARNING
-        if level == 'INFO':
-            return logging.INFO
-        if level == 'DEBUG':
-            return logging.DEBUG
-        if level == 'NOTSET':
-            return logging.NOTSET
+            if level == 'CRITICAL':
+                return logging.CRITICAL
+            if level == 'ERROR':
+                return logging.ERROR
+            if level == 'WARNING':
+                return logging.WARNING
+            if level == 'INFO':
+                return logging.INFO
+            if level == 'DEBUG':
+                return logging.DEBUG
+            if level == 'NOTSET':
+                return logging.NOTSET
 
         return logging.NOTSET
 
+
+class CLIOptions(Options):
+    """Options extracted from command line"""
+
     @staticmethod
-    def config():
+    def options():
         """Parse application's CLI options into options dictionary
         :return: instance of Config
         """
@@ -114,7 +117,7 @@ class CLIOpts(object):
         argparser.add_argument(
             '--log-level',
             type=str,
-            default="NOTSET",
+            default=None,
             help='Log Level. Default - NOTSET'
         )
         argparser.add_argument(
@@ -230,31 +233,31 @@ class CLIOpts(object):
         argparser.add_argument(
             '--src-password',
             type=str,
-            default='',
+            default=None,
             help='Password to be used when reading from src. Ex.: qwerty'
         )
         argparser.add_argument(
             '--src-schemas',
             type=str,
-            default='',
+            default=None,
             help='Comma-separated list of schemas to be used when reading from src. Ex.: db1,db2,db3'
         )
         argparser.add_argument(
             '--src-tables',
             type=str,
-            default='',
+            default=None,
             help='Comma-separated list of tables to be used when reading from src. Ex.: table1,table2,table3'
         )
         argparser.add_argument(
             '--src-tables-where-clauses',
             type=str,
-            default='',
+            default=None,
             help='Comma-separated list of WHERE clauses for tables to be migrated. Ex.: db1.t1="a=1 and b=2",db2.t2="c=3 and k=4"'
         )
         argparser.add_argument(
             '--src-tables-prefixes',
             type=str,
-            default='',
+            default=None,
             help='Comma-separated list of table prefixes to be used when reading from src.'
                  'Useful when we need to process unknown-in-advance tables, say day-named log tables, as log_2017_12_27'
                  'Ex.: mylog_,anotherlog_,extralog_3'
@@ -306,7 +309,7 @@ class CLIOpts(object):
         argparser.add_argument(
             '--dst-password',
             type=str,
-            default='',
+            default=None,
             help='Password to be used when writing to dst. Ex.: qwerty'
         )
         argparser.add_argument(
@@ -356,114 +359,208 @@ class CLIOpts(object):
 
         args = argparser.parse_args()
 
-        # build options
-        return Config({
+        return {
+            #
+            # general app section
+            #
+            'config_file': args.config_file,
+            'log_file': args.log_file,
+            'log_level': args.log_level,
+            'nice_pause': args.nice_pause,
+            'dry': args.dry,
+            'daemon': args.daemon,
+            'pid_file': args.pid_file,
+            'mempool': args.mempool, # csvpool assumes mempool to be enabled
+            'mempool_max_events_num': args.mempool_max_events_num,
+            'mempool_max_rows_num': args.mempool_max_rows_num,
+            'mempool_max_flush_interval': args.mempool_max_flush_interval,
+            'csvpool': args.csvpool,
+            'csvpool_file_path_prefix': args.csvpool_file_path_prefix,
+            'csvpool_keep_files': args.csvpool_keep_files,
+            'table_templates': args.table_templates,
+            'table_templates_with_create_database': args.table_templates_with_create_database,
+            'table_templates_json': args.table_templates_json,
+            'table_migrate': args.table_migrate,
 
-            'app-config': {
-                'config-file': args.config_file,
-                'log-file': args.log_file,
-                'log-level': CLIOpts.log_level_from_string(args.log_level),
-                'dry': args.dry,
-                'daemon': args.daemon,
-                'table-templates': args.table_templates or args.table_templates_with_create_database,
-                'table-templates-with-create-database': args.table_templates_with_create_database,
-                'table-templates-json': args.table_templates_json,
-                'table-migrate': args.table_migrate,
-                'pid_file': args.pid_file,
-                'mempool': args.mempool or args.csvpool, # csvpool assumes mempool to be enabled
-                'mempool-max-events-num': args.mempool_max_events_num,
-                'mempool-max-rows-num': args.mempool_max_rows_num,
-                'mempool-max-flush-interval': args.mempool_max_flush_interval,
-                'csvpool': args.csvpool,
-            },
+            #
+            # src section
+            #
+            'src_server_id': args.src_server_id,
+            'src_host': args.src_host,
+            'src_port': args.src_port,
+            'src_user': args.src_user,
+            'src_password': args.src_password,
+            'src_schemas': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
+            'src_tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
+            'src_tables_where_clauses': [x for x in args.src_tables_where_clauses.split(',') if x] if args.src_tables_where_clauses else None,
+            'src_tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
+            'src_wait': args.src_wait,
+            'src_resume': args.src_resume,
+            'src_file': args.src_file,
 
-            'converter-config': {
-                'clickhouse': {
-                    'converter_file': args.ch_converter_file,
-                    'converter_class': args.ch_converter_class,
-                    'column_skip': CLIOpts.join(args.column_skip),
-                },
-                'csv': {
-                    'column_default_value': CLIOpts.join_into_dict(args.column_default_value),
-                    'column_skip': CLIOpts.join(args.column_skip),
-                },
-            },
+            #
+            # dst section
+            #
+            'dst_file': args.dst_file,
+            'dst_host': args.dst_host,
+            'dst_port': args.dst_port,
+            'dst_user': args.dst_user,
+            'dst_password': args.dst_password,
+            'dst_schema': args.dst_schema,
+            'dst_table': args.dst_table,
 
-            'table-builder-config': {
-                'mysql': {
-                    'host': args.src_host,
-                    'port': args.src_port,
-                    'user': args.src_user,
-                    'password': args.src_password,
-                    'dbs': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
-                    'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
-                    'tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
-                },
-            },
+            #
+            # converters section
+            #
+            'column_default_value': CLIOptions.join_lists_into_dict(args.column_default_value),
+            'column_skip': CLIOptions.join_lists(args.column_skip),
+            'ch_converter_file': args.ch_converter_file,
+            'ch_converter_class': args.ch_converter_class,
+        }
 
-            'table-migrator-config': {
-                'mysql': {
-                    'host': args.src_host,
-                    'port': args.src_port,
-                    'user': args.src_user,
-                    'password': args.src_password,
-                    'dbs': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
-                    'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
-                    'tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
-                    'tables_where_clauses': [x for x in args.src_tables_where_clauses.split(',') if x] if args.src_tables_where_clauses else None,
-                },
-                'clickhouse': {
-                    'connection_settings': {
-                        'host': args.dst_host,
-                        'port': args.dst_port,
-                        'user': args.dst_user,
-                        'password': args.dst_password,
-                    },
-                    'dst_schema': args.dst_schema,
-                    'dst_table': args.dst_table,
-                },
-            },
+from configobj import ConfigObj
 
-            'reader-config': {
-                'mysql': {
-                    'connection_settings': {
-                        'host': args.src_host,
-                        'port': args.src_port,
-                        'user': args.src_user,
-                        'passwd': args.src_password,
-                    },
-                    'server_id': args.src_server_id,
-                    'schemas': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
-                    'tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
-                    'tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
-                    'blocking': args.src_wait,
-                    'resume_stream': args.src_resume,
-                    'nice_pause': 0 if args.nice_pause is None else args.nice_pause,
-                },
-                'file': {
-                    'csv_file_path': args.src_file,
-                    'nice_pause': 0 if args.nice_pause is None else args.nice_pause,
-                },
-            },
 
-            'writer-config': {
-                'clickhouse': {
-                    'connection_settings': {
-                        'host': args.dst_host,
-                        'port': args.dst_port,
-                        'user': args.dst_user,
-                        'password': args.dst_password,
-                    },
-                    'dst_schema': args.dst_schema,
-                    'dst_table': args.dst_table,
-                },
-                'file': {
-                    'csv_file_path': args.dst_file,
-                    'csv_file_path_prefix': args.csvpool_file_path_prefix,
-                    'csv_file_path_suffix_parts': [],
-                    'csv_keep_file': args.csvpool_keep_files,
-                    'dst_schema': args.dst_schema,
-                    'dst_table': args.dst_table,
-                },
-            },
-        })
+class ConfigFileOptions(Options):
+    """Options extracted from configuration files"""
+
+    @staticmethod
+    def options(filename):
+
+        #
+        def transform(section, key):
+            newkey = key.replace('-', '_')
+            section.rename(key, newkey)
+
+        # fetch base config
+        try:
+            base_config = ConfigObj(
+                infile='/etc/clickhouse-mysql/config.ini',
+                encoding="utf-8",
+                default_encoding="utf-8",
+                list_values=True,
+                create_empty=False, # create empty config file
+                stringify=True,
+                raise_errors=False,
+                file_error=False,
+            )
+        except:
+            base_config = None
+
+        # fetch user config
+        try:
+            user_config = ConfigObj(
+                filename,
+                encoding="utf-8",
+                default_encoding="utf-8",
+                list_values=True,
+                create_empty=False, # create empty config file
+                stringify=True,
+                raise_errors=False,
+                file_error=False,
+            )
+        except:
+            user_config = None
+
+        # merge base and user configs
+        # user config has priority over base config
+
+        if base_config and user_config:
+            base_config.merge(user_config)
+            base_config.walk(transform, call_on_sections=True)
+            return base_config
+
+        if base_config:
+            base_config.walk(transform, call_on_sections=True)
+            return base_config
+
+        if user_config:
+            user_config.walk(transform, call_on_sections=True)
+            return user_config
+
+        return None
+
+
+class AggregatedOptions(object):
+    """Aggregated and prioritized options"""
+
+    cli_opts = None
+    cfg_opts = None
+    env_opts = None
+
+    def __init__(self):
+        """Build aggregated options"""
+        self.cli_opts = CLIOptions.options()
+        self.cfg_opts = ConfigFileOptions.options(self.cli_opts['config_file'])
+
+    def get_from_src(self, src, *coordinates):
+        """Fetch an option by specified coordinates from provided source"""
+
+        first_iteration = True
+        for coordinate in coordinates:
+            try:
+                section = src[coordinate] if first_iteration else section[coordinate]
+            except:
+                return None
+            first_iteration = False
+
+        return section
+
+    def get(self, *coordinates):
+        """
+        Fetch an option by specified coordinates according to source priorities.
+        Priority would be:
+        1. config (lower priority)
+        2. CLI opts
+        """
+        cfg_opt = self.get_from_src(self.cfg_opts, *coordinates)
+        cli_opt = self.get_from_src(self.cli_opts, *coordinates)
+
+        if cli_opt:
+            # CLI opt - top priority
+            return cli_opt
+
+        if cfg_opt:
+            # cfg opt - lower priority
+            return cfg_opt
+
+        # option not available
+        return None
+
+    def get_int(self, *coordinates):
+        value = self.get(*coordinates)
+        if value is not None:
+            value = int(value)
+        return value
+
+    def get_bool(self, *coordinates):
+        value = self.get(*coordinates)
+        if value is None:
+            return None
+
+        value = value.upper()
+        if (value == '1') or (value == 'YES') or (value == 'ON'):
+            return True
+        else:
+            return False
+
+    def __getitem__(self, coordinates_tuple):
+        if isinstance(coordinates_tuple, tuple):
+            return self.get(*coordinates_tuple)
+        else:
+            return self.get(coordinates_tuple)
+
+    def __str__(self):
+        str = 'OPTIONS:\n'
+        if self.cli_opts:
+            str += 'CLI: =================\n'
+            str += pprint.pformat(self.cli_opts)
+            str += '\n'
+
+        if self.cfg_opts:
+            dict = self.cfg_opts.walk(lambda section, key: section[key])
+            str += 'CFG: =================\n'
+            str += pprint.pformat(dict)
+            str += '\n'
+
+        return str

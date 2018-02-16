@@ -70,6 +70,7 @@ setup(
         'mysqlclient',
         'mysql-replication',
         'clickhouse-driver',
+        'configobj',
     ],
 
     # cross-platform support for pip to create the appropriate form of executable
