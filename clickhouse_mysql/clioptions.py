@@ -535,14 +535,23 @@ class AggregatedOptions(object):
 
     def get_bool(self, *coordinates):
         value = self.get(*coordinates)
-        if value is None:
-            return None
 
-        value = value.upper()
-        if (value == '1') or (value == 'YES') or (value == 'ON'):
-            return True
+        if value is None:
+            # None is not interpreted
+            return None
+        elif isinstance(value, bool):
+            # bool is ready-to-use
+            return value
+        elif isinstance(value, str):
+            # str can be interpreted as "yes", "1", "on"
+            value = value.upper()
+            if (value == '1') or (value == 'YES') or (value == 'ON'):
+                return True
+            else:
+                return False
         else:
-            return False
+            # int and all the rest just cast into bool
+            return bool(value)
 
     def __getitem__(self, coordinates_tuple):
         if isinstance(coordinates_tuple, tuple):
