@@ -1,0 +1,78 @@
+# man 5 systemd.unit
+# man 5 systemd.service
+# man 5 systemd.install
+# man systemctl
+
+[Unit]
+
+Description=MySQL to ClickHouse data reader
+
+# After means: start service after specified service is up and running
+After=network.target
+After=syslog.target
+#After=mysql.service
+
+# Requires means: this service reuires specified service, so we'd like to start required service in case it is not running yet.
+# In case service is listed in Requires and not listed in After - it will be launched "in parallel" with current service, and not after.
+# In this case, you need to understand possible race conditions, so it is better to explicitly specify in both After and Requries
+#Requires=mysql.service
+
+# Wants means: specified service would be nice to have, but it is optionals, we can go without it
+#Wants=redis.service
+
+[Service]
+
+# Command to start the service
+ExecStart=/usr/bin/python3 -m clickhouse_mysql.main --config-file=clickhouse-mysql.conf --daemon --log-file=/var/log/clickhouse-mysql/clickhouse-mysql.log --pid-file=/var/run/clickhouse-mysql/clickhouse-mysql.pid
+
+
+# Command to stop the the service
+#ExecStop=/bin/kill -SIGINT $(cat /var/run/clickhouse-mysql/clickhouse-mysql.pid)
+
+# Command to reload the service
+#ExecReload=
+
+#ExecStartPre=
+#ExecStartPost=
+#ExecStopPost=
+
+# How long to wait for start/stop command(s)
+#TimeoutSec=300
+
+KillMode=process
+
+# How to restart the service in case it is down/ Check by PID file
+Restart=always
+#Restart=on-failure
+
+# Run service as `sudo`
+User=user
+Group=user
+
+# Service is a simple one and can't fork by itself
+#Type=simple
+
+# Service can fork by itself, exiting main process. Classic 'daemon' schema.
+Type=forking
+
+# Monitor PID file
+PIDFile=/var/run/clickhouse-mysql/clickhouse-mysql.pid
+
+# Perform `cd` into this dir before starting the service
+WorkingDirectory=/home/user/dev/mysqlbinlog/clickhouse-mysql-data-reader
+
+# Env vars
+#Environment=RACK_ENV=production
+
+# How this service must be treated in case of "Out Of Memory" situation
+# -1000 : do not kill this service at all (like sshd)
+# IMPORTANT: touch this in case of real need only
+#OOMScoreAdjust=-100
+
+[Install]
+
+Alias=clickhouse-mysql clickhouse-mysql.service
+
+# runtime level
+# multi-user.target is the same as old known runlevel=3
+WantedBy=multi-user.target
