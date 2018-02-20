@@ -51,6 +51,7 @@ class Config(object):
                 'table_templates_json': self.options['table_templates_json'],
                 'table_migrate': self.options.get_bool('table_migrate'),
                 'pid_file': self.options['pid_file'],
+                'binlog_position_file': self.options['binlog_position_file'],
                 'mempool': self.options.get_bool('mempool') or self.options.get_bool('csvpool'), # csvpool assumes mempool to be enabled
                 'mempool_max_events_num': self.options['mempool_max_events_num'],
                 'mempool_max_rows_num': self.options['mempool_max_rows_num'],
@@ -242,6 +243,7 @@ class Config(object):
                 blocking=self.config['reader']['mysql']['blocking'],
                 resume_stream=self.config['reader']['mysql']['resume_stream'],
                 nice_pause=self.config['reader']['mysql']['nice_pause'],
+                binlog_position_file=self.config['app']['binlog_position_file'],
             )
 
     def converter_builder(self, which):
