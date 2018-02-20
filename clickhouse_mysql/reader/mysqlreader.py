@@ -33,6 +33,8 @@ class MySQLReader(Reader):
     write_rows_event_num = 0
     write_rows_event_each_row_num = 0;
 
+    binlog_position_file = None
+
     def __init__(
             self,
             connection_settings,
@@ -45,6 +47,7 @@ class MySQLReader(Reader):
             blocking=None,
             resume_stream=None,
             nice_pause=None,
+            binlog_position_file=None,
             callbacks={},
     ):
         super().__init__(callbacks=callbacks)
@@ -59,6 +62,7 @@ class MySQLReader(Reader):
         self.blocking = blocking
         self.resume_stream = resume_stream
         self.nice_pause = nice_pause
+        self.binlog_position_file=binlog_position_file
 
         logging.info("raw dbs list. len()=%d", 0 if schemas is None else len(schemas))
         if schemas is not None:
@@ -96,10 +100,22 @@ class MySQLReader(Reader):
             server_id=self.server_id,
             # we are interested in reading CH-repeatable events only
             only_events=[
-                # INSERT's are supported
+                # Possible events
+                #QueryEvent,
+                #RotateEvent,
+                #StopEvent,
+                #FormatDescriptionEvent,
+                #XidEvent,
+                #GtidEvent,
+                #BeginLoadQueryEvent,
+                #ExecuteLoadQueryEvent,
+                ###UpdateRowsEvent,
                 WriteRowsEvent,
-            #    UpdateRowsEvent,
-            #    DeleteRowsEvent
+                ###DeleteRowsEvent,
+                #TableMapEvent,
+                #HeartbeatLogEvent,
+                #NotImplementedEvent,
+
             ],
             only_schemas=self.schemas,
             # in case we have any prefixes - this means we need to listen to all tables within specified schemas
@@ -152,103 +168,166 @@ class MySQLReader(Reader):
 
         return False
 
+    first_rows_passed = []
+    start_timestamp = 0
+    start = 0
+    rows_num = 0
+    rows_num_since_interim_performance_report = 0
+    rows_num_per_event_min = None
+    rows_num_per_event_max = None
+
+    def init_read_events(self):
+        self.start_timestamp = int(time.time())
+        self.first_rows_passed = []
+
+    def init_fetch_loop(self):
+        self.start = time.time()
+
+    def stat_init_fetch_loop(self):
+        self.rows_num = 0
+        self.rows_num_since_interim_performance_report = 0
+        self.rows_num_per_event_min = None
+        self.rows_num_per_event_max = None
+
+    def stat_close_fetch_loop(self):
+        if self.rows_num > 0:
+            # we have some rows processed
+            now = time.time()
+            if now > self.start + 60:
+                # and processing was long enough
+                self.performance_report(self.start, self.rows_num, now)
+
+    def stat_write_rows_event_calc_rows_num_min_max(self, rows_num_per_event):
+        # populate min value
+        if (self.rows_num_per_event_min is None) or (rows_num_per_event < self.rows_num_per_event_min):
+            self.rows_num_per_event_min = rows_num_per_event
+
+        # populate max value
+        if (self.rows_num_per_event_max is None) or (rows_num_per_event > self.rows_num_per_event_max):
+            self.rows_num_per_event_max = rows_num_per_event
+
+    def stat_write_rows_event_all_rows(self, mysql_event):
+        self.write_rows_event_num += 1
+        self.rows_num += len(mysql_event.rows)
+        self.rows_num_since_interim_performance_report += len(mysql_event.rows)
+        logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
+
+    def stat_write_rows_event_each_row(self):
+        self.write_rows_event_each_row_num += 1
+        logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
+
+    def stat_write_rows_event_each_row_for_each_row(self):
+        self.rows_num += 1
+        self.rows_num_since_interim_performance_report += 1
+
+    def stat_write_rows_event_finalyse(self):
+        if self.rows_num_since_interim_performance_report >= 100000:
+            # speed report each N rows
+            self.performance_report(
+                start=self.start,
+                rows_num=self.rows_num,
+                rows_num_per_event_min=self.rows_num_per_event_min,
+                rows_num_per_event_max=self.rows_num_per_event_max,
+            )
+            self.rows_num_since_interim_performance_report = 0
+            self.rows_num_per_event_min = None
+            self.rows_num_per_event_max = None
+
+    def process_first_event(self, event):
+        if "{}.{}".format(event.schema, event.table) not in self.first_rows_passed:
+            Util.log_row(event.first_row(), "first row in replication {}.{}".format(event.schema, event.table))
+            self.first_rows_passed.append("{}.{}".format(event.schema, event.table))
+        logging.info(self.first_rows_passed)
+
+    def process_write_rows_event(self, mysql_event):
+        """
+        Process specific MySQL event - WriteRowsEvent
+        :param mysql_event: WriteRowsEvent instance
+        :return:
+        """
+        if self.tables_prefixes:
+            # we have prefixes specified
+            # need to find whether current event is produced by table in 'looking-into-tables' list
+            if not self.is_table_listened(mysql_event.table):
+                # this table is not listened
+                # processing is over - just skip event
+                return
+
+        # statistics
+        self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
+
+        if self.subscribers('WriteRowsEvent'):
+            # dispatch event to subscribers
+
+            # statistics
+            self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
+
+            # dispatch Event
+            event = Event()
+            event.schema = mysql_event.schema
+            event.table = mysql_event.table
+            event.pymysqlreplication_event = mysql_event
+
+            self.process_first_event(event=event)
+            self.notify('WriteRowsEvent', event=event)
+
+        if self.subscribers('WriteRowsEvent.EachRow'):
+            # dispatch event to subscribers
+
+            # statistics
+            self.stat_write_rows_event_each_row()
+
+            # dispatch Event per each row
+            for row in mysql_event.rows:
+                # statistics
+                self.stat_write_rows_event_each_row_for_each_row()
+
+                # dispatch Event
+                event = Event()
+                event.schema = mysql_event.schema
+                event.table = mysql_event.table
+                event.row = row['values']
+
+                self.process_first_event(event=event)
+                self.notify('WriteRowsEvent.EachRow', event=event)
+
+        self.stat_write_rows_event_finalyse()
+
+    def process_binlog_position(self, file, pos):
+        if self.binlog_position_file:
+            with open(self.binlog_position_file, "w") as f:
+                f.write("{}:{}".format(file, pos))
+        logging.debug("Next event binlog pos: {}.{}".format(file, pos))
+
     def read(self):
         # main function - read data from source
 
-        start_timestamp = int(time.time())
-        first_rows_passed = []
+        self.init_read_events()
+
         # fetch events
         try:
             while True:
                 logging.debug('Check events in binlog stream')
 
-                start = time.time()
-                rows_num = 0
-                rows_num_since_interim_performance_report = 0
-                rows_num_per_event = 0
-                rows_num_per_event_min = None
-                rows_num_per_event_max = None
+                self.init_fetch_loop()
 
-                # fetch available events from MySQL
+                # statistics
+                self.stat_init_fetch_loop()
+
                 try:
+                    # fetch available events from MySQL
                     for mysql_event in self.binlog_stream:
                         # new event has come
                         # check what to do with it
+
+                        # process event based on its type
                         if isinstance(mysql_event, WriteRowsEvent):
-
-                            if self.tables_prefixes:
-                                # we have prefixes specified
-                                # need to find whether current event is produced by table in 'looking-into-tables' list
-                                if not self.is_table_listened(mysql_event.table):
-                                    # this table is not listened
-                                    # skip event
-                                    continue # for binlog_stream
-
-                            # statistics
-                            rows_num_per_event = len(mysql_event.rows)
-                            if (rows_num_per_event_min is None) or (rows_num_per_event < rows_num_per_event_min):
-                                rows_num_per_event_min = rows_num_per_event
-                            if (rows_num_per_event_max is None) or (rows_num_per_event > rows_num_per_event_max):
-                                rows_num_per_event_max = rows_num_per_event
-
-                            if self.subscribers('WriteRowsEvent'):
-                                # dispatch event to subscribers
-
-                                # statistics
-                                self.write_rows_event_num += 1
-                                rows_num += len(mysql_event.rows)
-                                rows_num_since_interim_performance_report += len(mysql_event.rows)
-                                logging.debug('WriteRowsEvent #%d rows: %d', self.write_rows_event_num, len(mysql_event.rows))
-
-                                # dispatch Event
-                                event = Event()
-                                event.schema = mysql_event.schema
-                                event.table = mysql_event.table
-                                event.pymysqlreplication_event = mysql_event
-                                if "{}.{}".format(event.schema, event.table) not in first_rows_passed:
-                                    Util.log_row(event.first_row(), "first row in replication {}.{}".format(mysql_event.schema, mysql_event.table))
-                                    first_rows_passed.append("{}.{}".format(event.schema, event.table))
-                                logging.info(first_rows_passed)
-                                self.notify('WriteRowsEvent', event=event)
-
-                            if self.subscribers('WriteRowsEvent.EachRow'):
-                                # dispatch event to subscribers
-
-                                # statistics
-                                self.write_rows_event_each_row_num += 1
-                                logging.debug('WriteRowsEvent.EachRow #%d', self.write_rows_event_each_row_num)
-
-                                # dispatch Event per each row
-                                for row in mysql_event.rows:
-                                    # statistics
-                                    rows_num += 1
-                                    rows_num_since_interim_performance_report += 1
-
-                                    # dispatch Event
-                                    event = Event()
-                                    event.schema = mysql_event.schema
-                                    event.table = mysql_event.table
-                                    event.row = row['values']
-                                    if "{}.{}".format(event.schema, event.table) not in first_rows_passed:
-                                        Util.log_row(event.first_row(), "first row in replication {}.{}".format(mysql_event.schema, mysql_event.table))
-                                        first_rows_passed.append("{}.{}".format(event.schema, event.table))
-                                    logging.info(first_rows_passed)
-                                    self.notify('WriteRowsEvent.EachRow', event=event)
-
-                            if rows_num_since_interim_performance_report >= 100000:
-                                # speed report each N rows
-                                self.performance_report(
-                                    start=start,
-                                    rows_num=rows_num,
-                                    rows_num_per_event_min=rows_num_per_event_min,
-                                    rows_num_per_event_max=rows_num_per_event_max,
-                                )
-                                rows_num_since_interim_performance_report = 0
-                                rows_num_per_event_min = None
-                                rows_num_per_event_max = None
+                            self.process_write_rows_event(mysql_event)
                         else:
                             # skip non-insert events
                             pass
+
+                        self.process_binlog_position(self.binlog_stream.log_file, self.binlog_stream.log_pos)
                 except Exception as ex:
                     if self.blocking:
                         # we'd like to continue waiting for data
@@ -261,12 +340,8 @@ class MySQLReader(Reader):
 
                 # all events fetched (or none of them available)
 
-                if rows_num > 0:
-                    # we have some rows processed
-                    now = time.time()
-                    if now > start + 60:
-                        # and processing was long enough
-                        self.performance_report(start, rows_num, now)
+                # statistics
+                self.stat_close_fetch_loop()
 
                 if not self.blocking:
                     # do not wait for more data - all done
@@ -287,11 +362,12 @@ class MySQLReader(Reader):
             self.binlog_stream.close()
         except:
             pass
+
         end_timestamp = int(time.time())
 
-        logging.info('start %d', start_timestamp)
+        logging.info('start %d', self.start_timestamp)
         logging.info('end %d', end_timestamp)
-        logging.info('len %d', end_timestamp - start_timestamp)
+        logging.info('len %d', end_timestamp - self.start_timestamp)
 
 if __name__ == '__main__':
     connection_settings = {
