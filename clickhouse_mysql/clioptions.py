@@ -279,6 +279,18 @@ class CLIOptions(Options):
             help='Resume reading from previous position.'
         )
         argparser.add_argument(
+            '--src-binlog-file',
+            type=str,
+            default=None,
+            help='Binlog file to be used when reading from src. Ex.: mysql-bin.000024'
+        )
+        argparser.add_argument(
+            '--src-binlog-position',
+            type=int,
+            default=None,
+            help='Binlog position to be used when reading from src. Ex.: 5703'
+        )
+        argparser.add_argument(
             '--src-file',
             type=str,
             default=None,
@@ -404,6 +416,8 @@ class CLIOptions(Options):
             'src_wait': args.src_wait,
             'src_resume': args.src_resume,
             'src_file': args.src_file,
+            'src_binlog_file': args.src_binlog_file,
+            'src_binlog_position': args.src_binlog_position,
 
             #
             # dst section
