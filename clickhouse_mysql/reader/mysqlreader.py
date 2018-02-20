@@ -54,7 +54,7 @@ class MySQLReader(Reader):
 
         self.connection_settings = connection_settings
         self.server_id = server_id
-        self.log_file = log_file,
+        self.log_file = log_file
         self.log_pos = log_pos
         self.schemas = None if not TableProcessor.extract_dbs(schemas, Util.join_lists(tables, tables_prefixes)) else TableProcessor.extract_dbs(schemas, Util.join_lists(tables, tables_prefixes))
         self.tables = None if tables is None else TableProcessor.extract_tables(tables)

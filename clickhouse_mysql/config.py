@@ -35,6 +35,26 @@ class Config(object):
         # get aggregated options from all sources (config, cli, env)
         self.options = AggregatedOptions()
 
+        log_file = None
+        log_pos = None
+        if self.options['binlog_position_file'] and self.options.get_bool('src_resume'):
+            try:
+                with open(self.options['binlog_position_file'], 'r') as f:
+                    position = f.read()
+                    log_file, log_pos = position.split(':')
+                    log_pos = int(log_pos)
+                    print("binlog position from file {} is {}:{}".format(
+                        self.options['binlog_position_file'],
+                        log_file,
+                        log_pos
+                    ))
+            except:
+                log_file = None
+                log_pos = None
+                print("can't read binlog position from file {}".format(
+                    self.options['binlog_position_file'],
+                ))
+
         # build application config out of aggregated options
         self.config = {
             #
@@ -133,6 +153,8 @@ class Config(object):
                     'blocking': self.options.get_bool('src_wait'),
                     'resume_stream': self.options.get_bool('src_resume'),
                     'nice_pause': 0 if self.options.get_int('nice_pause') is None else self.options.get_int('nice_pause'),
+                    'log_file': self.options['src_binlog_file'] if self.options['src_binlog_file'] else log_file,
+                    'log_pos': self.options.get_int('src_binlog_position') if self.options.get_int('src_binlog_position') else log_pos,
                 },
                 'file': {
                     'csv_file_path': self.options['src_file'],
@@ -235,8 +257,8 @@ class Config(object):
                     'passwd': self.config['reader']['mysql']['connection_settings']['password'],
                 },
                 server_id=self.config['reader']['mysql']['server_id'],
-                log_file=None,
-                log_pos=None,
+                log_file=self.config['reader']['mysql']['log_file'],
+                log_pos=self.config['reader']['mysql']['log_pos'],
                 schemas=self.config['reader']['mysql']['schemas'],
                 tables=self.config['reader']['mysql']['tables'],
                 tables_prefixes=self.config['reader']['mysql']['tables_prefixes'],
