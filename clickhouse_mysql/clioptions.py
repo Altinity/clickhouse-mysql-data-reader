@@ -144,6 +144,12 @@ class CLIOptions(Options):
             help='Pid file to be used by app in daemon mode'
         )
         argparser.add_argument(
+            '--binlog-position-file',
+            type=str,
+            default=None,
+            help='File to write binlog position to'
+        )
+        argparser.add_argument(
             '--mempool',
             action='store_true',
             help='Cache data in mem.'
@@ -370,6 +376,7 @@ class CLIOptions(Options):
             'dry': args.dry,
             'daemon': args.daemon,
             'pid_file': args.pid_file,
+            'binlog_position_file': args.binlog_position_file,
             'mempool': args.mempool, # csvpool assumes mempool to be enabled
             'mempool_max_events_num': args.mempool_max_events_num,
             'mempool_max_rows_num': args.mempool_max_rows_num,
