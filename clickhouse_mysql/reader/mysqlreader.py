@@ -374,7 +374,7 @@ class MySQLReader(Reader):
         except KeyboardInterrupt:
             logging.info("SIGINT received. Time to exit.")
         except Exception as ex:
-            logging.warning("Got an exception, skip it")
+            logging.warning("Got an exception, handle it")
             logging.warning(ex)
 
         try:
