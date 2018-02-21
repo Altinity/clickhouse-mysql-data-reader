@@ -101,21 +101,21 @@ class MySQLReader(Reader):
             # we are interested in reading CH-repeatable events only
             only_events=[
                 # Possible events
+                #BeginLoadQueryEvent,
+                DeleteRowsEvent,
+                #ExecuteLoadQueryEvent,
+                #FormatDescriptionEvent,
+                #GtidEvent,
+                #HeartbeatLogEvent,
+                #IntvarEvent
+                #NotImplementedEvent,
                 #QueryEvent,
                 #RotateEvent,
                 #StopEvent,
-                #FormatDescriptionEvent,
-                #XidEvent,
-                #GtidEvent,
-                #BeginLoadQueryEvent,
-                #ExecuteLoadQueryEvent,
-                ###UpdateRowsEvent,
-                WriteRowsEvent,
-                ###DeleteRowsEvent,
                 #TableMapEvent,
-                #HeartbeatLogEvent,
-                #NotImplementedEvent,
-
+                UpdateRowsEvent,
+                WriteRowsEvent,
+                #XidEvent,
             ],
             only_schemas=self.schemas,
             # in case we have any prefixes - this means we need to listen to all tables within specified schemas
@@ -293,6 +293,12 @@ class MySQLReader(Reader):
 
         self.stat_write_rows_event_finalyse()
 
+    def process_update_rows_event(self, mysql_event):
+        logging.info("Skip update rows")
+
+    def process_delete_rows_event(self, mysql_event):
+        logging.info("Skip delete rows")
+
     def process_binlog_position(self, file, pos):
         if self.binlog_position_file:
             with open(self.binlog_position_file, "w") as f:
@@ -323,18 +329,30 @@ class MySQLReader(Reader):
                         # process event based on its type
                         if isinstance(mysql_event, WriteRowsEvent):
                             self.process_write_rows_event(mysql_event)
+                        elif isinstance(mysql_event, DeleteRowsEvent):
+                            self.process_delete_rows_event(mysql_event)
+                        elif isinstance(mysql_event, UpdateRowsEvent):
+                            self.process_update_rows_event(mysql_event)
                         else:
-                            # skip non-insert events
+                            # skip other unhandled events
                             pass
 
+                        # after event processed, we need to handle current binlog position
                         self.process_binlog_position(self.binlog_stream.log_file, self.binlog_stream.log_pos)
+
+                except KeyboardInterrupt:
+                    # pass SIGINT further
+                    logging.info("SIGINT received. Pass it further.")
+                    raise
                 except Exception as ex:
                     if self.blocking:
                         # we'd like to continue waiting for data
                         # report and continue cycle
+                        logging.warning("Got an exception, skip it in blocking mode")
                         logging.warning(ex)
                     else:
                         # do not continue, report error and exit
+                        logging.critical("Got an exception, abort it in non-blocking mode")
                         logging.critical(ex)
                         sys.exit(1)
 
@@ -354,14 +372,16 @@ class MySQLReader(Reader):
                 self.notify('ReaderIdleEvent')
 
         except KeyboardInterrupt:
-            logging.info("Ctrl+C. Break.")
-        except:
-            pass
+            logging.info("SIGINT received. Time to exit.")
+        except Exception as ex:
+            logging.warning("Got an exception, skip it")
+            logging.warning(ex)
 
         try:
             self.binlog_stream.close()
-        except:
-            pass
+        except Exception as ex:
+            logging.warning("Unable to close binlog stream correctly")
+            logging.warning(ex)
 
         end_timestamp = int(time.time())
 
