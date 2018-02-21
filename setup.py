@@ -60,6 +60,8 @@ setup(
             '../clickhouse_mysql_examples/*.sql',
             # converter examples
             '../clickhouse_mysql_converter/*.py',
+            # init scripts
+            '../init.d/*',
         ],
     },
 
