@@ -1,6 +1,6 @@
 #!/bin/bash
 
-TO_DEL="build dist clickhouse_mysql.egg-info"
+TO_DEL="build dist clickhouse_mysql.egg-info deb_dist"
 
 echo "########################################"
 echo "### Clear all build and release data ###"
