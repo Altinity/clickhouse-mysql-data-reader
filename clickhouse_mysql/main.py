@@ -9,8 +9,8 @@ import pprint
 import json
 import os
 
-if sys.version_info < (3, 5):
-    print("Python version is NOT OK, need 3.5 at least")
+if sys.version_info < (3, 4):
+    print("Python version is NOT OK, need 3.4 at least")
     sys.exit(1)
 
 from clickhouse_mysql.clioptions import CLIOptions
