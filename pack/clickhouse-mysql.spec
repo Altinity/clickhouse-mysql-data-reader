@@ -16,6 +16,8 @@ Vendor: Altinity (Vladislav Klimenko <sunsingerus@gmail.com>)
 Packager: Altinity (Vladislav Klimenko <sunsingerus@gmail.com>)
 Url: https://github.com/altinity/clickhouse-mysql-data-reader
 Requires: python34
+Requires: python34-libs
+Requires: python34-setuptools
 Buildrequires: python34
 Buildrequires: python34-devel
 Buildrequires: python34-libs
