@@ -105,7 +105,7 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--config-file',
             type=str,
-            default=None,
+            default='/etc/clickhouse-mysql/clickhouse-mysql.conf',
             help='Path to config file. Default - not specified'
         )
         argparser.add_argument(
