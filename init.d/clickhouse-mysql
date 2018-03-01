@@ -151,7 +151,7 @@ function stop_hard()
 
 function restart()
 {
-	stop
+	stop_soft
 	start
 }
 
