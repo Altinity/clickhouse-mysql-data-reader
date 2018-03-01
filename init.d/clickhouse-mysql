@@ -193,7 +193,7 @@ case "$1" in
 	stop_hard)
 		stop_hard
 		;;
-	retart)
+	restart)
 		restart
 		;;
 	status)
