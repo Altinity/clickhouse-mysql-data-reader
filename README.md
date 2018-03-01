@@ -54,10 +54,20 @@ Datareader can be installed either from `github` repo or from `pypi` repo.
 ## PyPi Installation
 In case you need just to use the app - this is the most convenient way to go.
 
-Install dependencies:
+Install dependencies.
+MySQL repo for `mysql-community-devel`
+```bash
+sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+```
+epel (for python3)
+```bash
+sudo yum install epel-release
+```
+and direct dependencies:
 ```bash
 sudo yum install mysql-community-devel
 sudo yum install gcc
+sudo yum install python34-devel python34-pip
 ```
 
 Install datareader

@@ -16,12 +16,15 @@ SERVICE_NAME=clickhouse-mysql
 PID_FILE=/var/run/${SERVICE_NAME}/${SERVICE_NAME}.pid
 LOG_FILE=/var/log/${SERVICE_NAME}/${SERVICE_NAME}.log
 
-RUN_CMD="python3 -m clickhouse_mysql.main --config-file=clickhouse-mysql.conf --daemon --log-file=$LOG_FILE --pid-file=$PID_FILE"
+#RUN_CMD="python3 -m clickhouse_mysql.main --config-file=clickhouse-mysql.conf --daemon --log-file=$LOG_FILE --pid-file=$PID_FILE"
+RUN_CMD="/usr/bin/clickhouse-mysql --daemon --log-file=$LOG_FILE --pid-file=$PID_FILE"
+
 IS_CMD_CAPABLE="yes"
 #IS_CMD_CAPABLE="no"
 
-RUN_CMD_AS_USER=user
-WORK_DIR="/home/user/dev/mysqlbinlog/clickhouse-mysql-data-reader"
+#RUN_CMD_AS_USER=user
+RUN_CMD_AS_USER=clickhouse
+WORK_DIR="/"
 
 SOFT_STOP_SIGNAL=SIGINT
 HARD_STOP_SIGNAL=SIGKILL
@@ -148,7 +151,7 @@ function stop_hard()
 
 function restart()
 {
-	stop
+	stop_soft
 	start
 }
 
@@ -190,7 +193,7 @@ case "$1" in
 	stop_hard)
 		stop_hard
 		;;
-	retart)
+	restart)
 		restart
 		;;
 	status)

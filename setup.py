@@ -7,7 +7,7 @@ setup(
     name="clickhouse-mysql",
 
     # version should comply with PEP440
-    version='0.0.2018022101',
+    version='0.0.20180227',
 
     description='MySQL to ClickHouse data migrator',
     long_description='MySQL to ClickHouse data migrator',
@@ -37,6 +37,7 @@ setup(
         # supported Python versions
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
         'Programming Language :: Python :: 3 :: Only',
@@ -62,6 +63,8 @@ setup(
             '../clickhouse_mysql_converter/*.py',
             # init scripts
             '../init.d/*',
+            # config files
+            '../clickhouse-mysql.conf',
         ],
     },
 
