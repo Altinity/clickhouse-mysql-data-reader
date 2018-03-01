@@ -51,6 +51,29 @@ However, you may have it called differently.
 
 Datareader can be installed either from `github` repo or from `pypi` repo.
 
+## RPM Installation
+```bash
+curl -s https://packagecloud.io/install/repositories/altinity/clickhouse/script.rpm.sh | sudo bash
+```
+EPEL & MySQL
+```bash
+sudo yum install -y epel-release
+sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+```
+
+```bash
+sudo yum install clickhouse-mysql
+```
+
+```bash
+sudo cp /etc/clickhouse-mysql/clickhouse-mysql-example.conf /etc/clickhouse-mysql/clickhouse-mysql.conf
+sudo vim /etc/clickhouse-mysql/clickhouse-mysql.conf
+```
+
+```bash
+sudo /etc/init.d/clickhouse-mysql start
+```
+
 ## PyPi Installation
 In case you need just to use the app - this is the most convenient way to go.
 

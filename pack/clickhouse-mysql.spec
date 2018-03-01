@@ -16,9 +16,13 @@ Vendor: Altinity (Vladislav Klimenko <sunsingerus@gmail.com>)
 Packager: Altinity (Vladislav Klimenko <sunsingerus@gmail.com>)
 Url: https://github.com/altinity/clickhouse-mysql-data-reader
 Requires: python34
+Requires: python34-devel
 Requires: python34-libs
+Requires: python34-pip
 Requires: python34-setuptools
 Requires: clickhouse-client
+Requires: mysql-community-devel
+Requires: gcc
 Buildrequires: python34
 Buildrequires: python34-devel
 Buildrequires: python34-libs
@@ -112,4 +116,9 @@ create_system_user $CLICKHOUSE_USER clickhouse
 
 chown -R $CLICKHOUSE_USER:$CLICKHOUSE_GROUP /var/run/clickhouse-mysql
 chown -R $CLICKHOUSE_USER:$CLICKHOUSE_GROUP /var/log/clickhouse-mysql
+
+/usr/bin/pip3 install mysqlclient
+/usr/bin/pip3 install mysql-replication
+/usr/bin/pip3 install clickhouse-driver
+/usr/bin/pip3 install configobj
 
