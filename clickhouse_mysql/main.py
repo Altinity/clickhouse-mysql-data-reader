@@ -8,6 +8,8 @@ import traceback
 import pprint
 import json
 import os
+import pkg_resources
+import shutil
 
 if sys.version_info < (3, 4):
     print("Python version is NOT OK, need 3.4 at least")
@@ -51,11 +53,55 @@ class Main(Daemon):
         logging.info(pprint.pformat(sys.path))
 #        mp.set_start_method('forkserver')
 
+    @staticmethod
+    def install():
+        # install service file
+        src_service_filepath = os.path.abspath(
+            pkg_resources.resource_filename('clickhouse_mysql', '../clickhouse_mysql.init.d/clickhouse-mysql'))
+        dst_service_dir = '/etc/init.d/'
+        dst_service_filepath = dst_service_dir + 'clickhouse-mysql'
+        try:
+            print("Install service file ", src_service_filepath, ' to ', dst_service_filepath)
+            # os.makedirs wants '/' at the end of the folder name
+            os.makedirs(name=dst_service_dir, exist_ok=True)
+            shutil.copy2(src_service_filepath, dst_service_filepath)
+        except Exception as e:
+            print(e)
+            print('Looks like you have no permissions to write to ', dst_service_filepath)
+            sys.exit(1)
+
+        # install config example file
+        src_service_filepath = os.path.abspath(
+            pkg_resources.resource_filename('clickhouse_mysql', '../clickhouse_mysql.etc/clickhouse-mysql.conf'))
+        dst_service_dir = '/etc/clickhouse-mysql/'
+        dst_service_filepath = dst_service_dir + 'clickhouse-mysql-example.conf'
+        try:
+            print("Install config file ", src_service_filepath, ' to ', dst_service_filepath)
+            # os.makedirs wants '/' at the end of the folder name
+            os.makedirs(name=dst_service_dir, exist_ok=True)
+            shutil.copy2(src_service_filepath, dst_service_filepath)
+        except Exception as e:
+            print(e)
+            print('Looks like you have no permissions to write to ', dst_service_filepath)
+            sys.exit(1)
+
+        print("Ensure clickhouse user exists")
+        os.system("useradd clickhouse")
+
+        print("Ensure var/run folders available")
+        os.system("mkdir -p /var/log/clickhouse-mysql")
+        os.system("chown clickhouse /var/log/clickhouse-mysql")
+        os.system("mkdir -p /var/run/clickhouse-mysql")
+        os.system("chown clickhouse /var/run/clickhouse-mysql")
+
     def run(self):
         try:
             # what action are we going to do
 
-            if self.config.is_table_templates():
+            if self.config.is_install():
+                Main.install()
+
+            elif self.config.is_table_templates():
                 # we are going to prepare table templates
                 templates = self.config.table_builder().templates(self.config.is_table_templates_json())
 
