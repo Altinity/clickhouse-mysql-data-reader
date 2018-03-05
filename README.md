@@ -6,6 +6,8 @@
 
  * [Introduction](#introduction)
  * [Requirements and Installation](#requirements-and-installation)
+   * [Dev Installation](#dev-installation)
+   * [RPM Installation](#rpm-installation)
    * [PyPi Installation](#pypi-installation)
    * [GitHub-based Installation - Clone Sources](#github-based-installation---clone-sources)
    * [MySQL setup](#mysql-setup)
@@ -45,11 +47,47 @@ Utility to import data into ClickHouse from MySQL (mainly) and/or CSV files
 
 # Requirements and Installation
 
-Datareader requires at least **Python 3.5** with additional modules to be installed.
+Datareader requires at least **Python 3.4** with additional modules to be installed.
 In most distributions Python 3 have `pip` utility named as `pip3`, so we'll use this naming. 
 However, you may have it called differently.
 
 Datareader can be installed either from `github` repo or from `pypi` repo.
+
+## Dev Installation
+```bash
+sudo yum install -y rpm-build
+./package_rpm_distr.sh
+./pack/build.sh
+sudo yum install ./build/bdist.linux-x86_64/rpm/RPMS/noarch/clickhouse-mysql-0.0.20180227-1.noarch.rpm 
+```
+
+## RPM Installation
+**Tested on CentOS 7**
+
+Packagecloud repo
+```bash
+curl -s https://packagecloud.io/install/repositories/altinity/clickhouse/script.rpm.sh | sudo bash
+```
+EPEL & MySQL repos
+```bash
+sudo yum install -y epel-release
+sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+```
+Install data reader
+```bash
+sudo yum install clickhouse-mysql
+```
+
+Prepare config file
+```bash
+sudo cp /etc/clickhouse-mysql/clickhouse-mysql-example.conf /etc/clickhouse-mysql/clickhouse-mysql.conf
+sudo vim /etc/clickhouse-mysql/clickhouse-mysql.conf
+```
+
+Start service
+```bash
+sudo /etc/init.d/clickhouse-mysql start
+```
 
 ## PyPi Installation
 In case you need just to use the app - this is the most convenient way to go.
