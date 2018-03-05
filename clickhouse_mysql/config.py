@@ -77,6 +77,7 @@ class Config(object):
                 'mempool_max_rows_num': self.options['mempool_max_rows_num'],
                 'mempool_max_flush_interval': self.options['mempool_max_flush_interval'],
                 'csvpool': self.options.get_bool('csvpool'),
+                'install': self.options.get_bool('install'),
             },
 
             #
@@ -216,6 +217,9 @@ class Config(object):
 
     def is_table_templates_json(self):
         return self.config['app']['table_templates_json']
+
+    def is_install(self):
+        return self.config['app']['install']
 
     def table_builder(self):
         return TableBuilder(

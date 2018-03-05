@@ -7,7 +7,7 @@ setup(
     name="clickhouse-mysql",
 
     # version should comply with PEP440
-    version='0.0.20180227',
+    version='0.0.2018030506',
 
     description='MySQL to ClickHouse data migrator',
     long_description='MySQL to ClickHouse data migrator',
@@ -62,9 +62,9 @@ setup(
             # converter examples
             '../clickhouse_mysql_converter/*.py',
             # init scripts
-            '../init.d/*',
+            '../clickhouse_mysql.init.d/*',
             # config files
-            '../clickhouse-mysql.conf',
+            '../clickhouse_mysql.etc/*',
         ],
     },
 
@@ -76,6 +76,7 @@ setup(
         'mysql-replication',
         'clickhouse-driver',
         'configobj',
+        'setuptools',
     ],
 
     # cross-platform support for pip to create the appropriate form of executable
@@ -86,5 +87,10 @@ setup(
         ],
     },
 
-#    python_requires='>=3.3',
+    #cmdclass={
+    #    'develop': PostDevelopCommand,
+    #    'install': PostInstallCommand,
+    #},
+
+    #    python_requires='>=3.3',
 )

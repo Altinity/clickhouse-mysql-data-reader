@@ -208,6 +208,11 @@ class CLIOptions(Options):
             action='store_true',
             help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse already! See --table-templates option(s) for help.'
         )
+        argparser.add_argument(
+            '--install',
+            action='store_true',
+            help='Install service file(s)'
+        )
 
         #
         # src section
@@ -400,6 +405,7 @@ class CLIOptions(Options):
             'table_templates_with_create_database': args.table_templates_with_create_database,
             'table_templates_json': args.table_templates_json,
             'table_migrate': args.table_migrate,
+            'install': args.install,
 
             #
             # src section
