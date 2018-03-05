@@ -13,8 +13,11 @@
 #SERVICE_NAME=$(basename $0)
 SERVICE_NAME=clickhouse-mysql
 
-PID_FILE=/var/run/${SERVICE_NAME}/${SERVICE_NAME}.pid
-LOG_FILE=/var/log/${SERVICE_NAME}/${SERVICE_NAME}.log
+PID_FILE_DIR="/var/run/${SERVICE_NAME}"
+LOG_FILE_DIR="/var/log/${SERVICE_NAME}"
+
+PID_FILE="${PID_FILE_DIR}/${SERVICE_NAME}.pid"
+LOG_FILE="${LOG_FILE_DIR}/${SERVICE_NAME}.log"
 
 #RUN_CMD="python3 -m clickhouse_mysql.main --config-file=clickhouse-mysql.conf --daemon --log-file=$LOG_FILE --pid-file=$PID_FILE"
 RUN_CMD="/usr/bin/clickhouse-mysql --daemon --log-file=$LOG_FILE --pid-file=$PID_FILE"
@@ -79,6 +82,19 @@ function start_incapable_service()
 	sudo -u $RUN_CMD_AS_USER bash -c "$CMD"
 }
 
+function create_dirs()
+{
+	if [ ! -d "${PID_FILE_DIR}" ]; then
+		mkdir -p "${PID_FILE_DIR}"
+		chown "${RUN_CMD_AS_USER}" "${PID_FILE_DIR}"
+	fi
+
+	if [ ! -d "${LOG_FILE_DIR}" ]; then
+		mkdir -p "${LOG_FILE_DIR}"
+		chown "${RUN_CMD_AS_USER}" "${LOG_FILE_DIR}"
+	fi
+}
+
 function start()
 {
 	if is_running; then
@@ -87,6 +103,8 @@ function start()
 		echo
 		exit 1
 	fi
+
+	create_dirs
 
 	if ! is_file_usable "$LOG_FILE"; then
 		echo "Log file $LOG_FILE is not writable by user $RUN_CMD_AS_USER. Please check path"

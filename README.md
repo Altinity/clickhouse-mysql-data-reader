@@ -64,7 +64,8 @@ sudo yum install ./build/bdist.linux-x86_64/rpm/RPMS/noarch/clickhouse-mysql-0.0
 ## RPM Installation
 **Tested on CentOS 7**
 
-Packagecloud repo
+Packagecloud repo from [packagecloud.io](https://packagecloud.io/Altinity/clickhouse)
+More details on installation are available on [https://github.com/Altinity/clickhouse-rpm-install](https://github.com/Altinity/clickhouse-rpm-install)
 ```bash
 curl -s https://packagecloud.io/install/repositories/altinity/clickhouse/script.rpm.sh | sudo bash
 ```
@@ -93,19 +94,30 @@ sudo /etc/init.d/clickhouse-mysql start
 In case you need just to use the app - this is the most convenient way to go.
 
 Install dependencies.
-MySQL repo for `mysql-community-devel`
+MySQL repo (for `mysql-community-devel`)
 ```bash
 sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
 ```
-epel (for python3)
+epel (for `python3`)
 ```bash
-sudo yum install epel-release
+sudo yum install -y epel-release
 ```
+
+clickhouse-client (for `clickhouse-client`) from Packagecloud repo from [packagecloud.io](https://packagecloud.io/Altinity/clickhouse)
+More details on installation are available on [https://github.com/Altinity/clickhouse-rpm-install](https://github.com/Altinity/clickhouse-rpm-install)
+```bash
+curl -s https://packagecloud.io/install/repositories/altinity/clickhouse/script.rpm.sh | sudo bash
+```
+```bash
+sudo yum install -y clickhouse-client
+```
+
 and direct dependencies:
 ```bash
-sudo yum install mysql-community-devel
-sudo yum install gcc
-sudo yum install python34-devel python34-pip
+sudo yum install -y mysql-community-devel
+sudo yum install -y mariadb-devel
+sudo yum install -y gcc
+sudo yum install -y python34-devel python34-pip
 ```
 
 Install datareader
@@ -113,10 +125,11 @@ Install datareader
 sudo pip3 install clickhouse-mysql
 ```
 
-Now we are able to call datareader as an app
+Now we are able to call datareader as an app - perform last installation steps - install service files, etc
 ```bash
 [user@localhost ~]$ which clickhouse-mysql
 /usr/bin/clickhouse-mysql
+/usr/bin/clickhouse-mysql --install
 ```
 
 ## GitHub-based Installation - Clone Sources
