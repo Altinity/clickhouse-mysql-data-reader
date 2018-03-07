@@ -16,10 +16,10 @@ class TableBuilder(TableProcessor):
         :return: dict of ClickHouse's CREATE TABLE () templates
         {
             'db1': {
-                'table1': TABLE1_TEMPLATE,
+                'table1': CREATE TABLE TABLE1 TEMPLATE,
             },
             'db2': {
-                'table2': TABLE2_TEMPLATE,
+                'table2': CREATE TABLE TABLE2 TEMPLATE,
             }
         }
         """
@@ -38,14 +38,15 @@ class TableBuilder(TableProcessor):
 
     def create_table_description(self, db=None, table=None, json=False):
         """
-        High-level function. Produce either text ClickHouse's table SQL CREATE TABLE() template or JSON ClikcHouse's table description
+        High-level function.
+        Produce either text ClickHouse's table SQL CREATE TABLE() template or JSON ClikcHouse's table description
         :param db: string MySQL db name
         :param table: string MySQL table name
         :param json: bool what shold return - json description or ClickHouse's SQL template
         :return: dict{"template":SQL, "fields": {}} or string SQL
         """
         columns_description = self.create_table_columns_description(db=db, table=table)
-        sql_template = self.create_table_sql_template(db=db, table=table, columns_descrption=columns_description)
+        sql_template = self.create_table_sql_template(db=db, table=table, columns_description=columns_description)
         if json:
             return {
                 "template": sql_template,
@@ -54,7 +55,7 @@ class TableBuilder(TableProcessor):
         else:
             return sql_template
 
-    def create_table_sql_template(self, db=None, table=None, columns_descrption=None):
+    def create_table_sql_template(self, db=None, table=None, columns_description=None):
         """
         Produce table template for ClickHouse
         CREATE TABLE(
@@ -69,11 +70,11 @@ class TableBuilder(TableProcessor):
         """
 
         ch_columns = []
-        for column_description in columns_descrption:
-            ch_columns.append('`{0}` {1}'.format(column_description['field'], column_description['clickhouse_type']))
+        for column_description in columns_description:
+            ch_columns.append('`{}` {}'.format(column_description['field'], column_description['clickhouse_type_nullable']))
 
-        sql = """CREATE TABLE {0} (
-    {1}
+        sql = """CREATE TABLE {} (
+    {}
 ) ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
 """.format(
             self.create_full_table_name(db=db, table=table),
@@ -81,16 +82,63 @@ class TableBuilder(TableProcessor):
         )
         return sql
 
+    def create_table_sql(self, db=None, table=None, columns_description=None):
+        """
+        Produce table template for ClickHouse
+        CREATE TABLE(
+            ...
+            columns specification
+            ...
+        ) ENGINE = MergeTree(_PRIMARY_DATE_FIELD, (COMMA_SEPARATED_INDEX_FIELDS_LIST), 8192)
+        for specified MySQL's table
+        :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
+        :param db: string - name of the DB in MySQL
+        :return: string - almost-ready-to-use ClickHouse CREATE TABLE statement
+        """
+
+        ch_columns = []
+
+        primary_date_field = self.fetch_primary_date_field(columns_description)
+        primary_key_fields = self.fetch_primary_key_fields(columns_description)
+
+        if primary_date_field is None:
+            # No primary date field found. Make one
+            ch_columns.append('`primary_date_field` Date default today()')
+
+        if primary_key_fields is None:
+            primary_key_fields = []
+            primary_key_fields.append('primary_date_field')
+
+        for column_description in columns_description:
+            field = column_description['field']
+            ch_type = column_description['clickhouse_type'] if (field == primary_date_field) or (field in primary_key_fields) else column_description['clickhouse_type_nullable']
+            ch_columns.append('`{}` {}'.format(field, ch_type))
+
+        sql = """CREATE TABLE {} (
+    {}
+) ENGINE = MergeTree({}, ({}), 8192)
+""".format(
+            self.create_full_table_name(db=db, table=table),
+            ",\n    ".join(ch_columns),
+            primary_date_field,
+            ",".join(primary_key_fields),
+        )
+        return sql
+
     def create_table_columns_description(self, db=None, table=None, ):
         # list of table columns specifications
-        # [{    'field': 'f1',
-        #        'mysql_type': 'int',
-        #        'clickhouse_type': 'UInt32'
-        #        'nullable': True,
-        #        'key': 'PRI',
-        #        'default': 'CURRENT TIMESTAMP',
-        #        'extra': 'on update CURRENT_TIMESTAMP',
-        # }, {}, {}]
+        # [
+        #   {
+        #       'field': 'f1',
+        #       'mysql_type': 'int',
+        #       'clickhouse_type': 'UInt32'
+        #       'nullable': True,
+        #       'key': 'PRI',
+        #       'default': 'CURRENT TIMESTAMP',
+        #       'extra': 'on update CURRENT_TIMESTAMP',
+        #   },
+        #   {...},
+        # ]
         columns_description = []
 
         # issue 'DESCRIBE table' statement
@@ -105,7 +153,8 @@ class TableBuilder(TableProcessor):
             columns_description.append({
                 'field': _field,
                 'mysql_type': _type,
-                'clickhouse_type': self.map_type(mysql_type=_type, nullable=self.is_field_nullable(_null)),
+                'clickhouse_type': self.map_type(mysql_type=_type),
+                'clickhouse_type_nullable': self.map_type_nullable(mysql_type=_type, nullable=self.is_field_nullable(_null)),
                 'nullable': self.is_field_nullable(_null),
                 'key': _key,
                 'default': _default,
@@ -114,27 +163,60 @@ class TableBuilder(TableProcessor):
 
         return columns_description
 
-    def is_field_nullable(self, nullable):
+    def fetch_primary_date_field(self, columns_description):
         """
-        Chack whether `nullable` value can be interpreted as True. Understand MySQL's "Yes" for nullable or just bool value
-        :param nullable: bool, string
+        Fetch first Date column name
+        :param columns_description:
+        :return: string|None
+        """
+        for column_description in columns_description:
+            if (column_description['clickhouse_type'] == 'Date'):
+                return column_description['field']
+
+        return None
+
+    def fetch_primary_key_fields(self, columns_description):
+        """
+        Fetch list of primary keys columns names
+        :param columns_description:
+        :return: list | None
+        """
+        primary_key_fields = []
+        for column_description in columns_description:
+            if self.is_field_primary_key(column_description['key']):
+                primary_key_fields.append(columns_description['field'])
+
+        return None if not primary_key_fields else primary_key_fields
+
+    def is_field_nullable(self, field):
+        """
+        Check whether `nullable` field description value can be interpreted as True.
+        Understand MySQL's "Yes" for nullable or just bool value
+        :param field: bool, string
         :return: bool
         """
-        if isinstance(nullable, bool):
+        if isinstance(field, bool):
             # for bool - simple statement
-            return nullable
-        elif isinstance(nullable, str):
+            return field
+        elif isinstance(field, str):
             # also accept case-insensitive string 'yes'
-            return True if nullable.upper() == "YES" else False
+            return True if field.upper() == "YES" else False
 
-    def map_type(self, mysql_type, nullable=False):
+    def is_field_primary_key(self, field):
+        """
+        Check whether `key` field description value can be interpreted as True
+        :param field:
+        :return:
+        """
+        return bool(field)
+
+    def map_type(self, mysql_type):
         """
         Map MySQL type (as a string from DESC table statement) to ClickHouse type (as string)
         :param mysql_type: string MySQL type (from DESC statement). Ex.: 'INT(10) UNSIGNED', 'BOOLEAN'
-        :param nullable: bool is this field nullable
         :return: string ClickHouse type specification directly usable in CREATE TABLE statement.  Ex.:
-            Nullable(Int32)
-            Nullable(UInt32)
+            Int32
+            UInt32
         """
 
         # deal with UPPER CASE strings for simplicity
@@ -214,6 +296,19 @@ class TableBuilder(TableProcessor):
 
         else:
             ch_type = 'UNKNOWN'
+
+        return ch_type
+
+    def map_type_nullable(self, mysql_type, nullable=False):
+        """
+        Map MySQL type (as a string from DESC table statement) to ClickHouse type (as string)
+        :param mysql_type: string MySQL type (from DESC statement). Ex.: 'INT(10) UNSIGNED', 'BOOLEAN'
+        :param nullable: bool is this field nullable
+        :return: string ClickHouse type specification directly usable in CREATE TABLE statement.  Ex.:
+            Nullable(Int32)
+            Nullable(UInt32)
+        """
+        ch_type = self.map_type(mysql_type)
 
         # Deal with NULLs
         if nullable:

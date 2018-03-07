@@ -103,7 +103,7 @@ class Main(Daemon):
 
             elif self.config.is_table_templates():
                 # we are going to prepare table templates
-                templates = self.config.table_builder().templates(self.config.is_table_templates_json())
+                templates = self.config.table_builder().templates(json=self.config.is_table_templates_json())
 
                 for db in templates:
                     for table in templates[db]:
@@ -113,7 +113,7 @@ class Main(Daemon):
 
             elif self.config.is_table_templates_json():
                 # we are going to prepare table templates in JSON form
-                print(json.dumps(self.config.table_builder().templates(self.config.is_table_templates_json())))
+                print(json.dumps(self.config.table_builder().templates(json=self.config.is_table_templates_json())))
 
             elif self.config.is_table_migrate():
                 # we are going to migrate data
