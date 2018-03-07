@@ -51,8 +51,8 @@ mkdir -p %{buildroot}/etc/init.d
 mkdir -p %{buildroot}/var/run/clickhouse-mysql
 mkdir -p %{buildroot}/var/log/clickhouse-mysql
 
-cp %{_builddir}/%{buildsubdir}/clickhouse-mysql.conf           %{buildroot}/etc/clickhouse-mysql/clickhouse-mysql-example.conf
-cp %{_builddir}/%{buildsubdir}/init.d/clickhouse-mysql         %{buildroot}/etc/init.d/clickhouse-mysql
+cp %{_builddir}/%{buildsubdir}/clickhouse_mysql.etc/clickhouse-mysql.conf           %{buildroot}/etc/clickhouse-mysql/clickhouse-mysql-example.conf
+cp %{_builddir}/%{buildsubdir}/clickhouse_mysql.init.d/clickhouse-mysql         %{buildroot}/etc/init.d/clickhouse-mysql
 #cp %{_builddir}/%{buildsubdir}/init.d/clickhouse-mysql.service %{buildroot}/etc/systemd/system/clickhouse-mysql.service
 
 %clean
