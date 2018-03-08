@@ -9,7 +9,7 @@ class TableBuilder(TableProcessor):
     Build ClickHouse table(s)
     """
 
-    def templates(self, json=False):
+    def templates(self):
         """
         Create ClikHouse tables templates for specified MySQL tables.
         In case no tables specified all tables from specified MySQL db are templated
@@ -32,11 +32,11 @@ class TableBuilder(TableProcessor):
         for db in dbs:
             templates[db] = {}
             for table in dbs[db]:
-                templates[db][table] = self.create_table_description(db=db, table=table, json=json)
+                templates[db][table] = self.create_table_description(db=db, table=table)
 
         return templates
 
-    def create_table_description(self, db=None, table=None, json=False):
+    def create_table_description(self, db=None, table=None):
         """
         High-level function.
         Produce either text ClickHouse's table SQL CREATE TABLE() template or JSON ClikcHouse's table description
@@ -46,14 +46,11 @@ class TableBuilder(TableProcessor):
         :return: dict{"template":SQL, "fields": {}} or string SQL
         """
         columns_description = self.create_table_columns_description(db=db, table=table)
-        sql_template = self.create_table_sql_template(db=db, table=table, columns_description=columns_description)
-        if json:
-            return {
-                "template": sql_template,
-                "fields": columns_description,
-            }
-        else:
-            return sql_template
+        return {
+            "template": self.create_table_sql_template(db=db, table=table, columns_description=columns_description),
+            "create": self.create_table_sql(db=db, table=table, columns_description=columns_description),
+            "fields": columns_description,
+        }
 
     def create_table_sql_template(self, db=None, table=None, columns_description=None):
         """
@@ -89,11 +86,11 @@ class TableBuilder(TableProcessor):
             ...
             columns specification
             ...
-        ) ENGINE = MergeTree(_PRIMARY_DATE_FIELD, (COMMA_SEPARATED_INDEX_FIELDS_LIST), 8192)
+        ) ENGINE = MergeTree(PRIMARY DATE FIELD, (COMMA SEPARATED INDEX FIELDS LIST), 8192)
         for specified MySQL's table
         :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
         :param db: string - name of the DB in MySQL
-        :return: string - almost-ready-to-use ClickHouse CREATE TABLE statement
+        :return: string - ready-to-use ClickHouse CREATE TABLE statement
         """
 
         ch_columns = []
@@ -103,14 +100,17 @@ class TableBuilder(TableProcessor):
 
         if primary_date_field is None:
             # No primary date field found. Make one
+            primary_date_field = 'primary_date_field'
             ch_columns.append('`primary_date_field` Date default today()')
 
         if primary_key_fields is None:
+            # No primary key fields found. Make PK from primary date field
             primary_key_fields = []
-            primary_key_fields.append('primary_date_field')
+            primary_key_fields.append(primary_date_field)
 
         for column_description in columns_description:
             field = column_description['field']
+            # primary date and primary key fields can't be nullable
             ch_type = column_description['clickhouse_type'] if (field == primary_date_field) or (field in primary_key_fields) else column_description['clickhouse_type_nullable']
             ch_columns.append('`{}` {}'.format(field, ch_type))
 

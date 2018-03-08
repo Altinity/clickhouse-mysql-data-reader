@@ -101,19 +101,22 @@ class Main(Daemon):
             if self.config.is_install():
                 Main.install()
 
-            elif self.config.is_table_templates():
-                # we are going to prepare table templates
-                templates = self.config.table_builder().templates(json=self.config.is_table_templates_json())
+            elif self.config.is_table_template() or self.config.is_table_create():
+
+                templates = self.config.table_builder().templates()
 
                 for db in templates:
                     for table in templates[db]:
-                        if self.config.is_table_templates_with_create_database():
+                        if self.config.is_with_create_database():
                             print("CREATE DATABASE IF NOT EXISTS `{}`;".format(db))
-                        print("{};".format(templates[db][table]))
+                        if self.config.is_table_template():
+                            print("{};".format(templates[db][table]['template']))
+                        if self.config.is_table_create():
+                            print("{};".format(templates[db][table]['create']))
 
-            elif self.config.is_table_templates_json():
+            elif self.config.is_table_template_json():
                 # we are going to prepare table templates in JSON form
-                print(json.dumps(self.config.table_builder().templates(json=self.config.is_table_templates_json())))
+                print(json.dumps(self.config.table_builder().templates()))
 
             elif self.config.is_table_migrate():
                 # we are going to migrate data
