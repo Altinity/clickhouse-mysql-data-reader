@@ -189,24 +189,29 @@ class CLIOptions(Options):
             help='Keep CSV pool files. Useful for debugging'
         )
         argparser.add_argument(
-            '--table-templates',
+            '--table-template',
             action='store_true',
-            help='Prepare table templates.'
+            help='Prepare CREATE TABLE template(s).'
         )
         argparser.add_argument(
-            '--table-templates-with-create-database',
+            '--table-create',
             action='store_true',
-            help='Prepare table templates. Prepend each template with CREATE DATABASE statement'
+            help='Prepare CREATE TABLE statement(s).'
         )
         argparser.add_argument(
-            '--table-templates-json',
+            '--with-create-database',
             action='store_true',
-            help='Prepare table templates as JSON. Useful for IPC'
+            help='Prepare CREATE TABLE sql [template] statement(s). Prepend each sttatement with CREATE DATABASE'
+        )
+        argparser.add_argument(
+            '--table-template-json',
+            action='store_true',
+            help='Prepare CREATE TABLE template(s) as JSON. Useful for IPC'
         )
         argparser.add_argument(
             '--table-migrate',
             action='store_true',
-            help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse already! See --table-templates option(s) for help.'
+            help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse already! See --table-template and --table-create options for additional info.'
         )
         argparser.add_argument(
             '--install',
@@ -401,9 +406,10 @@ class CLIOptions(Options):
             'csvpool': args.csvpool,
             'csvpool_file_path_prefix': args.csvpool_file_path_prefix,
             'csvpool_keep_files': args.csvpool_keep_files,
-            'table_templates': args.table_templates,
-            'table_templates_with_create_database': args.table_templates_with_create_database,
-            'table_templates_json': args.table_templates_json,
+            'table_template': args.table_template,
+            'table_create': args.table_create,
+            'with_create_database': args.with_create_database,
+            'table_template_json': args.table_template_json,
             'table_migrate': args.table_migrate,
             'install': args.install,
 

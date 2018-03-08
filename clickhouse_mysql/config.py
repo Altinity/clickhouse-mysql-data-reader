@@ -66,9 +66,10 @@ class Config(object):
                 'log_level': Options.log_level_from_string(self.options['log_level']),
                 'dry': self.options.get_bool('dry'),
                 'daemon': self.options.get_bool('daemon'),
-                'table_templates': self.options['table_templates'] or self.options['table_templates_with_create_database'],
-                'table_templates_with_create_database': self.options['table_templates_with_create_database'],
-                'table_templates_json': self.options['table_templates_json'],
+                'table_template': self.options['table_template'],
+                'table_create': self.options['table_create'],
+                'with_create_database': self.options['with_create_database'],
+                'table_template_json': self.options['table_template_json'],
                 'table_migrate': self.options.get_bool('table_migrate'),
                 'pid_file': self.options['pid_file'],
                 'binlog_position_file': self.options['binlog_position_file'],
@@ -209,14 +210,17 @@ class Config(object):
     def is_daemon(self):
         return self.config['app']['daemon']
 
-    def is_table_templates(self):
-        return self.config['app']['table_templates']
+    def is_table_template(self):
+        return self.config['app']['table_template']
 
-    def is_table_templates_with_create_database(self):
-        return self.config['app']['table_templates_with_create_database']
+    def is_table_create(self):
+        return self.config['app']['table_create']
 
-    def is_table_templates_json(self):
-        return self.config['app']['table_templates_json']
+    def is_with_create_database(self):
+        return self.config['app']['with_create_database']
+
+    def is_table_template_json(self):
+        return self.config['app']['table_template_json']
 
     def is_install(self):
         return self.config['app']['install']
