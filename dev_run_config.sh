@@ -14,4 +14,4 @@ if [ ! -d "clickhouse_mysql" ]; then
     cd ..
 fi
 
-$PYTHON $CH_MYSQL --config-file=clickhouse-mysql.conf ${*:1}
+$PYTHON $CH_MYSQL --config-file=clickhouse_mysql.etc/clickhouse-mysql.conf ${*:1}
