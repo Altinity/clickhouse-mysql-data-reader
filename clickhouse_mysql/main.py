@@ -98,40 +98,56 @@ class Main(Daemon):
         try:
             # what action are we going to do
 
+            # first of all, check for auxiliary activities (such as CREATE TABLE SQL statements, etc)
+
+            # run installation process
             if self.config.is_install():
                 Main.install()
+                return
 
-            elif self.config.is_table_template() or self.config.is_table_create():
+            # get JSON-ed SQL statements for review
+            if self.config.is_create_table_json_template():
+                # we are going to prepare table templates in JSON form
+                print(json.dumps(self.config.table_sql_builder().templates()))
+                return
 
-                templates = self.config.table_builder().templates()
+            # get SQL statements for review
+            if self.config.is_create_table_sql() or self.config.is_create_table_sql_template():
+
+                templates = self.config.table_sql_builder().templates()
 
                 for db in templates:
                     for table in templates[db]:
                         if self.config.is_with_create_database():
-                            print("CREATE DATABASE IF NOT EXISTS `{}`;".format(db))
-                        if self.config.is_table_template():
-                            print("{};".format(templates[db][table]['template']))
-                        if self.config.is_table_create():
-                            print("{};".format(templates[db][table]['create']))
+                            print("{};".format(templates[db][table]['create_database']))
+                        if self.config.is_create_table_sql_template():
+                            print("{};".format(templates[db][table]['create_table_template']))
+                        if self.config.is_create_table_sql():
+                            print("{};".format(templates[db][table]['create_table']))
 
-            elif self.config.is_table_template_json():
-                # we are going to prepare table templates in JSON form
-                print(json.dumps(self.config.table_builder().templates()))
+            # auxiliary activities completed
+            # run main activities (such as migrate or pump data)
 
-            elif self.config.is_table_migrate():
+            # main activities may be prepended with dst tables creation
+            if self.config.is_dst_create_table():
+                migrator = self.config.table_migrator()
+                migrator.migrate_all_tables(self.config.is_with_create_database())
+
+            # run data migration
+            if self.config.is_migrate_table():
                 # we are going to migrate data
                 migrator = self.config.table_migrator()
-                migrator.chwriter = self.config.writer()
-                migrator.pool_max_rows_num = self.config.mempool_max_rows_num()
-                migrator.migrate()
+                migrator.migrate_all_tables_data()
+                return
 
-            else:
-                # we are going to pump slave data
+            # pump data to Clickhouse
+            if self.config.is_pump_data():
                 pumper = Pumper(
                     reader=self.config.reader(),
                     writer=self.config.writer(),
                 )
                 pumper.run()
+                return
 
         except Exception as ex:
             logging.critical(ex)

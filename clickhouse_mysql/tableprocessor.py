@@ -3,19 +3,13 @@
 
 import logging
 import MySQLdb
-from MySQLdb.cursors import Cursor
+from clickhouse_mysql.dbclient.mysqlclient import MySQLClient
 
 
 class TableProcessor(object):
 
-    connection = None
-    cursor = None
-    cursorclass = Cursor
+    client = None
 
-    host = None
-    port = None
-    user = None
-    password = None
     dbs = None
     tables = None
     tables_prefixes = None
@@ -43,62 +37,15 @@ class TableProcessor(object):
         :param tables: list of string list of table names. Table names may be short or full form
         :param tables_prefixes: list of string list of table prefixes. May be short or full form
         """
-        self.host = host
-        self.port = port
-        self.user = user
-        self.password = password
         self.dbs = [] if dbs is None else dbs
         self.tables = [] if tables is None else tables
         self.tables_prefixes = [] if tables_prefixes is None else tables_prefixes
-
-    def disconnect(self):
-        """
-        Destroy connection objects
-        :return:
-        """
-        if self.cursor:
-            try:
-                self.cursor.close()
-                del self.cursor
-            except:
-                pass
-
-        if self.connection:
-            try:
-                del self.connection
-            except:
-                pass
-
-    def connect(self, db):
-        """
-        Connect to MySQL
-        :param db: string schema/db name
-        :return:
-        """
-
-        self.disconnect()
-        try:
-            self.connection = MySQLdb.connect(
-                host=self.host,
-                user=self.user,
-                passwd=self.password,
-                db=db,
-                cursorclass=self.cursorclass,
-            )
-            self.cursor = self.connection.cursor()
-            logging.debug("Connect to the database host={} user={} password={} db={}".format(
-                self.host,
-                self.user,
-                self.password,
-                db
-            ))
-        except:
-            raise Exception("Can not connect to the database host={} user={} password={} db={}".format(
-                self.host,
-                self.user,
-                self.password,
-                db
-            ))
+        self.client = MySQLClient({
+            'host': host,
+            'port': port,
+            'user': user,
+            'password': password,
+        })
 
     def dbs_tables_lists(self):
         """
@@ -162,32 +109,7 @@ class TableProcessor(object):
         :param db: database to list tables in
         :return: ['table1', 'table2', ...]
         """
-        try:
-            self.connect(db=db)
-
-            sql = "USE " + db
-            logging.debug(sql)
-            self.cursor.execute(sql)
-
-            sql = "SHOW TABLES"
-            logging.debug(sql)
-            self.cursor.execute(sql)
-
-            tables = []
-            for row in self.cursor:
-                logging.debug("table: {}".format(row))
-                table_name = row['Tables_in_db']
-                tables.append(table_name)
-
-        except:
-            raise Exception("Can not list tables on host={} user={} password={} db={}".format(
-                self.host,
-                self.user,
-                self.password,
-                db
-            ))
-
-        return tables
+        return self.client.tables_list(db)
 
     def tables_match(self, db, prefix):
         """
