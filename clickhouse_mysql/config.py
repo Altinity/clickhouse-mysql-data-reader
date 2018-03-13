@@ -13,9 +13,11 @@ from clickhouse_mysql.objectbuilder import ObjectBuilder
 
 from clickhouse_mysql.converter.csvwriteconverter import CSVWriteConverter
 from clickhouse_mysql.converter.chwriteconverter import CHWriteConverter
-from clickhouse_mysql.tablebuilder import TableBuilder
+from clickhouse_mysql.tablesqlbuilder import TableSQLBuilder
 from clickhouse_mysql.tablemigrator import TableMigrator
 from clickhouse_mysql.clioptions import Options, AggregatedOptions
+
+from clickhouse_mysql.dbclient.chclient import CHClient
 
 from clickhouse_mysql.util import Util
 
@@ -66,11 +68,11 @@ class Config(object):
                 'log_level': Options.log_level_from_string(self.options['log_level']),
                 'dry': self.options.get_bool('dry'),
                 'daemon': self.options.get_bool('daemon'),
-                'table_template': self.options['table_template'],
-                'table_create': self.options['table_create'],
+                'create_table_sql_template': self.options['create_table_sql_template'],
+                'create_table_sql': self.options['create_table_sql'],
                 'with_create_database': self.options['with_create_database'],
-                'table_template_json': self.options['table_template_json'],
-                'table_migrate': self.options.get_bool('table_migrate'),
+                'create_table_json_template': self.options['create_table_json_template'],
+                'migrate_table': self.options.get_bool('migrate_table'),
                 'pid_file': self.options['pid_file'],
                 'binlog_position_file': self.options['binlog_position_file'],
                 'mempool': self.options.get_bool('mempool') or self.options.get_bool('csvpool'), # csvpool assumes mempool to be enabled
@@ -78,6 +80,7 @@ class Config(object):
                 'mempool_max_rows_num': self.options['mempool_max_rows_num'],
                 'mempool_max_flush_interval': self.options['mempool_max_flush_interval'],
                 'csvpool': self.options.get_bool('csvpool'),
+                'pump_data': self.options.get_bool('pump_data'),
                 'install': self.options.get_bool('install'),
             },
 
@@ -105,9 +108,18 @@ class Config(object):
                     'port': self.options.get_int('src_port'),
                     'user': self.options['src_user'],
                     'password': self.options['src_password'],
-                    'dbs': self.options['src_schemas'],
-                    'tables': self.options['src_tables'],
-                    'tables_prefixes': self.options['src_tables_prefixes'],
+                    'dbs': self.options.get_list('src_schemas'),
+                    'tables': self.options.get_list('src_tables'),
+                    'tables_prefixes': self.options.get_list('src_tables_prefixes'),
+                },
+                'clickhouse': {
+                    'connection_settings': {
+                        'host': self.options['dst_host'],
+                        'port': self.options.get_int('dst_port'),
+                        'user': self.options['dst_user'],
+                        'password': self.options['dst_password'],
+                    },
+                    'dst_create_table': self.options.get_bool('dst_create_table'),
                 },
             },
 
@@ -120,10 +132,10 @@ class Config(object):
                     'port': self.options.get_int('src_port'),
                     'user': self.options['src_user'],
                     'password': self.options['src_password'],
-                    'dbs': self.options['src_schemas'],
-                    'tables': self.options['src_tables'],
-                    'tables_prefixes': self.options['src_tables_prefixes'],
-                    'tables_where_clauses': self.options['src_tables_where_clauses'],
+                    'dbs': self.options.get_list('src_schemas'),
+                    'tables': self.options.get_list('src_tables'),
+                    'tables_prefixes': self.options.get_list('src_tables_prefixes'),
+                    'tables_where_clauses': self.options.get_list('src_tables_where_clauses'),
                 },
                 'clickhouse': {
                     'connection_settings': {
@@ -134,6 +146,7 @@ class Config(object):
                     },
                     'dst_schema': self.options['dst_schema'],
                     'dst_table': self.options['dst_table'],
+                    'dst_create_table': self.options.get_bool('dst_create_table'),
                 },
             },
 
@@ -149,9 +162,9 @@ class Config(object):
                         'password': self.options['src_password'],
                     },
                     'server_id': self.options.get_int('src_server_id'),
-                    'schemas': self.options['src_schemas'],
-                    'tables': self.options['src_tables'],
-                    'tables_prefixes': self.options['src_tables_prefixes'],
+                    'schemas': self.options.get_list('src_schemas'),
+                    'tables': self.options.get_list('src_tables'),
+                    'tables_prefixes': self.options.get_list('src_tables_prefixes'),
                     'blocking': self.options.get_bool('src_wait'),
                     'resume_stream': self.options.get_bool('src_resume'),
                     'nice_pause': 0 if self.options.get_int('nice_pause') is None else self.options.get_int('nice_pause'),
@@ -210,23 +223,26 @@ class Config(object):
     def is_daemon(self):
         return self.config['app']['daemon']
 
-    def is_table_template(self):
-        return self.config['app']['table_template']
+    def is_create_table_sql_template(self):
+        return self.config['app']['create_table_sql_template']
 
-    def is_table_create(self):
-        return self.config['app']['table_create']
+    def is_create_table_sql(self):
+        return self.config['app']['create_table_sql']
 
     def is_with_create_database(self):
         return self.config['app']['with_create_database']
 
-    def is_table_template_json(self):
-        return self.config['app']['table_template_json']
+    def is_dst_create_table(self):
+        return self.config['table_builder']['clickhouse']['dst_create_table']
+
+    def is_create_table_json_template(self):
+        return self.config['app']['create_table_json_template']
 
     def is_install(self):
         return self.config['app']['install']
 
-    def table_builder(self):
-        return TableBuilder(
+    def table_sql_builder(self):
+        return TableSQLBuilder(
             host=self.config['table_builder']['mysql']['host'],
             port=self.config['table_builder']['mysql']['port'],
             user=self.config['table_builder']['mysql']['user'],
@@ -236,11 +252,17 @@ class Config(object):
             tables_prefixes=self.config['table_builder']['mysql']['tables_prefixes'],
         )
 
-    def is_table_migrate(self):
-        return self.config['app']['table_migrate']
+    def is_migrate_table(self):
+        return self.config['app']['migrate_table']
+
+    def is_pump_data(self):
+        return self.config['app']['pump_data']
+
+    def chclient(self):
+        return CHClient(self.config['writer']['clickhouse']['connection_settings'])
 
     def table_migrator(self):
-        return TableMigrator(
+        table_migrator = TableMigrator(
             host=self.config['table_migrator']['mysql']['host'],
             port=self.config['table_migrator']['mysql']['port'],
             user=self.config['table_migrator']['mysql']['user'],
@@ -250,6 +272,11 @@ class Config(object):
             tables_prefixes=self.config['table_migrator']['mysql']['tables_prefixes'],
             tables_where_clauses=self.config['table_migrator']['mysql']['tables_where_clauses'],
         )
+        table_migrator.chwriter = self.writer()
+        table_migrator.chclient = self.chclient()
+        table_migrator.pool_max_rows_num = self.mempool_max_rows_num()
+
+        return table_migrator
 
     def reader(self):
         if self.config['reader']['file']['csv_file_path']:

@@ -2,16 +2,16 @@
 # -*- coding: utf-8 -*-
 
 from clickhouse_mysql.tableprocessor import TableProcessor
+from MySQLdb.cursors import Cursor
 
-
-class TableBuilder(TableProcessor):
+class TableSQLBuilder(TableProcessor):
     """
     Build ClickHouse table(s)
     """
 
     def templates(self):
         """
-        Create ClikHouse tables templates for specified MySQL tables.
+        Create ClickHouse tables templates for specified MySQL tables.
         In case no tables specified all tables from specified MySQL db are templated
         :return: dict of ClickHouse's CREATE TABLE () templates
         {
@@ -47,8 +47,9 @@ class TableBuilder(TableProcessor):
         """
         columns_description = self.create_table_columns_description(db=db, table=table)
         return {
-            "template": self.create_table_sql_template(db=db, table=table, columns_description=columns_description),
-            "create": self.create_table_sql(db=db, table=table, columns_description=columns_description),
+            "create_table_template": self.create_table_sql_template(db=db, table=table, columns_description=columns_description),
+            "create_table": self.create_table_sql(db=db, table=table, columns_description=columns_description),
+            "create_database": self.create_database_sql(db=db),
             "fields": columns_description,
         }
 
@@ -70,7 +71,7 @@ class TableBuilder(TableProcessor):
         for column_description in columns_description:
             ch_columns.append('`{}` {}'.format(column_description['field'], column_description['clickhouse_type_nullable']))
 
-        sql = """CREATE TABLE {} (
+        sql = """CREATE TABLE IF NOT EXISTS {} (
     {}
 ) ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
 """.format(
@@ -114,7 +115,7 @@ class TableBuilder(TableProcessor):
             ch_type = column_description['clickhouse_type'] if (field == primary_date_field) or (field in primary_key_fields) else column_description['clickhouse_type_nullable']
             ch_columns.append('`{}` {}'.format(field, ch_type))
 
-        sql = """CREATE TABLE {} (
+        sql = """CREATE TABLE IF NOT EXISTS {} (
     {}
 ) ENGINE = MergeTree({}, ({}), 8192)
 """.format(
@@ -123,6 +124,17 @@ class TableBuilder(TableProcessor):
             primary_date_field,
             ",".join(primary_key_fields),
         )
+        return sql
+
+    def create_database_sql(self, db):
+        """
+        Produce create database statement for ClickHouse
+        CREATE DATABASE
+        for specified MySQL's db
+        :param db: string - name of the DB in MySQL
+        :return: string - ready-to-use ClickHouse CREATE DATABASE statement
+        """
+        sql = "CREATE DATABASE IF NOT EXISTS `{}`".format(db)
         return sql
 
     def create_table_columns_description(self, db=None, table=None, ):
@@ -142,9 +154,10 @@ class TableBuilder(TableProcessor):
         columns_description = []
 
         # issue 'DESCRIBE table' statement
-        self.connect(db=db)
-        self.cursor.execute("DESC {0}".format(self.create_full_table_name(db=db, table=table)))
-        for (_field, _type, _null, _key, _default, _extra,) in self.cursor:
+        self.client.cursorclass = Cursor
+        self.client.connect(db=db)
+        self.client.cursor.execute("DESC {}".format(self.create_full_table_name(db=db, table=table)))
+        for (_field, _type, _null, _key, _default, _extra,) in self.client.cursor:
             # Field | Type | Null | Key | Default | Extra
 
             # build ready-to-sql column specification Ex.:
@@ -184,7 +197,7 @@ class TableBuilder(TableProcessor):
         primary_key_fields = []
         for column_description in columns_description:
             if self.is_field_primary_key(column_description['key']):
-                primary_key_fields.append(columns_description['field'])
+                primary_key_fields.append(column_description['field'])
 
         return None if not primary_key_fields else primary_key_fields
 
@@ -317,7 +330,7 @@ class TableBuilder(TableProcessor):
         return ch_type
 
 if __name__ == '__main__':
-    tb = TableBuilder(
+    tb = TableSQLBuilder(
         host='127.0.0.1',
         user='reader',
         password='qwerty',

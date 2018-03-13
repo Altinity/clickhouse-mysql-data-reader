@@ -88,8 +88,73 @@ class Options(object):
 class CLIOptions(Options):
     """Options extracted from command line"""
 
-    @staticmethod
-    def options():
+    default_options = {
+        #
+        # general app section
+        #
+        'config_file': '/etc/clickhouse-mysql/clickhouse-mysql.conf',
+        'log_file': None,
+        'log_level': None,
+        'nice_pause': None,
+        'dry': False,
+        'daemon': False,
+        'pid_file': '/tmp/reader.pid',
+        'binlog_position_file': None,
+        'mempool': False,
+        'mempool_max_events_num': 100000,
+        'mempool_max_rows_num': 100000,
+        'mempool_max_flush_interval': 60,
+        'csvpool': False,
+        'csvpool_file_path_prefix': '/tmp/csvpool_',
+        'csvpool_keep_files': False,
+        'create_table_sql_template': False,
+        'create_table_sql': False,
+        'with_create_database': False,
+        'create_table_json_template': False,
+        'migrate_table': False,
+        'pump_data': False,
+        'install': False,
+
+        #
+        # src section
+        #
+        'src_server_id': None,
+        'src_host': None,
+        'src_port': 3306,
+        'src_user': None,
+        'src_password': None,
+        'src_schemas': None,
+        'src_tables': None,
+        'src_tables_where_clauses': None,
+        'src_tables_prefixes': None,
+        'src_wait': False,
+        'src_resume': False,
+        'src_binlog_file': None,
+        'src_binlog_position': None,
+        'src_file': None,
+
+        #
+        # dst section
+        #
+        'dst_file': None,
+        'dst_host': None,
+        'dst_port': 9000,
+        'dst_user': 'default',
+        'dst_password': '',
+        'dst_schema': None,
+        'dst_table': None,
+        'dst_create_table': False,
+
+        #
+        # converters section
+        #
+        'column_default_value': None,
+        'column_skip': None,
+        'ch_converter_file': None,
+        'ch_converter_class': None,
+    }
+
+    def options(self):
         """Parse application's CLI options into options dictionary
         :return: instance of Config
         """
@@ -105,25 +170,25 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--config-file',
             type=str,
-            default='/etc/clickhouse-mysql/clickhouse-mysql.conf',
+            default=self.default_options['config_file'],
             help='Path to config file. Default - not specified'
         )
         argparser.add_argument(
             '--log-file',
             type=str,
-            default=None,
+            default=self.default_options['log_file'],
             help='Path to log file. Default - not specified'
         )
         argparser.add_argument(
             '--log-level',
             type=str,
-            default=None,
+            default=self.default_options['log_level'],
             help='Log Level. Default - NOTSET'
         )
         argparser.add_argument(
             '--nice-pause',
             type=int,
-            default=None,
+            default=self.default_options['nice_pause'],
             help='make nice pause between attempts to read binlog stream'
         )
         argparser.add_argument(
@@ -140,13 +205,13 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--pid-file',
             type=str,
-            default='/tmp/reader.pid',
+            default=self.default_options['pid_file'],
             help='Pid file to be used by app in daemon mode'
         )
         argparser.add_argument(
             '--binlog-position-file',
             type=str,
-            default=None,
+            default=self.default_options['binlog_position_file'],
             help='File to write binlog position to'
         )
         argparser.add_argument(
@@ -157,19 +222,19 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--mempool-max-events-num',
             type=int,
-            default=100000,
+            default=self.default_options['mempool_max_events_num'],
             help='Max events number to pool - triggering pool flush'
         )
         argparser.add_argument(
             '--mempool-max-rows-num',
             type=int,
-            default=100000,
+            default=self.default_options['mempool_max_rows_num'],
             help='Max rows number to pool - triggering pool flush'
         )
         argparser.add_argument(
             '--mempool-max-flush-interval',
             type=int,
-            default=60,
+            default=self.default_options['mempool_max_flush_interval'],
             help='Max seconds number between pool flushes'
         )
         argparser.add_argument(
@@ -180,7 +245,7 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--csvpool-file-path-prefix',
             type=str,
-            default='/tmp/csvpool_',
+            default=self.default_options['csvpool_file_path_prefix'],
             help='File path prefix to CSV pool files'
         )
         argparser.add_argument(
@@ -189,29 +254,36 @@ class CLIOptions(Options):
             help='Keep CSV pool files. Useful for debugging'
         )
         argparser.add_argument(
-            '--table-template',
+            '--create-table-sql-template',
             action='store_true',
-            help='Prepare CREATE TABLE template(s).'
+            help='Prepare CREATE TABLE SQL template(s).'
         )
         argparser.add_argument(
-            '--table-create',
+            '--create-table-sql',
             action='store_true',
-            help='Prepare CREATE TABLE statement(s).'
+            help='Prepare CREATE TABLE SQL statement(s).'
         )
         argparser.add_argument(
             '--with-create-database',
             action='store_true',
-            help='Prepare CREATE TABLE sql [template] statement(s). Prepend each sttatement with CREATE DATABASE'
+            help='Prepend each CREATE TABLE SQL statement(s) with CREATE DATABASE statement'
         )
         argparser.add_argument(
-            '--table-template-json',
+            '--create-table-json-template',
             action='store_true',
             help='Prepare CREATE TABLE template(s) as JSON. Useful for IPC'
         )
         argparser.add_argument(
-            '--table-migrate',
+            '--migrate-table',
             action='store_true',
-            help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse already! See --table-template and --table-create options for additional info.'
+            help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse '
+                 'or it has to be created with --create-table and possibly with --with-create-database options'
+                 'See --table-template and --table-create options for additional info.'
+        )
+        argparser.add_argument(
+            '--pump-data',
+            action='store_true',
+            help='Pump data into ClickHouse'
         )
         argparser.add_argument(
             '--install',
@@ -225,55 +297,55 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--src-server-id',
             type=int,
-            default=None,
+            default=self.default_options['src_server_id'],
             help='Set server_id to be used when reading date from MySQL src. Ex.: 1'
         )
         argparser.add_argument(
             '--src-host',
             type=str,
-            default=None,
+            default=self.default_options['src_host'],
             help='Host to be used when reading from src. Ex.: 127.0.0.1'
         )
         argparser.add_argument(
             '--src-port',
             type=int,
-            default=3306,
+            default=self.default_options['src_port'],
             help='Port to be used when reading from src. Ex.: 3306'
         )
         argparser.add_argument(
             '--src-user',
             type=str,
-            default=None,
+            default=self.default_options['src_user'],
             help='Username to be used when reading from src. Ex.: root'
         )
         argparser.add_argument(
             '--src-password',
             type=str,
-            default=None,
+            default=self.default_options['src_password'],
             help='Password to be used when reading from src. Ex.: qwerty'
         )
         argparser.add_argument(
             '--src-schemas',
             type=str,
-            default=None,
+            default=self.default_options['src_schemas'],
             help='Comma-separated list of schemas to be used when reading from src. Ex.: db1,db2,db3'
         )
         argparser.add_argument(
             '--src-tables',
             type=str,
-            default=None,
+            default=self.default_options['src_tables'],
             help='Comma-separated list of tables to be used when reading from src. Ex.: table1,table2,table3'
         )
         argparser.add_argument(
             '--src-tables-where-clauses',
             type=str,
-            default=None,
+            default=self.default_options['src_tables_where_clauses'],
             help='Comma-separated list of WHERE clauses for tables to be migrated. Ex.: db1.t1="a=1 and b=2",db2.t2="c=3 and k=4"'
         )
         argparser.add_argument(
             '--src-tables-prefixes',
             type=str,
-            default=None,
+            default=self.default_options['src_tables_prefixes'],
             help='Comma-separated list of table prefixes to be used when reading from src.'
                  'Useful when we need to process unknown-in-advance tables, say day-named log tables, as log_2017_12_27'
                  'Ex.: mylog_,anotherlog_,extralog_3'
@@ -291,19 +363,19 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--src-binlog-file',
             type=str,
-            default=None,
+            default=self.default_options['src_binlog_file'],
             help='Binlog file to be used when reading from src. Ex.: mysql-bin.000024'
         )
         argparser.add_argument(
             '--src-binlog-position',
             type=int,
-            default=None,
+            default=self.default_options['src_binlog_position'],
             help='Binlog position to be used when reading from src. Ex.: 5703'
         )
         argparser.add_argument(
             '--src-file',
             type=str,
-            default=None,
+            default=self.default_options['src_file'],
             help='Source file to read data from. CSV'
         )
 
@@ -313,44 +385,49 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--dst-file',
             type=str,
-            default=None,
+            default=self.default_options['dst_file'],
             help='Target file to be used when writing data. CSV'
         )
         argparser.add_argument(
             '--dst-host',
             type=str,
-            default=None,
+            default=self.default_options['dst_host'],
             help='Host to be used when writing to dst. Ex.: 127.0.0.1'
         )
         argparser.add_argument(
             '--dst-port',
             type=int,
-            default=9000,
+            default=self.default_options['dst_port'],
             help='Port to be used when writing to dst. Ex.: 9000'
         )
         argparser.add_argument(
             '--dst-user',
             type=str,
-            default='default',
+            default=self.default_options['dst_user'],
             help='Username to be used when writing to dst. Ex: default'
         )
         argparser.add_argument(
             '--dst-password',
             type=str,
-            default=None,
+            default=self.default_options['dst_password'],
             help='Password to be used when writing to dst. Ex.: qwerty'
         )
         argparser.add_argument(
             '--dst-schema',
             type=str,
-            default=None,
+            default=self.default_options['dst_schema'],
             help='Database/schema to be used when writing to dst. Ex.: db1'
         )
         argparser.add_argument(
             '--dst-table',
             type=str,
-            default=None,
+            default=self.default_options['dst_table'],
             help='Table to be used when writing to dst. Ex.: table1'
+        )
+        argparser.add_argument(
+            '--dst-create-table',
+            action='store_true',
+            help='Prepare and run CREATE TABLE SQL statement(s).'
         )
 
         #
@@ -361,7 +438,7 @@ class CLIOptions(Options):
             type=str,
             nargs='*',
             action='append',
-            default=None,
+            default=self.default_options['column_default_value'],
             help='Set of key=value pairs for columns default values. Ex.: date_1=2000-01-01 timestamp_1=2002-01-01\ 01:02:03'
         )
         argparser.add_argument(
@@ -369,19 +446,19 @@ class CLIOptions(Options):
             type=str,
             nargs='*',
             action='append',
-            default=None,
+            default=self.default_options['column_skip'],
             help='Set of column names to skip. Ex.: column1 column2'
         )
         argparser.add_argument(
             '--ch-converter-file',
             type=str,
-            default=None,
+            default=self.default_options['ch_converter_file'],
             help='Filename where to search for CH converter class'
         )
         argparser.add_argument(
             '--ch-converter-class',
             type=str,
-            default=None,
+            default=self.default_options['ch_converter_class'],
             help='Converter class name in --ch-converter-file file'
         )
 
@@ -406,11 +483,12 @@ class CLIOptions(Options):
             'csvpool': args.csvpool,
             'csvpool_file_path_prefix': args.csvpool_file_path_prefix,
             'csvpool_keep_files': args.csvpool_keep_files,
-            'table_template': args.table_template,
-            'table_create': args.table_create,
+            'create_table_sql_template': args.create_table_sql_template,
+            'create_table_sql': args.create_table_sql,
             'with_create_database': args.with_create_database,
-            'table_template_json': args.table_template_json,
-            'table_migrate': args.table_migrate,
+            'create_table_json_template': args.create_table_json_template,
+            'migrate_table': args.migrate_table,
+            'pump_data': args.pump_data,
             'install': args.install,
 
             #
@@ -421,15 +499,15 @@ class CLIOptions(Options):
             'src_port': args.src_port,
             'src_user': args.src_user,
             'src_password': args.src_password,
-            'src_schemas': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else None,
-            'src_tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else None,
-            'src_tables_where_clauses': [x for x in args.src_tables_where_clauses.split(',') if x] if args.src_tables_where_clauses else None,
-            'src_tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else None,
+            'src_schemas': [x for x in args.src_schemas.split(',') if x] if args.src_schemas else self.default_options['src_schemas'],
+            'src_tables': [x for x in args.src_tables.split(',') if x] if args.src_tables else self.default_options['src_tables'],
+            'src_tables_where_clauses': [x for x in args.src_tables_where_clauses.split(',') if x] if args.src_tables_where_clauses else self.default_options['src_tables_where_clauses'],
+            'src_tables_prefixes': [x for x in args.src_tables_prefixes.split(',') if x] if args.src_tables_prefixes else self.default_options['src_tables_prefixes'],
             'src_wait': args.src_wait,
             'src_resume': args.src_resume,
-            'src_file': args.src_file,
             'src_binlog_file': args.src_binlog_file,
             'src_binlog_position': args.src_binlog_position,
+            'src_file': args.src_file,
 
             #
             # dst section
@@ -441,6 +519,7 @@ class CLIOptions(Options):
             'dst_password': args.dst_password,
             'dst_schema': args.dst_schema,
             'dst_table': args.dst_table,
+            'dst_create_table': args.dst_create_table,
 
             #
             # converters section
@@ -521,9 +600,13 @@ class AggregatedOptions(object):
     cfg_opts = None
     env_opts = None
 
+    cli = None
+
     def __init__(self):
         """Build aggregated options"""
-        self.cli_opts = CLIOptions.options()
+        self.cli = CLIOptions()
+
+        self.cli_opts = self.cli.options()
         self.cfg_opts = ConfigFileOptions.options(self.cli_opts['config_file'])
 
     def get_from_src(self, src, *coordinates):
@@ -548,23 +631,40 @@ class AggregatedOptions(object):
         """
         cfg_opt = self.get_from_src(self.cfg_opts, *coordinates)
         cli_opt = self.get_from_src(self.cli_opts, *coordinates)
+        cli_def = self.get_from_src(self.cli.default_options, *coordinates)
 
-        if cli_opt:
-            # CLI opt - top priority
+        if cli_opt != cli_def:
+            # CLI opt is set - it is not default one - top priority
             return cli_opt
 
-        if cfg_opt:
-            # cfg opt - lower priority
+        # here CLI option is a default one
+
+        if cfg_opt is not None:
+            # cfg opt - is set lower priority
             return cfg_opt
 
-        # option not available
-        return None
+        # option not available - return CLI default
+        return cli_def
 
     def get_int(self, *coordinates):
         value = self.get(*coordinates)
         if value is not None:
             value = int(value)
         return value
+
+    def get_list(self, *coordinates):
+        value = self.get(*coordinates)
+
+        # return None as it is
+        if value is None:
+            return None
+
+        # return list-like type as it is
+        if isinstance(value, (list, set, dict, tuple)):
+            return value
+
+        # wrap value in a list
+        return [value]
 
     def get_bool(self, *coordinates):
         value = self.get(*coordinates)

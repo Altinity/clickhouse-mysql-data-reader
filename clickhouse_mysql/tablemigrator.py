@@ -2,20 +2,20 @@
 # -*- coding: utf-8 -*-
 
 import logging
-import MySQLdb
 
 from MySQLdb.cursors import SSDictCursor
 from clickhouse_mysql.tableprocessor import TableProcessor
+from clickhouse_mysql.tablesqlbuilder import TableSQLBuilder
 from clickhouse_mysql.event.event import Event
 
 
-class TableMigrator(TableProcessor):
+class TableMigrator(TableSQLBuilder):
     """
     Migrate data from MySQL to ClickHouse
     """
 
-    cursorclass = SSDictCursor
     chwriter = None
+    chclient = None
     pool_max_rows_num = 100000
 
     # {
@@ -28,7 +28,7 @@ class TableMigrator(TableProcessor):
     #       'table2': "g = 1 and h = 2"
     #   }
     # }
-    wheres = {}
+    where_clauses = {}
 
     def __init__(
             self,
@@ -50,21 +50,26 @@ class TableMigrator(TableProcessor):
             tables=tables,
             tables_prefixes=tables_prefixes,
         )
+        self.client.cursorclass = SSDictCursor
 
         # parse tables where clauses
         if not tables_where_clauses:
             return
 
-        # tables_where_clauses
-        # [ 'db1.t1=where_filename_1', 'db2.t2=where_filename_2']
+        # tables_where_clauses contains:
+        # [
+        #   'db1.t1=where_filename_1',
+        #   'db2.t2=where_filename_2'
+        # ]
 
         # debug info
         logging.info("tables_where_clauses={}".format(tables_where_clauses))
         for table_where in tables_where_clauses:
             logging.info("table_where={}".format(table_where))
 
+        # process WHERE migration clauses
         for table_where_clause in tables_where_clauses:
-            # db1.t1=where_filename_1
+            # table_where_clause contains 'db1.t1=where_filename_1'
             full_table_name, equals, where_file_name = table_where_clause.partition('=')
 
             # sanity check
@@ -85,23 +90,59 @@ class TableMigrator(TableProcessor):
             #   }
             # }
             db, table = TableProcessor.parse_full_table_name(full_table_name)
-            if not db in self.wheres:
-                self.wheres[db] = {}
-            self.wheres[db][table] = open(where_file_name,'r').read().strip("\n")
+            if not db in self.where_clauses:
+                self.where_clauses[db] = {}
+            self.where_clauses[db][table] = open(where_file_name, 'r').read().strip("\n")
 
         # debug info
         logging.info("migration where clauses")
-        for db, tables in self.wheres.items():
+        for db, tables in self.where_clauses.items():
             for table, where in tables.items():
                 logging.info("{}.{}.where={}".format(db, table, where))
 
-    def migrate(self):
+    def migrate_all_tables(self, with_create_database):
         """
         High-level migration function. Loops over tables and migrate each of them
         :return:
         """
+
+        # what tables are we going to migrate
         dbs = self.dbs_tables_lists()
 
+        # sanity check
+        if dbs is None:
+            logging.info("Nothing to migrate")
+            return None
+
+        # debug info
+        logging.info("List for migration:")
+        for db in dbs:
+            for table in dbs[db]:
+                logging.info("  {}.{}".format(db, table))
+
+        # migration templates
+        templates = self.templates()
+
+        # migrate table-by-table
+        for db in dbs:
+            for table in dbs[db]:
+                logging.info("Start migration {}.{}".format(db, table))
+                if with_create_database:
+                    print("{};".format(templates[db][table]['create_database']))
+                    self.chclient.execute(templates[db][table]['create_database'])
+                print("{};".format(templates[db][table]['create_table']))
+                self.chclient.execute(templates[db][table]['create_table'])
+
+    def migrate_all_tables_data(self):
+        """
+        High-level migration function. Loops over tables and migrate each of them
+        :return:
+        """
+
+        # what tables are we going to migrate
+        dbs = self.dbs_tables_lists()
+
+        # sanity check
         if dbs is None:
             logging.info("Nothing to migrate")
             return None
@@ -116,36 +157,43 @@ class TableMigrator(TableProcessor):
         for db in dbs:
             for table in dbs[db]:
                 logging.info("Start migration {}.{}".format(db, table))
-                self.migrate_table(db=db, table=table)
+                self.migrate_one_table_data(db=db, table=table)
 
-    def migrate_table(self, db=None, table=None, ):
+    def migrate_one_table_data(self, db=None, table=None):
         """
         Migrate one table
         :param db: db
         :param table: table
         :return: number of migrated rows
         """
-        self.connect(db=db)
+
+        self.client.cursorclass = SSDictCursor
+        self.client.connect(db=db)
 
         # build SQL statement
         sql = "SELECT * FROM {0}".format(self.create_full_table_name(db=db, table=table))
-        if db in self.wheres and table in self.wheres[db]:
-            sql += " WHERE {}".format(self.wheres[db][table])
+        # in case we have WHERE clause for this db.table - add it to SQL
+        if db in self.where_clauses and table in self.where_clauses[db]:
+            sql += " WHERE {}".format(self.where_clauses[db][table])
 
         try:
             logging.info("migrate_table. sql={}".format(sql))
-            self.cursor.execute(sql)
+            self.client.cursor.execute(sql)
             cnt = 0;
             while True:
-                rows = self.cursor.fetchmany(self.pool_max_rows_num)
+                # fetch multiple rows from MySQL
+                rows = self.client.cursor.fetchmany(self.pool_max_rows_num)
                 if not rows:
                     break
+
+                # insert Event with multiple rows into ClickHouse writer
                 event = Event()
                 event.schema = db
                 event.table = table
                 event.rows = rows
                 self.chwriter.insert(event)
                 self.chwriter.flush()
+
                 cnt += len(rows)
         except:
             raise Exception("Can not migrate table on host={} user={} password={} db={} table={} cnt={}".format(
