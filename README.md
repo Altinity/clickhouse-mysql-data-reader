@@ -69,17 +69,18 @@ More details on installation are available on [https://github.com/Altinity/click
 ```bash
 curl -s https://packagecloud.io/install/repositories/altinity/clickhouse/script.rpm.sh | sudo bash
 ```
-EPEL & MySQL repos
+Install EPEL (for `python3`) and MySQL (for `libmysqlclient`) repos
 ```bash
 sudo yum install -y epel-release
 sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
 ```
-Install data reader
+Install data reader from [packagecloud.io](https://packagecloud.io/Altinity/clickhouse)
 ```bash
 sudo yum install clickhouse-mysql
 ```
+clickhouse packages would also be installed as dependencies.
 
-Prepare config file
+Prepare config file - copy **example** file into production and edit it.
 ```bash
 sudo cp /etc/clickhouse-mysql/clickhouse-mysql-example.conf /etc/clickhouse-mysql/clickhouse-mysql.conf
 sudo vim /etc/clickhouse-mysql/clickhouse-mysql.conf
@@ -87,7 +88,7 @@ sudo vim /etc/clickhouse-mysql/clickhouse-mysql.conf
 
 Start service
 ```bash
-sudo /etc/init.d/clickhouse-mysql start
+sudo service clickhouse-mysql start
 ```
 
 ## PyPi Installation
@@ -120,7 +121,7 @@ sudo yum install -y gcc
 sudo yum install -y python34-devel python34-pip
 ```
 
-Install datareader
+Install data reader
 ```bash
 sudo pip3 install clickhouse-mysql
 ```
@@ -280,7 +281,8 @@ $PYTHON clickhouse-mysql ${*:1} \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --mempool-max-flush-interval=60 \
-    --mempool-max-events-num=1000
+    --mempool-max-events-num=1000 \
+    --pump-data
 ```
 Options description
   * `--src-server-id` - Master's server id
@@ -296,6 +298,7 @@ Options description
   * `--csvpool-file-path-prefix=qwe_` - put these CSV files having `qwe_` prefix in `CWD`
   * `--mempool-max-flush-interval=60` - flush mempool at least every 60 seconds
   * `--mempool-max-events-num=1000` - flush mempool at least each 1000 events (not rows, but events)
+  * `--pump-data` - pump data from MySQL into ClickHouse
 
 ## MySQL Migration Case 1 - with Tables Lock
 
@@ -321,10 +324,11 @@ clickhouse-mysql \
     --src-host=127.0.0.1 \
     --src-user=reader \
     --src-password=Qwerty1# \
-    --table-templates-with-create-database \
-    --src-only-table=airline.ontime > create_clickhouse.sql
+    --create-table-sql-template \
+    --with-create-database \
+    --src-only-table=airline.ontime > create_clickhouse_table_template.sql
 ```
-We have table template stored in `create_clickhouse.sql` file.
+We have **CREATE TABLE** template stored in `create_clickhouse_table_template.sql` file.
 ```bash
 vim create_clickhouse.sql
 ```  
@@ -342,7 +346,7 @@ Setup sharding field and primary key. These columns must not be `Nullable`
 
 Create table in ClickHouse
 ```bash
-clickhouse-client -mn < create_clickhouse.sql
+clickhouse-client -mn < create_clickhouse_table_template.sql
 ```
 
 ### MySQL Migration Case 1 - Migrate Existing Data
@@ -358,7 +362,7 @@ clickhouse-mysql \
     --src-host=127.0.0.1 \
     --src-user=reader \
     --src-password=Qwerty1# \
-    --table-migrate \
+    --migrate-table \
     --src-only-table=airline.ontime \
     --dst-host=127.0.0.1
 ```
@@ -391,7 +395,8 @@ clickhouse-mysql \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --mempool-max-flush-interval=60 \
-    --mempool-max-events-num=10000
+    --mempool-max-events-num=10000 \
+    --pump-data
 ```
 
 Allow new data to be inserted into MySQL - i.e. unlock tables.
@@ -444,17 +449,18 @@ clickhouse-mysql \
     --src-host=127.0.0.1 \
     --src-user=reader \
     --src-password=qwerty \
-    --table-templates-with-create-database \
-    --src-tables-prefixes=db.log_ > create_clickhouse.sql
+    --create-table-sql-template \
+    --with-create-database \
+    --src-tables-prefixes=db.log_ > create_clickhouse_table_template.sql
 ```
 Edit templates
 ```bash
-vim create_clickhouse.sql
+vim create_clickhouse_table_template.sql
 ```
 And create tables in ClickHouse
 ```bash
 
-clickhouse-client -mn < create_clickhouse.sql
+clickhouse-client -mn < create_clickhouse_table_template.sql
 ```
 
 ### MySQL Migration Case 2 - Listen For New Data
@@ -471,7 +477,8 @@ clickhouse-mysql \
     --src-tables-prefixes=log_ \
     --dst-host=127.0.0.1 \
     --dst-table=logunified \
-    --csvpool
+    --csvpool \
+    --pump-data
 ```
 Pay attention to 
 ```bash
@@ -497,7 +504,7 @@ clickhouse-mysql \
      --src-host=127.0.0.1 \
      --src-user=reader \
      --src-password=qwerty \
-     --table-migrate \
+     --migrate-table \
      --src-tables-prefixes=db.log_ \
      --src-tables-where-clauses=db.log_201801_1=db.log_201801_1.sql,db.log_201801_2=db.log_201801_2.sql,db.log_201801_3=db.log_201801_3.sql \
      --dst-host=127.0.0.1 \

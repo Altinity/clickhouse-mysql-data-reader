@@ -32,7 +32,8 @@ $PYTHON $CH_MYSQL ${*:1} \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --mempool-max-flush-interval=60 \
-    --mempool-max-events-num=10000
+    --mempool-max-events-num=10000 \
+    --pump-data
 
 #	--mempool
 #   --mempool-max-events-num=3
