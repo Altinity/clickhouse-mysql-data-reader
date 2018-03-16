@@ -56,9 +56,16 @@ Datareader can be installed either from `github` repo or from `pypi` repo.
 ## Dev Installation
 ```bash
 sudo yum install -y rpm-build
+sudo yum install -y epel-release
+sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
+curl -s https://packagecloud.io/install/repositories/altinity/clickhouse/script.rpm.sh | sudo bash
+
+sudo yum install -y python34-pip python34-devel
+
 ./package_rpm_distr.sh
 ./pack/build.sh
-sudo yum install ./build/bdist.linux-x86_64/rpm/RPMS/noarch/clickhouse-mysql-0.0.20180227-1.noarch.rpm 
+ls -l ./build/bdist.linux-x86_64/rpm/RPMS/noarch/
+sudo yum install ./build/bdist.linux-x86_64/rpm/RPMS/noarch/clickhouse-mysql-* 
 ```
 
 ## RPM Installation
