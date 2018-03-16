@@ -74,9 +74,15 @@ Install EPEL (for `python3`) and MySQL (for `libmysqlclient`) repos
 sudo yum install -y epel-release
 sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
 ```
+
+If you do not have EPEL available in your repos, install it directly from EPEL site
+```bash
+sudo yum install -y https://download.fedoraproject.org/pub/epel/7/x86_64/Packages/e/epel-release-7-11.noarch.rpm
+```
+
 Install data reader from [packagecloud.io](https://packagecloud.io/Altinity/clickhouse)
 ```bash
-sudo yum install clickhouse-mysql
+sudo yum install -y clickhouse-mysql
 ```
 clickhouse packages would also be installed as dependencies.
 
