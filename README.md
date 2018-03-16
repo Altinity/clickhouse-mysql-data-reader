@@ -64,6 +64,7 @@ sudo yum install -y python34-pip python34-devel
 
 ./package_rpm_distr.sh
 ./pack/build.sh
+ls -l ./build/bdist.linux-x86_64/rpm/RPMS/noarch/
 sudo yum install ./build/bdist.linux-x86_64/rpm/RPMS/noarch/clickhouse-mysql-* 
 ```
 
