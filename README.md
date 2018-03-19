@@ -60,7 +60,7 @@ sudo yum install -y epel-release
 sudo yum install -y https://dev.mysql.com/get/mysql57-community-release-el7-11.noarch.rpm
 curl -s https://packagecloud.io/install/repositories/altinity/clickhouse/script.rpm.sh | sudo bash
 
-sudo yum install -y python34-pip python34-devel
+sudo yum install -y python34-pip python34-devel python34-setuptools
 
 ./package_rpm_distr.sh
 ./pack/build.sh
