@@ -1,5 +1,5 @@
 %define name clickhouse-mysql
-%define version 0.0.20180319
+%define version 0.0.20180320
 %define release 1
 
 Summary: MySQL to ClickHouse data migrator
