@@ -128,9 +128,9 @@ class TableMigrator(TableSQLBuilder):
             for table in dbs[db]:
                 logging.info("Start migration {}.{}".format(db, table))
                 if with_create_database:
-                    print("{};".format(templates[db][table]['create_database']))
+                    print("Running with chclient {};".format(templates[db][table]['create_database']))
                     self.chclient.execute(templates[db][table]['create_database'])
-                print("{};".format(templates[db][table]['create_table']))
+                print("Running with chclient {};".format(templates[db][table]['create_table']))
                 self.chclient.execute(templates[db][table]['create_table'])
 
     def migrate_all_tables_data(self):
