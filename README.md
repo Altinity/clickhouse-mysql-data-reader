@@ -173,6 +173,52 @@ Clone sources from github
 git clone https://github.com/Altinity/clickhouse-mysql-data-reader
 ```
 
+## Quick Start
+
+Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) and want to migrate it into ClickHouse.
+
+Steps to do:
+
+  * Setup MySQL access as described in [MySQL setup](#mysql-setup)
+  * Run data reader as following:
+  
+```bash
+clickhouse-mysql \
+    --src-server-id=1 \
+    --src-wait \
+    --nice-pause=1 \
+    --src-host=127.0.0.1 \
+    --src-user=reader \
+    --src-password=qwerty \
+    --src-tables=airline.ontime \
+    --dst-host=127.0.0.1 \
+    --dst-create-table \
+    --migrate-table \
+    --pump-data \
+    --csvpool
+```
+ 
+Expected results are:
+  * automatically create target table in ClickHouse (if possible)
+  * migrate existing data from MySQL to ClickHouse
+  * after migration completed, listen for new events to come and pump data from MySQL into ClickHouse
+ 
+Options description
+  * `--src-server-id` - Master's server id
+  * `--src-wait` - wait for new data to come
+  * `--nice-pause=1` - when no data available sleep for 1 second
+  * `--src-host=127.0.0.1` - MySQL source host
+  * `--src-user=reader` - MySQL source user (remember about PRIVILEGES for this user)
+  * `--src-password=qwerty` - MySQL source password (remember about PRIVILEGES for this user)
+  * `--src-tables=airline.ontime` - list of MySQL source tables to process
+  * `--dst-host=127.0.0.1` - ClickHouse host
+  * `--dst-create-table` - create target table automatically
+  * `--migrate-table` - migrate source tables
+  * `--pump-data` - pump data from MySQL into ClickHouse after data migrated
+  * `--csvpool` - make pool of csv files while pumping data (assumes `--mempool` also)
+
+Choose any combination of `--pump-data`, `--migrate-table`, `--create-table-sql`, `--dst-create-table`
+
 ## MySQL setup
 
 Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
