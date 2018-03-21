@@ -131,14 +131,13 @@ class Main(Daemon):
             # main activities may be prepended with dst tables creation
             if self.config.is_dst_create_table():
                 migrator = self.config.table_migrator()
-                migrator.migrate_all_tables(self.config.is_with_create_database())
+                migrator.migrate_all_tables(self.config.is_dst_create_table())
 
             # run data migration
             if self.config.is_migrate_table():
                 # we are going to migrate data
                 migrator = self.config.table_migrator()
                 migrator.migrate_all_tables_data()
-                return
 
             # pump data to Clickhouse
             if self.config.is_pump_data():
@@ -147,7 +146,6 @@ class Main(Daemon):
                     writer=self.config.writer(),
                 )
                 pumper.run()
-                return
 
         except Exception as ex:
             logging.critical(ex)

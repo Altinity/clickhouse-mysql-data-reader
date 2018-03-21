@@ -272,7 +272,7 @@ class Config(object):
             tables_prefixes=self.config['table_migrator']['mysql']['tables_prefixes'],
             tables_where_clauses=self.config['table_migrator']['mysql']['tables_where_clauses'],
         )
-        table_migrator.chwriter = self.writer()
+        table_migrator.chwriter = self.writer_builder_chwriter().get()
         table_migrator.chclient = self.chclient()
         table_migrator.pool_max_rows_num = self.mempool_max_rows_num()
 
@@ -323,57 +323,67 @@ class Config(object):
                 )
                 return ObjectBuilder(instance=_class(column_skip=self.config['converter']['clickhouse']['column_skip']))
 
-    def writer_builder(self):
-        if self.config['app']['csvpool']:
-            return ObjectBuilder(class_name=ProcessWriter, constructor_params={
-                'next_writer_builder': ObjectBuilder(class_name=CSVWriter, constructor_params={
-                    'csv_file_path': self.config['writer']['file']['csv_file_path'],
-                    'csv_file_path_prefix': self.config['writer']['file']['csv_file_path_prefix'],
-                    'csv_file_path_suffix_parts': self.config['writer']['file']['csv_file_path_suffix_parts'],
-                    'csv_keep_file': self.config['writer']['file']['csv_keep_file'],
-                    'dst_schema': self.config['writer']['file']['dst_schema'],
-                    'dst_table': self.config['writer']['file']['dst_table'],
-                    'next_writer_builder': ObjectBuilder(
-                        class_name=CHCSVWriter,
-                        constructor_params=self.config['writer']['clickhouse']
-                    ),
-                    'converter_builder': self.converter_builder(CONVERTER_CSV),
-                })
-            })
-
-        elif self.config['writer']['file']['csv_file_path']:
-            return ObjectBuilder(class_name=CSVWriter, constructor_params={
+    def writer_builder_csvpool(self):
+        return ObjectBuilder(class_name=ProcessWriter, constructor_params={
+            'next_writer_builder': ObjectBuilder(class_name=CSVWriter, constructor_params={
                 'csv_file_path': self.config['writer']['file']['csv_file_path'],
                 'csv_file_path_prefix': self.config['writer']['file']['csv_file_path_prefix'],
                 'csv_file_path_suffix_parts': self.config['writer']['file']['csv_file_path_suffix_parts'],
                 'csv_keep_file': self.config['writer']['file']['csv_keep_file'],
                 'dst_schema': self.config['writer']['file']['dst_schema'],
                 'dst_table': self.config['writer']['file']['dst_table'],
-                'next_writer_builder': None,
+                'next_writer_builder': ObjectBuilder(
+                    class_name=CHCSVWriter,
+                    constructor_params=self.config['writer']['clickhouse']
+                ),
                 'converter_builder': self.converter_builder(CONVERTER_CSV),
             })
+        })
 
+    def writer_builder_csv_file(self):
+        return ObjectBuilder(class_name=CSVWriter, constructor_params={
+            'csv_file_path': self.config['writer']['file']['csv_file_path'],
+            'csv_file_path_prefix': self.config['writer']['file']['csv_file_path_prefix'],
+            'csv_file_path_suffix_parts': self.config['writer']['file']['csv_file_path_suffix_parts'],
+            'csv_keep_file': self.config['writer']['file']['csv_keep_file'],
+            'dst_schema': self.config['writer']['file']['dst_schema'],
+            'dst_table': self.config['writer']['file']['dst_table'],
+            'next_writer_builder': None,
+            'converter_builder': self.converter_builder(CONVERTER_CSV),
+        })
+
+    def writer_builder_chwriter(self):
+        return ObjectBuilder(class_name=CHWriter, constructor_params={
+            'connection_settings': {
+                'host': self.config['writer']['clickhouse']['connection_settings']['host'],
+                'port': self.config['writer']['clickhouse']['connection_settings']['port'],
+                'user': self.config['writer']['clickhouse']['connection_settings']['user'],
+                'password': self.config['writer']['clickhouse']['connection_settings']['password'],
+            },
+            'dst_schema': self.config['writer']['clickhouse']['dst_schema'],
+            'dst_table': self.config['writer']['clickhouse']['dst_table'],
+            'next_writer_builder': None,
+            'converter_builder': self.converter_builder(CONVERTER_CH),
+        })
+
+    def writer_builder(self):
+        if self.config['app']['csvpool']:
+            return self.writer_builder_csvpool()
+        elif self.config['writer']['file']['csv_file_path']:
+            return self.writer_builder_csv_file()
         else:
-            return ObjectBuilder(class_name=CHWriter, constructor_params={
-                'connection_settings': {
-                    'host': self.config['writer']['clickhouse']['connection_settings']['host'],
-                    'port': self.config['writer']['clickhouse']['connection_settings']['port'],
-                    'user': self.config['writer']['clickhouse']['connection_settings']['user'],
-                    'password': self.config['writer']['clickhouse']['connection_settings']['password'],
-                },
-                'dst_schema': self.config['writer']['clickhouse']['dst_schema'],
-                'dst_table': self.config['writer']['clickhouse']['dst_table'],
-                'next_writer_builder': None,
-                'converter_builder': self.converter_builder(CONVERTER_CH),
-            })
+            return self.writer_builder_chwriter()
+
+    def pool_writer(self):
+        return PoolWriter(
+            writer_builder=self.writer_builder(),
+            max_pool_size=self.config['app']['mempool_max_events_num'],
+            max_flush_interval=self.config['app']['mempool_max_flush_interval'],
+        )
 
     def writer(self):
         if self.config['app']['mempool']:
-            return PoolWriter(
-                writer_builder=self.writer_builder(),
-                max_pool_size=self.config['app']['mempool_max_events_num'],
-                max_flush_interval=self.config['app']['mempool_max_flush_interval'],
-            )
+            return self.pool_writer()
         else:
             return self.writer_builder().get()
 
