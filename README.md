@@ -11,6 +11,7 @@
    * [PyPi Installation](#pypi-installation)
    * [GitHub-based Installation - Clone Sources](#github-based-installation---clone-sources)
    * [MySQL setup](#mysql-setup)
+ * [Quick Start](#quick-start)
  * [Operation](#operation)
    * [Requirements and Limitations](#requirements-and-limitations)
    * [Operation General Schema](#operation-general-schema)
@@ -173,7 +174,35 @@ Clone sources from github
 git clone https://github.com/Altinity/clickhouse-mysql-data-reader
 ```
 
-## Quick Start
+## MySQL setup
+
+Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
+
+```mysql
+CREATE USER 'reader'@'%' IDENTIFIED BY 'qwerty';
+CREATE USER 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
+CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
+GRANT SELECT, REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'%';
+GRANT SELECT, REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'127.0.0.1';
+GRANT SELECT, REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'localhost';
+FLUSH PRIVILEGES;
+```
+
+Also the following MySQL config options are required:
+```ini
+[mysqld]
+# mandatory
+server-id        = 1
+log_bin          = /var/lib/mysql/bin.log
+binlog-format    = row # very important if you want to receive write, update and delete row events
+# optional
+expire_logs_days = 30
+max_binlog_size  = 768M
+# setup listen address
+bind-address     = 0.0.0.0
+```
+
+# Quick Start
 
 Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) and want to migrate it into ClickHouse.
 
@@ -218,34 +247,6 @@ Options description
   * `--csvpool` - make pool of csv files while pumping data (assumes `--mempool` also)
 
 Choose any combination of `--pump-data`, `--migrate-table`, `--create-table-sql`, `--dst-create-table`
-
-## MySQL setup
-
-Also the following (at least one of) MySQL privileges are required for this operation: `SUPER`, `REPLICATION CLIENT` 
-
-```mysql
-CREATE USER 'reader'@'%' IDENTIFIED BY 'qwerty';
-CREATE USER 'reader'@'127.0.0.1' IDENTIFIED BY 'qwerty';
-CREATE USER 'reader'@'localhost' IDENTIFIED BY 'qwerty';
-GRANT SELECT, REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'%';
-GRANT SELECT, REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'127.0.0.1';
-GRANT SELECT, REPLICATION CLIENT, REPLICATION SLAVE, SUPER ON *.* TO 'reader'@'localhost';
-FLUSH PRIVILEGES;
-```
-
-Also the following MySQL config options are required:
-```ini
-[mysqld]
-# mandatory
-server-id        = 1
-log_bin          = /var/lib/mysql/bin.log
-binlog-format    = row # very important if you want to receive write, update and delete row events
-# optional
-expire_logs_days = 30
-max_binlog_size  = 768M
-# setup listen address
-bind-address     = 0.0.0.0
-```
 
 # Operation
 
