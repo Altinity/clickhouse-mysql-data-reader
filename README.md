@@ -254,9 +254,11 @@ Choose any combination of `--pump-data`, `--migrate-table`, `--create-table-sql`
 
 Data reader understands INSERT SQL statements only. In practice this means that:
   * You need to create required table in ClickHouse before starting data read procedure. More on how to create target ClickHouse table: [MySQL -> ClickHouse Data Types Mapping](#mysql---clickhouse-data-types-mapping)
-  * UPDATE statements are not handled - meaning UPDATEs within MySQL would not be relayed into ClickHouse
-  * DELETE statements are not handled - meaning DELETEs within MySQL would not be relayed into ClickHouse
-  * DDL statements are not handled. For example, source table structure change can lead to insertion errors 
+  * From all DML statements INSERT-only are handled, which means:
+    * UPDATE statements are not handled - meaning UPDATEs within MySQL would not be relayed into ClickHouse
+    * DELETE statements are not handled - meaning DELETEs within MySQL would not be relayed into ClickHouse
+  * DDL statements are not handled, which means:
+    * source table structure change (ALTER TABLE) has to be handled externally and can lead to insertion errors 
 
 ## Operation General Schema
 
