@@ -5,6 +5,8 @@ import csv
 import os.path
 import logging
 import copy
+import time
+import uuid
 
 from clickhouse_mysql.writer.writer import Writer
 from clickhouse_mysql.event.event import Event
@@ -58,6 +60,13 @@ class CSVWriter(Writer):
         self.dst_table = dst_table
 
         if self.path is None:
+            if not self.path_suffix_parts:
+                # no suffix parts specified - use default ones
+                # 1. current UNIX timestamp with fractions Ex.: 1521813908.1152523
+                # 2. random-generated UUID Ex.: f42d7297-9d25-43d8-8468-a59810ce9f77
+                # result would be filename like csvpool_1521813908.1152523_f42d7297-9d25-43d8-8468-a59810ce9f77.csv
+                self.path_suffix_parts.append(str(time.time()))
+                self.path_suffix_parts.append(str(uuid.uuid4()))
             self.path = self.path_prefix + '_'.join(self.path_suffix_parts) + '.csv'
             self.delete = not csv_keep_file
 
