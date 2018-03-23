@@ -47,7 +47,9 @@ class CHWriter(Writer):
 
         # assume we have at least one Event
 
-        logging.debug('class:%s insert %d rows', __class__, len(events))
+        logging.debug('class:%s insert %d event(s)', __class__, len(events))
+
+        # verify and converts events and consolidate converted rows from all events into one batch
 
         rows = []
         event_converted = None
@@ -60,9 +62,15 @@ class CHWriter(Writer):
             for row in event_converted:
                 rows.append(row)
 
+        logging.debug('class:%s insert %d row(s)', __class__, len(rows))
+
+        # determine target schema.table
+
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = self.dst_table if self.dst_table else event_converted.table
-        logging.info("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema, self.dst_table))
+        logging.debug("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema, self.dst_table))
+
+        # and INSERT converted rows
 
         sql = ''
         try:
@@ -78,6 +86,8 @@ class CHWriter(Writer):
             logging.critical('sql={}'.format(sql))
             logging.critical('rows={}'.format(rows))
             sys.exit(0)
+
+        # all DONE
 
 
 
