@@ -134,7 +134,7 @@ class CSVWriter(Writer):
                 self.writer.writerow(self.convert(row))
 
     def push(self):
-        if not self.next_writer_builder:
+        if not self.next_writer_builder or not self.fieldnames:
             return
 
         event = Event()
