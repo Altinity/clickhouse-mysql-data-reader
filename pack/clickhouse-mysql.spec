@@ -21,7 +21,7 @@ Requires: python34-libs
 Requires: python34-pip
 Requires: python34-setuptools
 Requires: clickhouse-client
-Requires: mysql-community-devel
+Requires: mysql-devel
 Requires: gcc
 Buildrequires: python34
 Buildrequires: python34-devel
