@@ -100,7 +100,7 @@ class MySQLClient(object):
             tables = []
             for row in self.cursor:
                 logging.debug("table: {}".format(row))
-                table_name = row['Tables_in_db']
+                table_name = row[0]
                 tables.append(table_name)
 
         except:
