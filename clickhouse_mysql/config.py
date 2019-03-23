@@ -56,7 +56,6 @@ class Config(object):
                 print("can't read binlog position from file {}".format(
                     self.options['binlog_position_file'],
                 ))
-
         # build application config out of aggregated options
         self.config = {
             #
@@ -119,6 +118,8 @@ class Config(object):
                         'user': self.options['dst_user'],
                         'password': self.options['dst_password'],
                     },
+                    'dst_schema': self.options['dst_schema'],
+                    'dst_cluster': self.options['dst_cluster'],
                     'dst_create_table': self.options.get_bool('dst_create_table'),
                 },
             },
@@ -248,6 +249,8 @@ class Config(object):
             user=self.config['table_builder']['mysql']['user'],
             password=self.config['table_builder']['mysql']['password'],
             dbs=self.config['table_builder']['mysql']['dbs'],
+            shema=self.config['table_builder']['clickhouse']['dst_schema'],
+            cluster=self.config['table_builder']['clickhouse']['dst_cluster'],
             tables=self.config['table_builder']['mysql']['tables'],
             tables_prefixes=self.config['table_builder']['mysql']['tables_prefixes'],
         )

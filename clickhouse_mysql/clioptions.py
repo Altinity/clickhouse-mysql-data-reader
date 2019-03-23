@@ -142,6 +142,7 @@ class CLIOptions(Options):
         'dst_user': 'default',
         'dst_password': '',
         'dst_schema': None,
+        'dst_cluster': None,
         'dst_table': None,
         'dst_create_table': False,
 
@@ -417,6 +418,12 @@ class CLIOptions(Options):
             type=str,
             default=self.default_options['dst_schema'],
             help='Database/schema to be used when writing to dst. Ex.: db1'
+        )
+        argparser.add_argument(
+            '--dst-cluster',
+            type=str,
+            default=self.default_options['dst_cluster'],
+            help='Cluster to be used when writing to dst. Ex.: db1'
         )
         argparser.add_argument(
             '--dst-table',

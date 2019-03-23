@@ -99,11 +99,11 @@ class MySQLClient(object):
 
             tables = []
             for row in self.cursor:
-                logging.debug("table: {}".format(row))
                 table_name = row[0]
                 tables.append(table_name)
 
-        except:
+        except Exception as err:
+            logging.debug("Unexpected error: {}".format(str(err)))
             raise Exception("Can not list tables on host={} user={} password={} db={}".format(
                 self.host,
                 self.user,

@@ -3,6 +3,7 @@
 
 from clickhouse_mysql.tableprocessor import TableProcessor
 from MySQLdb.cursors import Cursor
+import logging
 
 class TableSQLBuilder(TableProcessor):
     """
@@ -24,7 +25,7 @@ class TableSQLBuilder(TableProcessor):
         }
         """
         dbs = self.dbs_tables_lists()
-
+        logging.debug("cluster: {}, shema: {}".format(self.cluster, self.shema))
         if dbs is None:
             return None
 
@@ -32,11 +33,11 @@ class TableSQLBuilder(TableProcessor):
         for db in dbs:
             templates[db] = {}
             for table in dbs[db]:
-                templates[db][table] = self.create_table_description(db=db, table=table)
+                templates[db][table] = self.create_table_description(cluster=self.cluster, shema=self.shema, db=db, table=table)
 
         return templates
 
-    def create_table_description(self, db=None, table=None):
+    def create_table_description(self, cluster=None, shema=None, db=None, table=None):
         """
         High-level function.
         Produce either text ClickHouse's table SQL CREATE TABLE() template or JSON ClikcHouse's table description
@@ -47,13 +48,13 @@ class TableSQLBuilder(TableProcessor):
         """
         columns_description = self.create_table_columns_description(db=db, table=table)
         return {
-            "create_table_template": self.create_table_sql_template(db=db, table=table, columns_description=columns_description),
-            "create_table": self.create_table_sql(db=db, table=table, columns_description=columns_description),
+            "create_table_template": self.create_table_sql_template(cluster=cluster, shema=shema, db=db, table=table, columns_description=columns_description),
+            "create_table": self.create_table_sql(cluster=cluster, shema=shema, db=db, table=table, columns_description=columns_description),
             "create_database": self.create_database_sql(db=db),
             "fields": columns_description,
         }
 
-    def create_table_sql_template(self, db=None, table=None, columns_description=None):
+    def create_table_sql_template(self, cluster=None, shema=None, db=None, table=None, columns_description=None):
         """
         Produce table template for ClickHouse
         CREATE TABLE(
@@ -80,7 +81,7 @@ class TableSQLBuilder(TableProcessor):
         )
         return sql
 
-    def create_table_sql(self, db=None, table=None, columns_description=None):
+    def create_table_sql(self, cluster=None, shema=None, db=None, table=None, columns_description=None):
         """
         Produce table template for ClickHouse
         CREATE TABLE(
@@ -119,10 +120,11 @@ class TableSQLBuilder(TableProcessor):
     {}
 ) ENGINE = MergeTree({}, ({}), 8192)
 """.format(
-            self.create_full_table_name(db=db, table=table),
+            self.create_full_table_name(shema=shema, db=db, table=table),
             ",\n    ".join(ch_columns),
             primary_date_field,
             ",".join(primary_key_fields),
+
         )
         return sql
 
