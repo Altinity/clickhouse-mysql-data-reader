@@ -525,6 +525,7 @@ class CLIOptions(Options):
             'dst_user': args.dst_user,
             'dst_password': args.dst_password,
             'dst_schema': args.dst_schema,
+            'dst_cluster': args.dst_cluster,
             'dst_table': args.dst_table,
             'dst_create_table': args.dst_create_table,
 
