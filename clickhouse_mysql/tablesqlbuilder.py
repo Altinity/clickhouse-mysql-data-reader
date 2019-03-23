@@ -74,10 +74,12 @@ class TableSQLBuilder(TableProcessor):
 
         sql = """CREATE TABLE IF NOT EXISTS {} (
     {}
-) ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
+) 
+    {}
+ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
 """.format(
-            self.create_full_table_name(db=db, table=table),
-            ",\n    ".join(ch_columns)
+            self.create_full_table_name(shema=shema, db=db, table=table),
+            ",\n    ".join(ch_columns), "on cluster {}".format(cluster) if cluster != None else ""
         )
         return sql
 
@@ -118,10 +120,13 @@ class TableSQLBuilder(TableProcessor):
 
         sql = """CREATE TABLE IF NOT EXISTS {} (
     {}
-) ENGINE = MergeTree({}, ({}), 8192)
+) 
+    {}
+ENGINE = MergeTree({}, ({}), 8192)
 """.format(
             self.create_full_table_name(shema=shema, db=db, table=table),
             ",\n    ".join(ch_columns),
+            "on cluster {}".format(cluster) if cluster != None else "",
             primary_date_field,
             ",".join(primary_key_fields),
 
