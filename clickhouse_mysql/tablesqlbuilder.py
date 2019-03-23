@@ -72,14 +72,14 @@ class TableSQLBuilder(TableProcessor):
         for column_description in columns_description:
             ch_columns.append('`{}` {}'.format(column_description['field'], column_description['clickhouse_type_nullable']))
 
-        sql = """CREATE TABLE IF NOT EXISTS {} (
+        sql = """CREATE TABLE IF NOT EXISTS {} {} (
     {}
 ) 
-    {}
 ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
 """.format(
             self.create_full_table_name(shema=shema, db=db, table=table),
-            ",\n    ".join(ch_columns), "on cluster {}".format(cluster) if cluster != None else ""
+            "on cluster {}".format(cluster) if cluster != None else "",
+            ",\n    ".join(ch_columns),
         )
         return sql
 
@@ -118,15 +118,14 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
             ch_type = column_description['clickhouse_type'] if (field == primary_date_field) or (field in primary_key_fields) else column_description['clickhouse_type_nullable']
             ch_columns.append('`{}` {}'.format(field, ch_type))
 
-        sql = """CREATE TABLE IF NOT EXISTS {} (
+        sql = """CREATE TABLE IF NOT EXISTS {} {} (
     {}
 ) 
-    {}
 ENGINE = MergeTree({}, ({}), 8192)
 """.format(
             self.create_full_table_name(shema=shema, db=db, table=table),
-            ",\n    ".join(ch_columns),
             "on cluster {}".format(cluster) if cluster != None else "",
+            ",\n    ".join(ch_columns),
             primary_date_field,
             ",".join(primary_key_fields),
 
