@@ -25,7 +25,7 @@ class TableProcessor(object):
             user=None,
             password=None,
             dbs=None,
-            shema=None,
+            schema=None,
             cluster=None,
             tables=None,
             tables_prefixes=None,
@@ -48,7 +48,7 @@ class TableProcessor(object):
             'user': user,
             'password': password,
         })
-        self.shema = shema
+        self.schema = schema
         self.cluster = cluster
 
     def dbs_tables_lists(self):
@@ -135,7 +135,7 @@ class TableProcessor(object):
         return res
 
     @staticmethod
-    def create_full_table_name(shema=None, db=None, table=None):
+    def create_full_table_name(schema=None, db=None, table=None):
         """
         Create fully-specified table name as `db`.`table` or just `table`
 
@@ -143,8 +143,8 @@ class TableProcessor(object):
         :param table:
         :return: `db`.`table` or just `table`
         """
-        if shema != None:
-            return '`{0}`.`{1}`'.format(shema, db+"__"+table) if db else '`{0}`'.format(table)
+        if schema != None:
+            return '`{0}`.`{1}`'.format(schema, db+"__"+table) if db else '`{0}`'.format(table)
         else:
             return '`{0}`.`{1}`'.format(db, table) if db else '`{0}`'.format(table)
 
