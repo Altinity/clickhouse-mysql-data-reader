@@ -67,7 +67,7 @@ class CHWriter(Writer):
         # determine target schema.table
 
         schema = self.dst_schema if self.dst_schema else event_converted.schema
-        table = self.dst_table if self.dst_table else event_converted.table
+        table = self.dst_table if self.dst_table else event_converted.schema+"__"+event_converted.table
         logging.debug("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema, self.dst_table))
 
         # and INSERT converted rows
@@ -84,7 +84,6 @@ class CHWriter(Writer):
             logging.critical('QUERY FAILED')
             logging.critical('ex={}'.format(ex))
             logging.critical('sql={}'.format(sql))
-            logging.critical('rows={}'.format(rows))
             sys.exit(0)
 
         # all DONE

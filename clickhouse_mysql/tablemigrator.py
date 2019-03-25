@@ -37,6 +37,8 @@ class TableMigrator(TableSQLBuilder):
             user=None,
             password=None,
             dbs=None,
+            schema=None,
+            cluster=None,
             tables=None,
             tables_prefixes=None,
             tables_where_clauses=None,
@@ -47,6 +49,8 @@ class TableMigrator(TableSQLBuilder):
             user=user,
             password=password,
             dbs=dbs,
+            schema=schema,
+            cluster=cluster,
             tables=tables,
             tables_prefixes=tables_prefixes,
         )
@@ -195,14 +199,11 @@ class TableMigrator(TableSQLBuilder):
                 self.chwriter.flush()
 
                 cnt += len(rows)
-        except:
-            raise Exception("Can not migrate table on host={} user={} password={} db={} table={} cnt={}".format(
-                self.host,
-                self.user,
-                self.password,
+        except Exception as ex:
+            logging.critical("Critical error: {}".format(str(ex)))
+            raise Exception("Can not migrate table on db={} table={}".format(
                 db,
                 table,
-                cnt
             ))
 
         return cnt
