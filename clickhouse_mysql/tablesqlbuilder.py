@@ -121,13 +121,12 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
         sql = """CREATE TABLE IF NOT EXISTS {} {} (
     {}
 ) 
-ENGINE = MergeTree({}, ({}), 8192)
+{}
 """.format(
-            self.create_full_table_name(schema=schema, db=db, table=table),
+            self.create_full_table_name(schema=schema, db=db, table=table, distribute=self.distribute),
             "on cluster {}".format(cluster) if cluster != None else "",
             ",\n    ".join(ch_columns),
-            primary_date_field,
-            ",".join(primary_key_fields),
+            self.create_table_engine(self.cluster, self.schema, db+"__"+table, primary_date_field+"_all", ",".join(primary_key_fields), self.distribute),
 
         )
         return sql
@@ -334,6 +333,20 @@ ENGINE = MergeTree({}, ({}), 8192)
             ch_type = 'Nullable(' + ch_type + ')'
 
         return ch_type
+
+    def create_table_engine(self, cluster=None, dst_schema=None, dst_table=None,primary_date_field=None, primary_key_fields=None, distribute=None):
+        logging.debug("cluster={}, dst_schema={}, dst_table={},primary_date_field={}, primary_key_fields={}, distribute={}"
+                      .format(cluster, dst_schema, dst_table,primary_date_field, primary_key_fields, distribute))
+        if distribute :
+            return "ENGINE = Distributed({}, '{}', '{}', rand())".format(
+                cluster,
+                dst_schema,
+                dst_table
+            )
+        else:
+            return "ENGINE = MergeTree({}, ({}), 8192)".format(
+            primary_date_field,
+            primary_key_fields)
 
 if __name__ == '__main__':
     tb = TableSQLBuilder(

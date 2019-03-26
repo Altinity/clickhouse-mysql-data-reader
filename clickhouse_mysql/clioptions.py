@@ -142,6 +142,7 @@ class CLIOptions(Options):
         'dst_user': 'default',
         'dst_password': '',
         'dst_schema': None,
+        'dst_distribute': False,
         'dst_cluster': None,
         'dst_table': None,
         'dst_create_table': False,
@@ -420,6 +421,12 @@ class CLIOptions(Options):
             help='Database/schema to be used when writing to dst. Ex.: db1'
         )
         argparser.add_argument(
+            '--dst-distribute',
+            action='store_true',
+            default=self.default_options['dst_distribute'],
+            help='is to add distribute table'
+        )
+        argparser.add_argument(
             '--dst-cluster',
             type=str,
             default=self.default_options['dst_cluster'],
@@ -525,6 +532,7 @@ class CLIOptions(Options):
             'dst_user': args.dst_user,
             'dst_password': args.dst_password,
             'dst_schema': args.dst_schema,
+            'dst_distribute': args.dst_distribute,
             'dst_cluster': args.dst_cluster,
             'dst_table': args.dst_table,
             'dst_create_table': args.dst_create_table,
