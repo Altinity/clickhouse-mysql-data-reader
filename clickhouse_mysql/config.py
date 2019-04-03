@@ -194,6 +194,7 @@ class Config(object):
                     },
                     'dst_schema': self.options['dst_schema'],
                     'dst_table': self.options['dst_table'],
+                    'dst_distribute': self.options['dst_distribute'],
                 },
                 'file': {
                     'csv_file_path': self.options['dst_file'],
@@ -372,6 +373,7 @@ class Config(object):
             },
             'dst_schema': self.config['writer']['clickhouse']['dst_schema'],
             'dst_table': self.config['writer']['clickhouse']['dst_table'],
+            'dst_distribute': self.config['writer']['clickhouse']['dst_distribute'],
             'next_writer_builder': None,
             'converter_builder': self.converter_builder(CONVERTER_CH),
         })
