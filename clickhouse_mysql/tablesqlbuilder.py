@@ -124,9 +124,9 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
 {}
 """.format(
             self.create_full_table_name(schema=schema, db=db, table=table, distribute=self.distribute),
-            "on cluster {}".format(cluster) if cluster != None else "",
+            "on cluster {}".format(cluster) if not self.distribute and cluster != None else "",
             ",\n    ".join(ch_columns),
-            self.create_table_engine(self.cluster, self.schema, db+"__"+table, primary_date_field+"_all", ",".join(primary_key_fields), self.distribute),
+            self.create_table_engine(self.cluster, self.schema, db+"__"+table, primary_date_field, ",".join(primary_key_fields), self.distribute),
 
         )
         return sql
