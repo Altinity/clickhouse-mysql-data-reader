@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 from clickhouse_mysql.reader.mysqlreader import MySQLReader
 from clickhouse_mysql.reader.csvreader import CSVReader
 
@@ -110,6 +111,7 @@ class Config(object):
                     'dbs': self.options.get_list('src_schemas'),
                     'tables': self.options.get_list('src_tables'),
                     'tables_prefixes': self.options.get_list('src_tables_prefixes'),
+                    'column_skip': self.options['column_skip']
                 },
                 'clickhouse': {
                     'connection_settings': {
@@ -138,6 +140,7 @@ class Config(object):
                     'tables': self.options.get_list('src_tables'),
                     'tables_prefixes': self.options.get_list('src_tables_prefixes'),
                     'tables_where_clauses': self.options.get_list('src_tables_where_clauses'),
+                    'column_skip': self.options['column_skip']
                 },
                 'clickhouse': {
                     'connection_settings': {
@@ -247,6 +250,7 @@ class Config(object):
         return self.config['app']['install']
 
     def table_sql_builder(self):
+        logging.debug("----config column_skip: %s",self.config['converter']['clickhouse']['column_skip'])
         return TableSQLBuilder(
             host=self.config['table_builder']['mysql']['host'],
             port=self.config['table_builder']['mysql']['port'],
@@ -258,6 +262,7 @@ class Config(object):
             cluster=self.config['table_builder']['clickhouse']['dst_cluster'],
             tables=self.config['table_builder']['mysql']['tables'],
             tables_prefixes=self.config['table_builder']['mysql']['tables_prefixes'],
+            column_skip=self.config['converter']['clickhouse']['column_skip'],
         )
 
     def is_migrate_table(self):
@@ -282,6 +287,7 @@ class Config(object):
             tables=self.config['table_migrator']['mysql']['tables'],
             tables_prefixes=self.config['table_migrator']['mysql']['tables_prefixes'],
             tables_where_clauses=self.config['table_migrator']['mysql']['tables_where_clauses'],
+            column_skip=self.config['converter']['clickhouse']['column_skip'],
         )
         table_migrator.chwriter = self.writer_builder_chwriter().get()
         table_migrator.chclient = self.chclient()
