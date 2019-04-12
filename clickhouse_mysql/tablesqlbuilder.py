@@ -25,6 +25,7 @@ class TableSQLBuilder(TableProcessor):
         }
         """
         dbs = self.dbs_tables_lists()
+        logging.debug("------column_skip: %s", self.column_skip)
         logging.debug("cluster: {}, schema: {}".format(self.cluster, self.schema))
         if dbs is None:
             return None
@@ -168,6 +169,9 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
             # build ready-to-sql column specification Ex.:
             # `integer_1` Nullable(Int32)
             # `u_integer_1` Nullable(UInt32)
+            if self.column_skip.__contains__(_field):
+                logging.debug("跳过%s",_field)
+                continue
             columns_description.append({
                 'field': _field,
                 'mysql_type': _type,

@@ -3,7 +3,7 @@
 
 import logging
 
-from MySQLdb.cursors import SSDictCursor
+from MySQLdb.cursors import SSDictCursor,Cursor
 from clickhouse_mysql.tableprocessor import TableProcessor
 from clickhouse_mysql.tablesqlbuilder import TableSQLBuilder
 from clickhouse_mysql.event.event import Event
@@ -43,6 +43,7 @@ class TableMigrator(TableSQLBuilder):
             tables=None,
             tables_prefixes=None,
             tables_where_clauses=None,
+            column_skip=[],
     ):
         super().__init__(
             host=host,
@@ -55,6 +56,7 @@ class TableMigrator(TableSQLBuilder):
             cluster=cluster,
             tables=tables,
             tables_prefixes=tables_prefixes,
+            column_skip=column_skip
         )
         self.client.cursorclass = SSDictCursor
 
@@ -69,6 +71,7 @@ class TableMigrator(TableSQLBuilder):
         # ]
 
         # debug info
+        logging.debug("column_skip={}".format(column_skip))
         logging.info("tables_where_clauses={}".format(tables_where_clauses))
         for table_where in tables_where_clauses:
             logging.info("table_where={}".format(table_where))
@@ -173,17 +176,20 @@ class TableMigrator(TableSQLBuilder):
         :return: number of migrated rows
         """
 
-        self.client.cursorclass = SSDictCursor
-        self.client.connect(db=db)
 
         # build SQL statement
-        sql = "SELECT * FROM {0}".format(self.create_full_table_name(db=db, table=table))
+        full_table_name = self.create_full_table_name(db=db, table=table)
+        sql = "SELECT {0} FROM {1}".format(
+            ",".join(self.get_columns(db,full_table_name))
+            ,full_table_name)
         # in case we have WHERE clause for this db.table - add it to SQL
         if db in self.where_clauses and table in self.where_clauses[db]:
             sql += " WHERE {}".format(self.where_clauses[db][table])
 
         try:
             logging.info("migrate_table. sql={}".format(sql))
+            self.client.cursorclass = SSDictCursor
+            self.client.connect(db=db)
             self.client.cursor.execute(sql)
             cnt = 0;
             while True:
@@ -210,6 +216,18 @@ class TableMigrator(TableSQLBuilder):
 
         return cnt
 
+    def get_columns(self,db,full_table_name):
+        self.client.cursorclass = Cursor
+        self.client.connect(db=db)
+        self.client.cursor.execute("DESC {}".format(full_table_name))
+        fields = []
+        for (_field, _type, _null, _key, _default, _extra,) in self.client.cursor:
+            logging.debug("遍历表结构%s:%s,%s,%s,%s,%s,%s",full_table_name,_field, _type, _null, _key, _default, _extra)
+            if self.column_skip.__contains__(_field):
+                logging.debug("跳过%s",_field)
+                continue
+            fields.append(_field)
+        return fields
 
 if __name__ == '__main__':
     tb = TableBuilder(

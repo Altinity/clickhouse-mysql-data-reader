@@ -30,6 +30,7 @@ class TableProcessor(object):
             cluster=None,
             tables=None,
             tables_prefixes=None,
+            column_skip=None,
     ):
         """
         :param host: string MySQL host
@@ -52,6 +53,8 @@ class TableProcessor(object):
         self.schema = schema
         self.cluster = cluster
         self.distribute = distribute
+        logging.debug("------column_skip: %s", column_skip)
+        self.column_skip = column_skip
 
     def dbs_tables_lists(self):
         """
