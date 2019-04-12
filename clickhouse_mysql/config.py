@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import logging
 from clickhouse_mysql.reader.mysqlreader import MySQLReader
 from clickhouse_mysql.reader.csvreader import CSVReader
 
@@ -250,7 +249,6 @@ class Config(object):
         return self.config['app']['install']
 
     def table_sql_builder(self):
-        logging.debug("----config column_skip: %s",self.config['converter']['clickhouse']['column_skip'])
         return TableSQLBuilder(
             host=self.config['table_builder']['mysql']['host'],
             port=self.config['table_builder']['mysql']['port'],

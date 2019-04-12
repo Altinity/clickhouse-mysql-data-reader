@@ -53,7 +53,6 @@ class TableProcessor(object):
         self.schema = schema
         self.cluster = cluster
         self.distribute = distribute
-        logging.debug("------column_skip: %s", column_skip)
         self.column_skip = column_skip
 
     def dbs_tables_lists(self):
