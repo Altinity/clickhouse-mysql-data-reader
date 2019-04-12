@@ -25,8 +25,6 @@ class TableSQLBuilder(TableProcessor):
         }
         """
         dbs = self.dbs_tables_lists()
-        logging.debug("------column_skip: %s", self.column_skip)
-        logging.debug("cluster: {}, schema: {}".format(self.cluster, self.schema))
         if dbs is None:
             return None
 
@@ -170,7 +168,7 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
             # `integer_1` Nullable(Int32)
             # `u_integer_1` Nullable(UInt32)
             if self.column_skip.__contains__(_field):
-                logging.debug("跳过%s",_field)
+                logging.debug("table sql builder skip column %s",_field)
                 continue
             columns_description.append({
                 'field': _field,
@@ -339,7 +337,6 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
         return ch_type
 
     def create_table_engine(self, cluster=None, dst_schema=None, dst_table=None,primary_date_field=None, primary_key_fields=None, distribute=None):
-        logging.debug("cluster={}, dst_schema={}, dst_table={},primary_date_field={}, primary_key_fields={}, distribute={}"
                       .format(cluster, dst_schema, dst_table,primary_date_field, primary_key_fields, distribute))
         if distribute :
             return "ENGINE = Distributed({}, '{}', '{}', rand())".format(

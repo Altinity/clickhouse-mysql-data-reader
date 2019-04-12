@@ -71,7 +71,6 @@ class TableMigrator(TableSQLBuilder):
         # ]
 
         # debug info
-        logging.debug("column_skip={}".format(column_skip))
         logging.info("tables_where_clauses={}".format(tables_where_clauses))
         for table_where in tables_where_clauses:
             logging.info("table_where={}".format(table_where))
@@ -222,9 +221,8 @@ class TableMigrator(TableSQLBuilder):
         self.client.cursor.execute("DESC {}".format(full_table_name))
         fields = []
         for (_field, _type, _null, _key, _default, _extra,) in self.client.cursor:
-            logging.debug("遍历表结构%s:%s,%s,%s,%s,%s,%s",full_table_name,_field, _type, _null, _key, _default, _extra)
             if self.column_skip.__contains__(_field):
-                logging.debug("跳过%s",_field)
+                logging.debug("skip column %s",_field)
                 continue
             fields.append(_field)
         return fields
