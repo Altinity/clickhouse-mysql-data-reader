@@ -30,7 +30,7 @@ class TableProcessor(object):
             cluster=None,
             tables=None,
             tables_prefixes=None,
-            column_skip=None,
+            column_skip=[],
     ):
         """
         :param host: string MySQL host

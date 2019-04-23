@@ -151,7 +151,7 @@ class CLIOptions(Options):
         # converters section
         #
         'column_default_value': None,
-        'column_skip': None,
+        'column_skip': [],
         'ch_converter_file': None,
         'ch_converter_class': None,
     }
