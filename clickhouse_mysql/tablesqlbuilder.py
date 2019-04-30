@@ -337,7 +337,6 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
         return ch_type
 
     def create_table_engine(self, cluster=None, dst_schema=None, dst_table=None,primary_date_field=None, primary_key_fields=None, distribute=None):
-                      .format(cluster, dst_schema, dst_table,primary_date_field, primary_key_fields, distribute))
         if distribute :
             return "ENGINE = Distributed({}, '{}', '{}', rand())".format(
                 cluster,
