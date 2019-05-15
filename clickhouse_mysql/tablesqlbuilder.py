@@ -101,10 +101,10 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
         primary_date_field = self.fetch_primary_date_field(columns_description)
         primary_key_fields = self.fetch_primary_key_fields(columns_description)
 
-        if primary_date_field is None:
-            # No primary date field found. Make one
-            primary_date_field = 'primary_date_field'
-            ch_columns.append('`primary_date_field` Date default today()')
+        # if primary_date_field is None:
+        #     # No primary date field found. Make one
+        #     primary_date_field = 'primary_date_field'
+        #     ch_columns.append('`primary_date_field` Date default today()')
 
         if primary_key_fields is None:
             # No primary key fields found. Make PK from primary date field
@@ -191,6 +191,8 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
         """
         for column_description in columns_description:
             if (column_description['clickhouse_type'] == 'Date'):
+                return column_description['field']
+            if (column_description['clickhouse_type'] == 'DateTime'):
                 return column_description['field']
 
         return None
@@ -344,9 +346,12 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
                 dst_table
             )
         else:
-            return "ENGINE = MergeTree({}, ({}), 8192)".format(
-            primary_date_field,
-            primary_key_fields)
+            engine = "ENGINE = ReplacingMergeTree() "
+            if primary_date_field is not None:
+                engine += "PARTITION BY toYYYYMM({}) ".format(primary_date_field)
+            if primary_key_fields is not None:
+                engine += "ORDER BY ({})".format(primary_key_fields)
+            return engine
 
 if __name__ == '__main__':
     tb = TableSQLBuilder(
