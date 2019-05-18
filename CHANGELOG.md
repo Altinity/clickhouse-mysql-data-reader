@@ -1,3 +1,10 @@
+# clickhouse-mysql 2019-03-25
+
+## new features
+* added new CLI option `--dst-schema` - make table full name change to `schema`.`db__table` 
+* added new CLI option `--dst-cluster` - support table create on cluster
+* added new CLI option `--dst-distribute` - make table full name change to `schema_all`.`db__table_all`,and engine change to Distributed
+
 # clickhouse-mysql 2018-03-14
 
 ## new features

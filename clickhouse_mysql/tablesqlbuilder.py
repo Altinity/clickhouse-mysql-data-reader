@@ -3,6 +3,7 @@
 
 from clickhouse_mysql.tableprocessor import TableProcessor
 from MySQLdb.cursors import Cursor
+import logging
 
 class TableSQLBuilder(TableProcessor):
     """
@@ -24,7 +25,6 @@ class TableSQLBuilder(TableProcessor):
         }
         """
         dbs = self.dbs_tables_lists()
-
         if dbs is None:
             return None
 
@@ -32,11 +32,11 @@ class TableSQLBuilder(TableProcessor):
         for db in dbs:
             templates[db] = {}
             for table in dbs[db]:
-                templates[db][table] = self.create_table_description(db=db, table=table)
+                templates[db][table] = self.create_table_description(cluster=self.cluster, schema=self.schema, db=db, table=table)
 
         return templates
 
-    def create_table_description(self, db=None, table=None):
+    def create_table_description(self, cluster=None, schema=None, db=None, table=None):
         """
         High-level function.
         Produce either text ClickHouse's table SQL CREATE TABLE() template or JSON ClikcHouse's table description
@@ -47,13 +47,13 @@ class TableSQLBuilder(TableProcessor):
         """
         columns_description = self.create_table_columns_description(db=db, table=table)
         return {
-            "create_table_template": self.create_table_sql_template(db=db, table=table, columns_description=columns_description),
-            "create_table": self.create_table_sql(db=db, table=table, columns_description=columns_description),
+            "create_table_template": self.create_table_sql_template(cluster=cluster, schema=schema, db=db, table=table, columns_description=columns_description),
+            "create_table": self.create_table_sql(cluster=cluster, schema=schema, db=db, table=table, columns_description=columns_description),
             "create_database": self.create_database_sql(db=db),
             "fields": columns_description,
         }
 
-    def create_table_sql_template(self, db=None, table=None, columns_description=None):
+    def create_table_sql_template(self, cluster=None, schema=None, db=None, table=None, columns_description=None):
         """
         Produce table template for ClickHouse
         CREATE TABLE(
@@ -71,16 +71,18 @@ class TableSQLBuilder(TableProcessor):
         for column_description in columns_description:
             ch_columns.append('`{}` {}'.format(column_description['field'], column_description['clickhouse_type_nullable']))
 
-        sql = """CREATE TABLE IF NOT EXISTS {} (
+        sql = """CREATE TABLE IF NOT EXISTS {} {} (
     {}
-) ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
+) 
+ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
 """.format(
-            self.create_full_table_name(db=db, table=table),
-            ",\n    ".join(ch_columns)
+            self.create_full_table_name(schema=schema, db=db, table=table),
+            "on cluster {}".format(cluster) if cluster != None else "",
+            ",\n    ".join(ch_columns),
         )
         return sql
 
-    def create_table_sql(self, db=None, table=None, columns_description=None):
+    def create_table_sql(self, cluster=None, schema=None, db=None, table=None, columns_description=None):
         """
         Produce table template for ClickHouse
         CREATE TABLE(
@@ -99,10 +101,10 @@ class TableSQLBuilder(TableProcessor):
         primary_date_field = self.fetch_primary_date_field(columns_description)
         primary_key_fields = self.fetch_primary_key_fields(columns_description)
 
-        if primary_date_field is None:
-            # No primary date field found. Make one
-            primary_date_field = 'primary_date_field'
-            ch_columns.append('`primary_date_field` Date default today()')
+        # if primary_date_field is None:
+        #     # No primary date field found. Make one
+        #     primary_date_field = 'primary_date_field'
+        #     ch_columns.append('`primary_date_field` Date default today()')
 
         if primary_key_fields is None:
             # No primary key fields found. Make PK from primary date field
@@ -115,14 +117,16 @@ class TableSQLBuilder(TableProcessor):
             ch_type = column_description['clickhouse_type'] if (field == primary_date_field) or (field in primary_key_fields) else column_description['clickhouse_type_nullable']
             ch_columns.append('`{}` {}'.format(field, ch_type))
 
-        sql = """CREATE TABLE IF NOT EXISTS {} (
+        sql = """CREATE TABLE IF NOT EXISTS {} {} (
     {}
-) ENGINE = MergeTree({}, ({}), 8192)
+) 
+{}
 """.format(
-            self.create_full_table_name(db=db, table=table),
+            self.create_full_table_name(schema=schema, db=db, table=table, distribute=self.distribute),
+            "on cluster {}".format(cluster) if not self.distribute and cluster != None else "",
             ",\n    ".join(ch_columns),
-            primary_date_field,
-            ",".join(primary_key_fields),
+            self.create_table_engine(self.cluster, self.schema, db+"__"+table, primary_date_field, ",".join(primary_key_fields), self.distribute),
+
         )
         return sql
 
@@ -163,6 +167,9 @@ class TableSQLBuilder(TableProcessor):
             # build ready-to-sql column specification Ex.:
             # `integer_1` Nullable(Int32)
             # `u_integer_1` Nullable(UInt32)
+            if self.column_skip.__contains__(_field):
+                logging.debug("table sql builder skip column %s",_field)
+                continue
             columns_description.append({
                 'field': _field,
                 'mysql_type': _type,
@@ -184,6 +191,8 @@ class TableSQLBuilder(TableProcessor):
         """
         for column_description in columns_description:
             if (column_description['clickhouse_type'] == 'Date'):
+                return column_description['field']
+            if (column_description['clickhouse_type'] == 'DateTime'):
                 return column_description['field']
 
         return None
@@ -328,6 +337,21 @@ class TableSQLBuilder(TableProcessor):
             ch_type = 'Nullable(' + ch_type + ')'
 
         return ch_type
+
+    def create_table_engine(self, cluster=None, dst_schema=None, dst_table=None,primary_date_field=None, primary_key_fields=None, distribute=None):
+        if distribute :
+            return "ENGINE = Distributed({}, '{}', '{}', rand())".format(
+                cluster,
+                dst_schema,
+                dst_table
+            )
+        else:
+            engine = "ENGINE = ReplacingMergeTree() "
+            if primary_date_field is not None:
+                engine += "PARTITION BY toYYYYMM({}) ".format(primary_date_field)
+            if primary_key_fields is not None:
+                engine += "ORDER BY ({})".format(primary_key_fields)
+            return engine
 
 if __name__ == '__main__':
     tb = TableSQLBuilder(

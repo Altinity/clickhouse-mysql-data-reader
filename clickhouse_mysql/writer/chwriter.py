@@ -4,6 +4,8 @@
 import logging
 import sys
 
+from decimal import Decimal
+
 from clickhouse_mysql.dbclient.chclient import CHClient
 
 from clickhouse_mysql.writer.writer import Writer
@@ -16,19 +18,26 @@ class CHWriter(Writer):
     client = None
     dst_schema = None
     dst_table = None
+    dst_distribute = None
 
     def __init__(
             self,
             connection_settings,
             dst_schema=None,
             dst_table=None,
+            dst_distribute=False,
             next_writer_builder=None,
             converter_builder=None,
     ):
-        logging.info("CHWriter() connection_settings={} dst_schema={} dst_table={}".format(connection_settings, dst_schema, dst_table))
+        if dst_distribute and dst_schema is not None:
+            dst_schema += "_all"
+        if dst_distribute and dst_table is not None:
+            dst_table += "_all"
+        logging.info("CHWriter() connection_settings={} dst_schema={} dst_table={} dst_distribute={}".format(connection_settings, dst_schema, dst_table, dst_distribute))
         self.client = CHClient(connection_settings)
         self.dst_schema = dst_schema
         self.dst_table = dst_table
+        self.dst_distribute = dst_distribute
 
     def insert(self, event_or_events=None):
         # event_or_events = [
@@ -60,6 +69,10 @@ class CHWriter(Writer):
 
             event_converted = self.convert(event)
             for row in event_converted:
+                for key in row.keys():
+                    # we need to convert Decimal value to str value for suitable for table structure
+                    if (type(row[key]) == Decimal):
+                        row[key] = str(row[key])
                 rows.append(row)
 
         logging.debug('class:%s insert %d row(s)', __class__, len(rows))
@@ -67,7 +80,14 @@ class CHWriter(Writer):
         # determine target schema.table
 
         schema = self.dst_schema if self.dst_schema else event_converted.schema
-        table = self.dst_table if self.dst_table else event_converted.table
+        table = None
+        if self.dst_table:
+            table = self.dst_table
+        elif self.dst_distribute:
+            # if current is going to insert distributed table,we need '_all' suffix
+            table = event_converted.schema + "__" + event_converted.table + "_all"
+        else:
+            table = event_converted.schema + "__" + event_converted.table
         logging.debug("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema, self.dst_table))
 
         # and INSERT converted rows
@@ -84,7 +104,6 @@ class CHWriter(Writer):
             logging.critical('QUERY FAILED')
             logging.critical('ex={}'.format(ex))
             logging.critical('sql={}'.format(sql))
-            logging.critical('rows={}'.format(rows))
             sys.exit(0)
 
         # all DONE

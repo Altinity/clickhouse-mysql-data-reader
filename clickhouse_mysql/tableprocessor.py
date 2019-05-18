@@ -25,8 +25,12 @@ class TableProcessor(object):
             user=None,
             password=None,
             dbs=None,
+            schema=None,
+            distribute=None,
+            cluster=None,
             tables=None,
             tables_prefixes=None,
+            column_skip=[],
     ):
         """
         :param host: string MySQL host
@@ -46,6 +50,10 @@ class TableProcessor(object):
             'user': user,
             'password': password,
         })
+        self.schema = schema
+        self.cluster = cluster
+        self.distribute = distribute
+        self.column_skip = column_skip
 
     def dbs_tables_lists(self):
         """
@@ -131,15 +139,21 @@ class TableProcessor(object):
         return res
 
     @staticmethod
-    def create_full_table_name(db=None, table=None):
+    def create_full_table_name(schema=None, db=None, table=None, distribute=None):
         """
-        Create fully-specified table name as `db`.`table` or just `table`
+        Create fully-specified table name as `schema_all`.`db__table_all`  or `schema`.`db__table` or just `db`.`table`
 
         :param db:
         :param table:
-        :return: `db`.`table` or just `table`
+        :return: `schema_all`.`db__table_all`  or `schema`.`db__table` or just `db`.`table`
         """
-        return '`{0}`.`{1}`'.format(db, table) if db else '`{0}`'.format(table)
+        if schema != None:
+            if distribute:
+                schema += "_all"
+                table += "_all"
+            return '`{0}`.`{1}`'.format(schema, db+"__"+table) if db else '`{0}`'.format(table)
+        else:
+            return '`{0}`.`{1}`'.format(db, table) if db else '`{0}`'.format(table)
 
     @staticmethod
     def is_full_table_name(full_name):

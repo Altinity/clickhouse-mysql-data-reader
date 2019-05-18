@@ -56,7 +56,6 @@ class Config(object):
                 print("can't read binlog position from file {}".format(
                     self.options['binlog_position_file'],
                 ))
-
         # build application config out of aggregated options
         self.config = {
             #
@@ -111,6 +110,7 @@ class Config(object):
                     'dbs': self.options.get_list('src_schemas'),
                     'tables': self.options.get_list('src_tables'),
                     'tables_prefixes': self.options.get_list('src_tables_prefixes'),
+                    'column_skip': self.options['column_skip']
                 },
                 'clickhouse': {
                     'connection_settings': {
@@ -119,6 +119,9 @@ class Config(object):
                         'user': self.options['dst_user'],
                         'password': self.options['dst_password'],
                     },
+                    'dst_schema': self.options['dst_schema'],
+                    'dst_distribute': self.options['dst_distribute'],
+                    'dst_cluster': self.options['dst_cluster'],
                     'dst_create_table': self.options.get_bool('dst_create_table'),
                 },
             },
@@ -136,6 +139,7 @@ class Config(object):
                     'tables': self.options.get_list('src_tables'),
                     'tables_prefixes': self.options.get_list('src_tables_prefixes'),
                     'tables_where_clauses': self.options.get_list('src_tables_where_clauses'),
+                    'column_skip': self.options['column_skip']
                 },
                 'clickhouse': {
                     'connection_settings': {
@@ -145,6 +149,8 @@ class Config(object):
                         'password': self.options['dst_password'],
                     },
                     'dst_schema': self.options['dst_schema'],
+                    'dst_distribute': self.options['dst_distribute'],
+                    'dst_cluster': self.options['dst_cluster'],
                     'dst_table': self.options['dst_table'],
                     'dst_create_table': self.options.get_bool('dst_create_table'),
                 },
@@ -190,6 +196,7 @@ class Config(object):
                     },
                     'dst_schema': self.options['dst_schema'],
                     'dst_table': self.options['dst_table'],
+                    'dst_distribute': self.options['dst_distribute'],
                 },
                 'file': {
                     'csv_file_path': self.options['dst_file'],
@@ -248,8 +255,12 @@ class Config(object):
             user=self.config['table_builder']['mysql']['user'],
             password=self.config['table_builder']['mysql']['password'],
             dbs=self.config['table_builder']['mysql']['dbs'],
+            schema=self.config['table_builder']['clickhouse']['dst_schema'],
+            distribute=self.config['table_builder']['clickhouse']['dst_distribute'],
+            cluster=self.config['table_builder']['clickhouse']['dst_cluster'],
             tables=self.config['table_builder']['mysql']['tables'],
             tables_prefixes=self.config['table_builder']['mysql']['tables_prefixes'],
+            column_skip=self.config['converter']['clickhouse']['column_skip'],
         )
 
     def is_migrate_table(self):
@@ -268,9 +279,13 @@ class Config(object):
             user=self.config['table_migrator']['mysql']['user'],
             password=self.config['table_migrator']['mysql']['password'],
             dbs=self.config['table_migrator']['mysql']['dbs'],
+            schema=self.config['table_migrator']['clickhouse']['dst_schema'],
+            distribute=self.config['table_migrator']['clickhouse']['dst_distribute'],
+            cluster=self.config['table_migrator']['clickhouse']['dst_cluster'],
             tables=self.config['table_migrator']['mysql']['tables'],
             tables_prefixes=self.config['table_migrator']['mysql']['tables_prefixes'],
             tables_where_clauses=self.config['table_migrator']['mysql']['tables_where_clauses'],
+            column_skip=self.config['converter']['clickhouse']['column_skip'],
         )
         table_migrator.chwriter = self.writer_builder_chwriter().get()
         table_migrator.chclient = self.chclient()
@@ -362,6 +377,7 @@ class Config(object):
             },
             'dst_schema': self.config['writer']['clickhouse']['dst_schema'],
             'dst_table': self.config['writer']['clickhouse']['dst_table'],
+            'dst_distribute': self.config['writer']['clickhouse']['dst_distribute'],
             'next_writer_builder': None,
             'converter_builder': self.converter_builder(CONVERTER_CH),
         })

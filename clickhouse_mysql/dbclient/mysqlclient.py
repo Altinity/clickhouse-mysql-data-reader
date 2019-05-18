@@ -62,6 +62,7 @@ class MySQLClient(object):
                 passwd=self.password,
                 db=db,
                 cursorclass=self.cursorclass,
+                charset='utf8',
             )
             self.cursor = self.connection.cursor()
             logging.debug("Connect to the database host={} user={} password={} db={}".format(
@@ -99,11 +100,11 @@ class MySQLClient(object):
 
             tables = []
             for row in self.cursor:
-                logging.debug("table: {}".format(row))
-                table_name = row['Tables_in_db']
+                table_name = row[0]
                 tables.append(table_name)
 
-        except:
+        except Exception as err:
+            logging.debug("Unexpected error: {}".format(str(err)))
             raise Exception("Can not list tables on host={} user={} password={} db={}".format(
                 self.host,
                 self.user,
