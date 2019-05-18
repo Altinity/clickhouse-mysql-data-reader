@@ -13,6 +13,7 @@ class CHCSVWriter(Writer):
 
     dst_schema = None
     dst_table = None
+    dst_distribute = None
 
     host = None
     port = None
@@ -24,7 +25,12 @@ class CHCSVWriter(Writer):
             connection_settings,
             dst_schema=None,
             dst_table=None,
+            dst_distribute=False,
     ):
+        if dst_distribute and dst_schema is not None:
+            dst_schema += "_all"
+        if dst_distribute and dst_table is not None:
+            dst_table += "_all"
         logging.info("CHCSWriter() connection_settings={} dst_schema={} dst_table={}".format(connection_settings, dst_schema, dst_table))
         self.host = connection_settings['host']
         self.port = connection_settings['port']
@@ -32,6 +38,7 @@ class CHCSVWriter(Writer):
         self.password = connection_settings['password']
         self.dst_schema = dst_schema
         self.dst_table = dst_table
+        self.dst_distribute = dst_distribute
 
     def insert(self, event_or_events=None):
         # event_or_events = [
@@ -54,7 +61,14 @@ class CHCSVWriter(Writer):
 
         for event in events:
             schema = self.dst_schema if self.dst_schema else event.schema
-            table = self.dst_table if self.dst_table else event.table
+            table = None
+            if self.dst_table:
+                table = self.dst_table
+            elif self.dst_distribute:
+                # if current is going to insert distributed table,we need '_all' suffix
+                table = event.schema + "__" + event.table + "_all"
+            else:
+                table = event.schema + "__" + event.table
 
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) FORMAT CSV'.format(
                 schema,
