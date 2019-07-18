@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os.path
 
 from MySQLdb.cursors import SSDictCursor,Cursor
 from clickhouse_mysql.tableprocessor import TableProcessor
@@ -100,7 +101,11 @@ class TableMigrator(TableSQLBuilder):
             db, table = TableProcessor.parse_full_table_name(full_table_name)
             if not db in self.where_clauses:
                 self.where_clauses[db] = {}
-            self.where_clauses[db][table] = open(where_file_name, 'r').read().strip("\n")
+                
+            if os.path.isfile(where_file_name):
+                self.wheres[db][table] = open(where_file_name,'r').read().strip("\n")
+            else:
+                self.wheres[db][table] = where_file_name
 
         # debug info
         logging.info("migration where clauses")
