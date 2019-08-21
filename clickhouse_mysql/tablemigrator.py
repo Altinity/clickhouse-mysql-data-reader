@@ -183,9 +183,7 @@ class TableMigrator(TableSQLBuilder):
 
         # build SQL statement
         full_table_name = self.create_full_table_name(db=db, table=table)
-        sql = "SELECT {0} FROM {1}".format(
-            ",".join(self.get_columns(db,full_table_name))
-            ,full_table_name)
+        sql = "SELECT {0} FROM {1}".format(",".join(self.get_columns(db, full_table_name)), full_table_name)
         # in case we have WHERE clause for this db.table - add it to SQL
         if db in self.where_clauses and table in self.where_clauses[db]:
             sql += " WHERE {}".format(self.where_clauses[db][table])
