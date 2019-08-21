@@ -63,6 +63,7 @@ class MySQLClient(object):
                 db=db,
                 cursorclass=self.cursorclass,
                 charset='utf8',
+                use_unicode=True,
             )
             self.cursor = self.connection.cursor()
             logging.debug("Connect to the database host={} user={} password={} db={}".format(
