@@ -29,6 +29,8 @@ setup(
         'Development Status :: 3 - Alpha',
 
         'Intended Audience :: Developers',
+        'Intended Audience :: System Administrators',
+
         'Topic :: Database',
 
         # should match license above
