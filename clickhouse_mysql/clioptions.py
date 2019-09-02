@@ -342,7 +342,7 @@ class CLIOptions(Options):
             '--src-tables-where-clauses',
             type=str,
             default=self.default_options['src_tables_where_clauses'],
-            help='Comma-separated list of WHERE clauses for tables to be migrated. Ex.: db1.t1="a=1 and b=2",db2.t2="c=3 and k=4"'
+            help='Comma-separated list of WHERE clauses for tables to be migrated. Ex.: db1.t1="a=1 and b=2",db2.t2="c=3 and k=4". Accepts both (comma-separated) clause (useful for short clauses) or file where clause is located (useful for long clauses)'
         )
         argparser.add_argument(
             '--src-tables-prefixes',

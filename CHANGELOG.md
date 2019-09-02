@@ -1,3 +1,12 @@
+# clickhouse-mysql 2019-09-03
+
+## improvements
+* fix --src-tables-where-clauses to accept both filenames (for long where-clauses) and where-cluases themselves (for shorted clauses)
+
+## bugfixes
+* fix --src-port CLI option
+* ensure UTF8 for source migration
+
 # clickhouse-mysql 2019-03-25
 
 ## new features
