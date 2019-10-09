@@ -6,6 +6,7 @@ import time
 import logging
 
 from clickhouse_mysql.writer.writer import Writer
+from clickhouse_mysql.tableprocessor import TableProcessor
 
 
 class CHCSVWriter(Writer):
@@ -25,6 +26,7 @@ class CHCSVWriter(Writer):
             connection_settings,
             dst_schema=None,
             dst_table=None,
+            dst_table_prefix=None,
             dst_distribute=False,
     ):
         if dst_distribute and dst_schema is not None:
@@ -38,6 +40,7 @@ class CHCSVWriter(Writer):
         self.password = connection_settings['password']
         self.dst_schema = dst_schema
         self.dst_table = dst_table
+        self.dst_table_prefix = dst_table_prefix
         self.dst_distribute = dst_distribute
 
     def insert(self, event_or_events=None):
@@ -62,13 +65,12 @@ class CHCSVWriter(Writer):
         for event in events:
             schema = self.dst_schema if self.dst_schema else event.schema
             table = None
-            if self.dst_table:
-                table = self.dst_table
-            elif self.dst_distribute:
-                # if current is going to insert distributed table,we need '_all' suffix
-                table = event.schema + "__" + event.table + "_all"
+            if self.dst_distribute:
+                table = TableProcessor.create_distributed_table_name(db=event.schema, table=event.table)
             else:
-                table = event.schema + "__" + event.table
+                table = self.dst_table if self.dst_table else event.table
+                if self.dst_schema:
+                    table = TableProcessor.create_migrated_table_name(prefix=self.dst_table_prefix, table=table)
 
             sql = 'INSERT INTO `{0}`.`{1}` ({2}) FORMAT CSV'.format(
                 schema,

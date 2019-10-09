@@ -122,7 +122,7 @@ class MySQLReader(Reader):
             only_tables=self.tables if not self.tables_prefixes else None,
             log_file=self.log_file,
             log_pos=self.log_pos,
-            freeze_schema=True, # If true do not support ALTER TABLE. It's faster.
+            freeze_schema=True,  # If true do not support ALTER TABLE. It's faster.
             blocking=False,
             resume_stream=self.resume_stream,
         )
@@ -321,10 +321,14 @@ class MySQLReader(Reader):
                 self.stat_init_fetch_loop()
 
                 try:
+                    logging.debug('Pre-start binlog position: ' + self.binlog_stream.log_file + ":" + str(self.binlog_stream.log_pos) if self.binlog_stream.log_pos is not None else "undef")
+
                     # fetch available events from MySQL
                     for mysql_event in self.binlog_stream:
                         # new event has come
                         # check what to do with it
+
+                        logging.debug('Got Event ' + self.binlog_stream.log_file + ":" + str(self.binlog_stream.log_pos))
 
                         # process event based on its type
                         if isinstance(mysql_event, WriteRowsEvent):
@@ -363,7 +367,7 @@ class MySQLReader(Reader):
 
                 if not self.blocking:
                     # do not wait for more data - all done
-                    break # while True
+                    break  # while True
 
                 # blocking - wait for more data
                 if self.nice_pause > 0:
