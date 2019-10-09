@@ -38,7 +38,9 @@ class TableMigrator(TableSQLBuilder):
             user=None,
             password=None,
             dbs=None,
-            schema=None,
+            dst_schema=None,
+            dst_table=None,
+            dst_table_prefix=None,
             distribute=None,
             cluster=None,
             tables=None,
@@ -52,7 +54,9 @@ class TableMigrator(TableSQLBuilder):
             user=user,
             password=password,
             dbs=dbs,
-            schema=schema,
+            dst_schema=dst_schema,
+            dst_table=dst_table,
+            dst_table_prefix=dst_table_prefix,
             distribute=distribute,
             cluster=cluster,
             tables=tables,
@@ -103,7 +107,7 @@ class TableMigrator(TableSQLBuilder):
                 self.where_clauses[db] = {}
                 
             if os.path.isfile(where_file_name):
-                self.wheres[db][table] = open(where_file_name,'r').read().strip("\n")
+                self.wheres[db][table] = open(where_file_name, 'r').read().strip("\n")
             else:
                 self.wheres[db][table] = where_file_name
 

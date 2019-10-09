@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import time
 
 class Pumper(object):
     """
@@ -20,7 +19,7 @@ class Pumper(object):
             # subscribe on reader's event notifications
             self.reader.subscribe({
                 'WriteRowsEvent': self.write_rows_event,
-#                'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
+                # 'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
                 'ReaderIdleEvent': self.reader_idle_event,
             })
 

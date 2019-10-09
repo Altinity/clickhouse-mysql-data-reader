@@ -5,6 +5,7 @@ from clickhouse_mysql.tableprocessor import TableProcessor
 from MySQLdb.cursors import Cursor
 import logging
 
+
 class TableSQLBuilder(TableProcessor):
     """
     Build ClickHouse table(s)
@@ -17,10 +18,12 @@ class TableSQLBuilder(TableProcessor):
         :return: dict of ClickHouse's CREATE TABLE () templates
         {
             'db1': {
-                'table1': CREATE TABLE TABLE1 TEMPLATE,
+                'table-db1-1': CREATE TABLE table1 statement template,
+                'table-db1-2': CREATE TABLE table2 statement template,
             },
             'db2': {
-                'table2': CREATE TABLE TABLE2 TEMPLATE,
+                'table-db2-1': CREATE TABLE table1 statement template,
+                'table-db2-2': CREATE TABLE table2 statement template,
             }
         }
         """
@@ -32,38 +35,57 @@ class TableSQLBuilder(TableProcessor):
         for db in dbs:
             templates[db] = {}
             for table in dbs[db]:
-                templates[db][table] = self.create_table_description(cluster=self.cluster, schema=self.schema, db=db, table=table)
+                templates[db][table] = self.create_table_description(
+                    cluster=self.cluster,
+                    dst_schema=self.dst_schema,
+                    dst_table=self.dst_table,
+                    dst_table_prefix=self.dst_table_prefix,
+                    db=db,
+                    table=table)
 
         return templates
 
-    def create_table_description(self, cluster=None, schema=None, db=None, table=None):
+    def create_table_description(self, cluster=None, dst_schema=None, dst_table=None, dst_table_prefix=None, db=None, table=None):
         """
         High-level function.
         Produce either text ClickHouse's table SQL CREATE TABLE() template or JSON ClikcHouse's table description
         :param db: string MySQL db name
         :param table: string MySQL table name
-        :param json: bool what shold return - json description or ClickHouse's SQL template
+        :param json: bool what should return - json description or ClickHouse's SQL template
         :return: dict{"template":SQL, "fields": {}} or string SQL
         """
         columns_description = self.create_table_columns_description(db=db, table=table)
         return {
-            "create_table_template": self.create_table_sql_template(cluster=cluster, schema=schema, db=db, table=table, columns_description=columns_description),
-            "create_table": self.create_table_sql(cluster=cluster, schema=schema, db=db, table=table, columns_description=columns_description),
-            "create_database": self.create_database_sql(db=db),
+            "create_table_template": self.create_table_sql_template(cluster=cluster,
+                                                                    dst_schema=dst_schema,
+                                                                    dst_table=dst_table,
+                                                                    dst_table_prefix=dst_table_prefix,
+                                                                    db=db,
+                                                                    table=table,
+                                                                    columns_description=columns_description),
+            "create_table": self.create_table_sql(cluster=cluster,
+                                                  dst_schema=dst_schema,
+                                                  dst_table=dst_table,
+                                                  dst_table_prefix=dst_table_prefix,
+                                                  db=db,
+                                                  table=table,
+                                                  columns_description=columns_description),
+            "create_database": self.create_database_sql(dst_schema=dst_schema, db=db),
             "fields": columns_description,
         }
 
-    def create_table_sql_template(self, cluster=None, schema=None, db=None, table=None, columns_description=None):
+    def create_table_sql_template(self, cluster=None, dst_schema=None, dst_table=None, dst_table_prefix=None, db=None, table=None, columns_description=None):
         """
         Produce table template for ClickHouse
-        CREATE TABLE(
+        CREATE TABLE schema.table (
             ...
             columns specification
             ...
         ) ENGINE = MergeTree(_<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
         for specified MySQL's table
-        :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
+
         :param db: string - name of the DB in MySQL
+        :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
         :return: string - almost-ready-to-use ClickHouse CREATE TABLE statement
         """
 
@@ -76,13 +98,13 @@ class TableSQLBuilder(TableProcessor):
 ) 
 ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 8192)
 """.format(
-            self.create_full_table_name(schema=schema, db=db, table=table),
-            "on cluster {}".format(cluster) if cluster != None else "",
+            self.create_full_table_name(dst_schema=dst_schema, dst_table=dst_table, dst_table_prefix=dst_table_prefix, db=db, table=table),
+            "on cluster {}".format(cluster) if cluster is not None else "",
             ",\n    ".join(ch_columns),
         )
         return sql
 
-    def create_table_sql(self, cluster=None, schema=None, db=None, table=None, columns_description=None):
+    def create_table_sql(self, cluster=None, dst_schema=None, dst_table=None, dst_table_prefix=None, db=None, table=None, columns_description=None):
         """
         Produce table template for ClickHouse
         CREATE TABLE(
@@ -91,8 +113,9 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
             ...
         ) ENGINE = MergeTree(PRIMARY DATE FIELD, (COMMA SEPARATED INDEX FIELDS LIST), 8192)
         for specified MySQL's table
-        :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
+
         :param db: string - name of the DB in MySQL
+        :param table: string - name of the table in MySQL which will be used as a base for CH's CREATE TABLE template
         :return: string - ready-to-use ClickHouse CREATE TABLE statement
         """
 
@@ -122,23 +145,28 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
 ) 
 {}
 """.format(
-            self.create_full_table_name(schema=schema, db=db, table=table, distribute=self.distribute),
-            "on cluster {}".format(cluster) if not self.distribute and cluster != None else "",
+            self.create_full_table_name(dst_schema=dst_schema, dst_table=dst_table, dst_table_prefix=dst_table_prefix, db=db, table=table, distribute=self.distribute),
+            "on cluster {}".format(cluster) if not self.distribute and cluster is not None else "",
             ",\n    ".join(ch_columns),
-            self.create_table_engine(self.cluster, self.schema, db+"__"+table, primary_date_field, ",".join(primary_key_fields), self.distribute),
-
+            self.create_table_engine(self.cluster,
+                                     self.dst_schema,
+                                     self.create_migrated_table_name(prefix=dst_table_prefix, table=dst_table) if dst_table is not None else self.create_migrated_table_name(prefix=dst_table_prefix, table=table),
+                                     primary_date_field,
+                                     ",".join(primary_key_fields),
+                                     self.distribute)
         )
         return sql
 
-    def create_database_sql(self, db):
+    def create_database_sql(self, dst_schema=None, db=None):
         """
         Produce create database statement for ClickHouse
         CREATE DATABASE
         for specified MySQL's db
-        :param db: string - name of the DB in MySQL
+
+        :param db: string - name of the DB
         :return: string - ready-to-use ClickHouse CREATE DATABASE statement
         """
-        sql = "CREATE DATABASE IF NOT EXISTS `{}`".format(db)
+        sql = "CREATE DATABASE IF NOT EXISTS `{}`".format(dst_schema if dst_schema is not None else db)
         return sql
 
     def create_table_columns_description(self, db=None, table=None, ):
@@ -190,9 +218,9 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
         :return: string|None
         """
         for column_description in columns_description:
-            if (column_description['clickhouse_type'] == 'Date'):
+            if column_description['clickhouse_type'] == 'Date':
                 return column_description['field']
-            if (column_description['clickhouse_type'] == 'DateTime'):
+            if column_description['clickhouse_type'] == 'DateTime':
                 return column_description['field']
 
         return None
@@ -338,8 +366,23 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
 
         return ch_type
 
-    def create_table_engine(self, cluster=None, dst_schema=None, dst_table=None,primary_date_field=None, primary_key_fields=None, distribute=None):
-        if distribute :
+    def create_table_engine(self,
+                            cluster=None,
+                            dst_schema=None,
+                            dst_table=None,
+                            primary_date_field=None,
+                            primary_key_fields=None,
+                            distribute=None):
+        """
+        :param cluster:
+        :param dst_schema:
+        :param dst_table:
+        :param primary_date_field:
+        :param primary_key_fields:
+        :param distribute:
+        :return:
+        """
+        if distribute:
             return "ENGINE = Distributed({}, '{}', '{}', rand())".format(
                 cluster,
                 dst_schema,

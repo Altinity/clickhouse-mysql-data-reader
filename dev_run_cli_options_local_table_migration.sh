@@ -19,24 +19,47 @@ if [ ! -d "clickhouse_mysql" ]; then
     cd ..
 fi
 
+MYSQL_USER=reader
+MYSQL_PASSWORD=qwerty
+SRC_TABLES=test.books
+DST_SCHEMA=test
+DST_TABLE=books
+
+MYSQL_USER=user1
+MYSQL_PASSWORD=qwerty
+SRC_TABLES=repl.foo
+DST_SCHEMA=repl1
+DST_TABLE=foo1
+
 $PYTHON $CH_MYSQL ${*:1} \
     --src-server-id=1 \
     --nice-pause=1 \
     --log-level=debug \
+    \
     --src-host=127.0.0.1 \
-    --src-user=reader \
-    --src-password=qwerty \
-    --src-tables=test.books \
+    --src-user="${MYSQL_USER}" \
+    --src-password="${MYSQL_PASSWORD}" \
+    --src-tables="${SRC_TABLES}" \
+    \
     --dst-host=127.0.0.1 \
-    --dst-schema=test \
-    --dst-table=books \
+    --dst-create-table \
+    --with-create-database \
+    \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --mempool-max-flush-interval=60 \
     --mempool-max-events-num=10000 \
+    \
+    --binlog-position-file=qwe.txt \
     --pump-data \
-    --migrate-table
+    --migrate-table \
+    --src-wait \
+    --src-resume
 
+#    --dst-schema="${DST_SCHEMA}" \
+#    --dst-table="${DST_TABLE}" \
+#    --dst-table="${DST_SCHEMA}.${DST_TABLE}" \
+#    --dst-table-prefix="pr1_" \
 #    --log-file=ontime.log \
 #	--mempool
 #   --mempool-max-events-num=3
