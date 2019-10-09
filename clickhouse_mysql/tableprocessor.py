@@ -25,7 +25,9 @@ class TableProcessor(object):
             user=None,
             password=None,
             dbs=None,
-            schema=None,
+            dst_schema=None,
+            dst_table=None,
+            dst_table_prefix=None,
             distribute=None,
             cluster=None,
             tables=None,
@@ -37,7 +39,7 @@ class TableProcessor(object):
         :param port: int MySQL port
         :param user: string MySQL user
         :param password: string MySQL password
-        :param dbs: list of string MySQL datatabse. May be omitted, in this case tables has to contain full table names, Ex.: db.table1
+        :param dbs: list of string MySQL databases. May be omitted, in this case tables has to contain full table names, Ex.: db.table1
         :param tables: list of string list of table names. Table names may be short or full form
         :param tables_prefixes: list of string list of table prefixes. May be short or full form
         """
@@ -50,7 +52,9 @@ class TableProcessor(object):
             'user': user,
             'password': password,
         })
-        self.schema = schema
+        self.dst_schema = dst_schema
+        self.dst_table = dst_table
+        self.dst_table_prefix = dst_table_prefix
         self.cluster = cluster
         self.distribute = distribute
         self.column_skip = column_skip
@@ -59,7 +63,7 @@ class TableProcessor(object):
         """
         Prepare dict of databases and with list of tables for each db
         Include all tables into db tables list in case to tables are explicitly specified
-        It still can be no tables - incase db really has no tables
+        It still can be no tables - in case db really has no tables
         For convenient iteration over all tables
 
         :return:
@@ -139,21 +143,41 @@ class TableProcessor(object):
         return res
 
     @staticmethod
-    def create_full_table_name(schema=None, db=None, table=None, distribute=None):
+    def create_full_table_name(dst_schema=None, dst_table=None, dst_table_prefix=None, db=None, table=None, distribute=None):
         """
         Create fully-specified table name as `schema_all`.`db__table_all`  or `schema`.`db__table` or just `db`.`table`
 
+        :param dst_schema:
         :param db:
         :param table:
+        :param distribute:
         :return: `schema_all`.`db__table_all`  or `schema`.`db__table` or just `db`.`table`
         """
-        if schema != None:
-            if distribute:
-                schema += "_all"
-                table += "_all"
-            return '`{0}`.`{1}`'.format(schema, db+"__"+table) if db else '`{0}`'.format(table)
-        else:
+
+        # target table can be renamed with dst_table
+        table = dst_table if dst_table is not None else table
+
+        # simple case - do not move table into another db
+        if dst_schema is None:
             return '`{0}`.`{1}`'.format(db, table) if db else '`{0}`'.format(table)
+
+        if distribute:
+            dst_schema += "_all"
+            table += "_all"
+
+        return \
+            '`{0}`.`{1}`'.format(dst_schema, TableProcessor.create_migrated_table_name(prefix=dst_table_prefix, table=table)) \
+            if db else \
+            '`{0}`'.format(table)
+
+    @staticmethod
+    def create_migrated_table_name(prefix=None, table=None):
+        prefix = prefix if prefix is not None else ""
+        return prefix + table
+
+    @staticmethod
+    def create_distributed_table_name(db=None, table=None):
+        return db + "__" + table + "_all"
 
     @staticmethod
     def is_full_table_name(full_name):
@@ -279,7 +303,9 @@ class TableProcessor(object):
         :param tables: list of tables with (otional) full names
         :return: set of db names
         """
-        dbs_group = TableProcessor.group_tables(dbs=dbs, tables=tables, unsettled_tables_action=TableProcessor.ACTION_IGNORE_TABLE)
+        dbs_group = TableProcessor.group_tables(dbs=dbs,
+                                                tables=tables,
+                                                unsettled_tables_action=TableProcessor.ACTION_IGNORE_TABLE)
 
         return dbs_group.keys()
 
@@ -290,7 +316,8 @@ class TableProcessor(object):
         :param tables: list of (possibly) full names
         :return: set of short names
         """
-        dbs_group = TableProcessor.group_tables(tables=tables, unsettled_tables_action=TableProcessor.ACTION_INCLUDE_TABLE)
+        dbs_group = TableProcessor.group_tables(tables=tables,
+                                                unsettled_tables_action=TableProcessor.ACTION_INCLUDE_TABLE)
         res = set()
         for db in dbs_group:
             res.update(dbs_group[db])
