@@ -16,25 +16,25 @@ class Options(object):
         [['a=b', 'c=d'], ['e=f', 'z=x'], ]
 
         :return: None or dictionary
-        {'a': 'b', 'c': 'd', 'e': 'f', 'z': 'x'}
+        {'a': 'b', 'c': 'd', 'e': 'f', 'y': 'z'}
 
         """
 
+        # lists_to_join must be a list
         if not isinstance(lists_to_join, list):
             return None
 
         res = {}
-        for lst in lists_to_join:
-            # lst = ['a=b', 'c=d']
-            for column_value_pair in lst:
-                # column_value_value = 'a=b'
-                column, value = column_value_pair.split('=', 2)
-                res[column] = value
-
         # res = dict {
-        #   'col1': 'value1',
-        #   'col2': 'value2',
+        #   'name1': 'value1',
+        #   'name2': 'value2',
         # }
+        for _list in lists_to_join:
+            # _list = ['a=b', 'c=d']
+            for name_value_pair in _list:
+                # name_value_pair contains 'a=b'
+                name, value = name_value_pair.split('=', 2)
+                res[name] = value
 
         # return with sanity check
         if len(res) > 0:
@@ -52,6 +52,7 @@ class Options(object):
         ['a', 'b', 'c', 'd', 'e', 'f']
         """
 
+        # lists_to_join must be a list
         if not isinstance(lists_to_join, list):
             return None
 
@@ -145,6 +146,7 @@ class CLIOptions(Options):
         'dst_distribute': False,
         'dst_cluster': None,
         'dst_table': None,
+        'dst_table_prefix': None,
         'dst_create_table': False,
 
         #
@@ -191,13 +193,13 @@ class CLIOptions(Options):
             '--nice-pause',
             type=int,
             default=self.default_options['nice_pause'],
-            help='make nice pause between attempts to read binlog stream'
+            help='Make specified (in sec) pause between attempts to read binlog stream'
         )
         argparser.add_argument(
             '--dry',
             action='store_true',
             help='Dry mode - do not do anything that can harm. '
-            'Useful for debugging.'
+                 'Useful for debugging.'
         )
         argparser.add_argument(
             '--daemon',
@@ -208,13 +210,13 @@ class CLIOptions(Options):
             '--pid-file',
             type=str,
             default=self.default_options['pid_file'],
-            help='Pid file to be used by app in daemon mode'
+            help='Pid file to be used by the app in daemon mode'
         )
         argparser.add_argument(
             '--binlog-position-file',
             type=str,
             default=self.default_options['binlog_position_file'],
-            help='File to write binlog position to'
+            help='File to write binlog position to during bin log reading and to read position from on start'
         )
         argparser.add_argument(
             '--mempool',
@@ -242,7 +244,8 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--csvpool',
             action='store_true',
-            help='Cache data in CSV pool files on disk. Requires memory pooling, thus enables --mempool even if it is not explicitly specified'
+            help='Cache data in CSV pool files on disk. Requires memory pooling, '
+                 'thus enables --mempool even if it is not explicitly specified'
         )
         argparser.add_argument(
             '--csvpool-file-path-prefix',
@@ -278,14 +281,19 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--migrate-table',
             action='store_true',
-            help='Migrate table(s). IMPORTANT!. Target table has to be created in ClickHouse '
-                 'or it has to be created with --create-table and possibly with --with-create-database options'
-                 'See --table-template and --table-create options for additional info.'
+            help='Migrate table(s). Copy existing data from MySQL table(s) with SELECT statement. '
+                 'Binlog is not read during this procedure - just copy data from the src table(s). '
+                 'IMPORTANT!. Target table has to be created in ClickHouse '
+                 'or it has to be created with --dst-create-table and possibly with --with-create-database options. '
+                 'See --create-table-sql-template and --create-table-sql options for additional info. '
         )
         argparser.add_argument(
             '--pump-data',
             action='store_true',
-            help='Pump data into ClickHouse'
+            help='Pump data from MySQL binlog into ClickHouse. Copy rows from binlog until the end of binlog reached. '
+                 'When end of binlog reached, process ends. '
+                 'Use in combination with --src-wait in case would like to continue and wait for new rows '
+                 'after end of binlog reached'
         )
         argparser.add_argument(
             '--install',
@@ -330,19 +338,25 @@ class CLIOptions(Options):
             '--src-schemas',
             type=str,
             default=self.default_options['src_schemas'],
-            help='Comma-separated list of schemas to be used when reading from src. Ex.: db1,db2,db3'
+            help='Comma-separated list of databases (a.k.a schemas) to be used when reading from src. Ex.: db1,db2,db3'
         )
         argparser.add_argument(
             '--src-tables',
             type=str,
             default=self.default_options['src_tables'],
-            help='Comma-separated list of tables to be used when reading from src. Ex.: table1,table2,table3'
+            help='Comma-separated list of tables to be used when reading from src. '
+                 'Ex.: table1,table2,table3'
+                 'Ex.: db1.table1,db2.table2,db3.table3'
+                 'Ex.: table1,db2.table2,table3'
         )
         argparser.add_argument(
             '--src-tables-where-clauses',
             type=str,
             default=self.default_options['src_tables_where_clauses'],
-            help='Comma-separated list of WHERE clauses for tables to be migrated. Ex.: db1.t1="a=1 and b=2",db2.t2="c=3 and k=4". Accepts both (comma-separated) clause (useful for short clauses) or file where clause is located (useful for long clauses)'
+            help='Comma-separated list of WHERE clauses for tables to be migrated. '
+                 'Ex.: db1.t1="a=1 and b=2",db2.t2="c=3 and k=4". '
+                 'Accepts both (comma-separated) clause (useful for short clauses) or '
+                 'file where clause is located (useful for long clauses)'
         )
         argparser.add_argument(
             '--src-tables-prefixes',
@@ -360,19 +374,21 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--src-resume',
             action='store_true',
-            help='Resume reading from previous position.'
+            help='Resume reading from previous position. Previous position is read from `binlog-position-file`'
         )
         argparser.add_argument(
             '--src-binlog-file',
             type=str,
             default=self.default_options['src_binlog_file'],
-            help='Binlog file to be used when reading from src. Ex.: mysql-bin.000024'
+            help='Binlog file to be used to read from src. Related to `binlog-position-file`. '
+                 'Ex.: mysql-bin.000024'
         )
         argparser.add_argument(
             '--src-binlog-position',
             type=int,
             default=self.default_options['src_binlog_position'],
-            help='Binlog position to be used when reading from src. Ex.: 5703'
+            help='Binlog position to be used when reading from src. Related to `binlog-position-file`. '
+                 'Ex.: 5703'
         )
         argparser.add_argument(
             '--src-file',
@@ -418,25 +434,34 @@ class CLIOptions(Options):
             '--dst-schema',
             type=str,
             default=self.default_options['dst_schema'],
-            help='Database/schema to be used when writing to dst. Ex.: db1'
+            help='Database (a.k.a schema) to be used to create tables in ClickHouse. '
+                 'It overwrites source database(s) name(s), so tables in ClickHouse '
+                 'would be located in differently named db than in MySQL. '
+                 'Ex.: db1'
         )
         argparser.add_argument(
             '--dst-distribute',
             action='store_true',
             default=self.default_options['dst_distribute'],
-            help='is to add distribute table'
+            help='Whether to add distribute table'
         )
         argparser.add_argument(
             '--dst-cluster',
             type=str,
             default=self.default_options['dst_cluster'],
-            help='Cluster to be used when writing to dst. Ex.: db1'
+            help='Cluster to be used when writing to dst. Ex.: cluster1'
         )
         argparser.add_argument(
             '--dst-table',
             type=str,
             default=self.default_options['dst_table'],
             help='Table to be used when writing to dst. Ex.: table1'
+        )
+        argparser.add_argument(
+            '--dst-table-prefix',
+            type=str,
+            default=self.default_options['dst_table_prefix'],
+            help='Prefix to be used when creating dst table. Ex.: copy_table_'
         )
         argparser.add_argument(
             '--dst-create-table',
@@ -453,7 +478,8 @@ class CLIOptions(Options):
             nargs='*',
             action='append',
             default=self.default_options['column_default_value'],
-            help='Set of key=value pairs for columns default values. Ex.: date_1=2000-01-01 timestamp_1=2002-01-01\ 01:02:03'
+            help='Set of key=value pairs for columns default values. '
+                 'Ex.: date_1=2000-01-01 timestamp_1=2002-01-01\ 01:02:03'
         )
         argparser.add_argument(
             '--column-skip',
@@ -535,6 +561,7 @@ class CLIOptions(Options):
             'dst_distribute': args.dst_distribute,
             'dst_cluster': args.dst_cluster,
             'dst_table': args.dst_table,
+            'dst_table_prefix': args.dst_table_prefix,
             'dst_create_table': args.dst_create_table,
 
             #
@@ -557,8 +584,8 @@ class ConfigFileOptions(Options):
 
         #
         def transform(section, key):
-            newkey = key.replace('-', '_')
-            section.rename(key, newkey)
+            new_key = key.replace('-', '_')
+            section.rename(key, new_key)
 
         # fetch base config
         try:
@@ -567,7 +594,7 @@ class ConfigFileOptions(Options):
                 encoding="utf-8",
                 default_encoding="utf-8",
                 list_values=True,
-                create_empty=False, # create empty config file
+                create_empty=False,  # create empty config file
                 stringify=True,
                 raise_errors=False,
                 file_error=False,
@@ -582,7 +609,7 @@ class ConfigFileOptions(Options):
                 encoding="utf-8",
                 default_encoding="utf-8",
                 list_values=True,
-                create_empty=False, # create empty config file
+                create_empty=False,  # create empty config file
                 stringify=True,
                 raise_errors=False,
                 file_error=False,

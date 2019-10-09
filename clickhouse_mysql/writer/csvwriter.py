@@ -34,16 +34,17 @@ class CSVWriter(Writer):
             csv_keep_file=False,
             dst_schema=None,
             dst_table=None,
+            dst_table_prefix=None,
             next_writer_builder=None,
             converter_builder=None,
     ):
         logging.info("CSVWriter() "
-            "csv_file_path={} "
-            "csv_file_path_prefix={} "
-            "csv_file_path_suffix_parts={} "
-            "csv_keep_file={} "
-            "dst_schema={} "
-            "dst_table={} ".format(
+                     "csv_file_path={} "
+                     "csv_file_path_prefix={} "
+                     "csv_file_path_suffix_parts={} "
+                     "csv_keep_file={} "
+                     "dst_schema={} "
+                     "dst_table={} ".format(
             csv_file_path,
             csv_file_path_prefix,
             csv_file_path_suffix_parts,
@@ -58,6 +59,7 @@ class CSVWriter(Writer):
         self.path_suffix_parts = csv_file_path_suffix_parts
         self.dst_schema = dst_schema
         self.dst_table = dst_table
+        self.dst_table_prefix = dst_table_prefix
 
         if self.path is None:
             if not self.path_suffix_parts:
