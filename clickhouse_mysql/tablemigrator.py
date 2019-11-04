@@ -231,7 +231,8 @@ class TableMigrator(TableSQLBuilder):
             if self.column_skip.__contains__(_field):
                 logging.debug("skip column %s",_field)
                 continue
-            fields.append(_field)
+            fields.append('`{}`'.format(_field))
+
         return fields
 
 if __name__ == '__main__':
