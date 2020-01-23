@@ -153,6 +153,7 @@ class Main(Daemon):
             traceback.print_exc(file=sys.stdout)
             print('=============')
             print(ex)
+            sys.exit(1);
 
     def start(self):
         if self.config.is_daemon():
