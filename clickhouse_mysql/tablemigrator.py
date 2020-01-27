@@ -107,9 +107,9 @@ class TableMigrator(TableSQLBuilder):
                 self.where_clauses[db] = {}
                 
             if os.path.isfile(where_file_name):
-                self.wheres[db][table] = open(where_file_name, 'r').read().strip("\n")
+                self.where_clauses[db][table] = open(where_file_name, 'r').read().strip("\n")
             else:
-                self.wheres[db][table] = where_file_name
+                self.where_clauses[db][table] = where_file_name
 
         # debug info
         logging.info("migration where clauses")
