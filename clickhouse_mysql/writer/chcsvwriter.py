@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import os
-import time
 import logging
+import shlex
 
 from clickhouse_mysql.writer.writer import Writer
 from clickhouse_mysql.tableprocessor import TableProcessor
@@ -80,13 +80,13 @@ class CHCSVWriter(Writer):
 
             choptions = ""
             if self.host:
-                choptions += " --host=" + self.host
+                choptions += " --host=" + shlex.quote(self.host)
             if self.port:
                 choptions += " --port=" + str(self.port)
             if self.user:
-                choptions += " --user=" + self.user
+                choptions += " --user=" + shlex.quote(self.user)
             if self.password:
-                choptions += " --password=" + self.password
+                choptions += " --password=" + shlex.quote(self.password)
             bash = "tail -n +2 '{0}' | clickhouse-client {1} --query='{2}'".format(
                 event.filename,
                 choptions,
