@@ -388,7 +388,7 @@ clickhouse-mysql \
     --src-password=Qwerty1# \
     --create-table-sql-template \
     --with-create-database \
-    --src-only-table=airline.ontime > create_clickhouse_table_template.sql
+    --src-tables=airline.ontime > create_clickhouse_table_template.sql
 ```
 We have **CREATE TABLE** template stored in `create_clickhouse_table_template.sql` file.
 ```bash
@@ -425,7 +425,7 @@ clickhouse-mysql \
     --src-user=reader \
     --src-password=Qwerty1# \
     --migrate-table \
-    --src-only-table=airline.ontime \
+    --src-tables=airline.ontime \
     --dst-host=127.0.0.1
 ```
 This may take some time.
@@ -451,8 +451,9 @@ clickhouse-mysql \
     --src-wait \
     --nice-pause=1 \
     --src-host=127.0.0.1 \
-    --src-user=reader --src-password=Qwerty1# \
-    --src-only-table=airline.ontime \
+    --src-user=reader \
+    --src-password=Qwerty1# \
+    --src-tables=airline.ontime \
     --dst-host=127.0.0.1 \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
