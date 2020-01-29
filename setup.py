@@ -7,7 +7,7 @@ setup(
     name="clickhouse-mysql",
 
     # version should comply with PEP440
-    version='0.0.20190904',
+    version='0.0.20200128',
 
     description='MySQL to ClickHouse data migrator',
     long_description='MySQL to ClickHouse data migrator',
@@ -20,7 +20,7 @@ setup(
 
     license="MIT",
 
-    # see https://pypi.python.org/pypi?%3Aaction=list_classifiers
+    # see https://pypi.python.org/pypi?:action=list_classifiers
     classifiers=[
         # How mature is this project? Common values are
         #   3 - Alpha
