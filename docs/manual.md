@@ -200,7 +200,7 @@ bind-address     = 0.0.0.0
 
 # Quick Start
 
-Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) and want to migrate it into ClickHouse.
+Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](../clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) and want to migrate it into ClickHouse.
 
 Steps to do:
 
@@ -360,7 +360,7 @@ Options description
 
 ## MySQL Migration Case 1 - with Tables Lock
 
-Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
+Suppose we have MySQL `airline.ontime` table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](../clickhouse_mysql_examples/airline_ontime_schema_mysql.sql) with multiple rows:
 
 ```mysql
 mysql> SELECT COUNT(*) FROM airline.ontime;
@@ -464,7 +464,7 @@ Allow new data to be inserted into MySQL - i.e. unlock tables.
 mysql> UNLOCK TABLES;
 ```
 
-Insert some data into MySQL. For example, via [clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh](clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh) script
+Insert some data into MySQL. For example, via [clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh](../clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh) script
 
 ```mysql
 mysql> SELECT COUNT(*) FROM airline.ontime;
@@ -609,7 +609,7 @@ Main Steps
   * Check how data are loaded into ClickHouse
 
 ### airline.ontime Data Set in CSV files
-Run [download script](clickhouse_mysql_examples/airline_ontime_data_download.sh)
+Run [download script](../clickhouse_mysql_examples/airline_ontime_data_download.sh)
 
 You may want to adjust dirs where to keep `ZIP` and `CSV` file
 
@@ -637,19 +637,19 @@ for year in `seq 1987 2017`; do
 Downloading can take some time. 
 
 ### airline.ontime MySQL Table
-Create MySQL table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](clickhouse_mysql_examples/airline_ontime_schema_mysql.sql):
+Create MySQL table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_mysql.sql](../clickhouse_mysql_examples/airline_ontime_schema_mysql.sql):
 ```bash
 mysql -uroot -p < clickhouse_mysql_examples/airline_ontime_schema_mysql.sql
 ```
 
 ### airline.ontime ClickHouse Table
-Create ClickHouse table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_ch.sql](clickhouse_mysql_examples/airline_ontime_schema_ch.sql):
+Create ClickHouse table of the [following structure - clickhouse_mysql_examples/airline_ontime_schema_ch.sql](../clickhouse_mysql_examples/airline_ontime_schema_ch.sql):
 ```bash
 clickhouse-client -mn < clickhouse_mysql_examples/airline_ontime_schema_ch.sql
 ```
 
 ### airline.ontime Data Reader
-Run [datareader script](clickhouse_mysql_examples/airline_ontime_data_mysql_to_ch_reader.sh)
+Run [datareader script](../clickhouse_mysql_examples/airline_ontime_data_mysql_to_ch_reader.sh)
 
 You may want to adjust `PYTHON` path and source and target hosts and usernames
 ```bash
@@ -670,7 +670,7 @@ PYTHON=/home/user/pypy3.5-5.9-beta-linux_x86_64-portable/bin/pypy
 ```
 
 ### airline.ontime Data Importer
-Run [data importer script](clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh)
+Run [data importer script](../clickhouse_mysql_examples/airline_ontime_mysql_data_import.sh)
 
 You may want to adjust `CSV` files location, number of imported files and MySQL user/password used for import
 ```bash
