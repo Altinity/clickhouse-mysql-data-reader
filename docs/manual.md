@@ -2,8 +2,10 @@
 
  * [Introduction](#introduction)
  * [Requirements and Installation](#requirements-and-installation)
+<!-- 
    * [Dev Installation](#dev-installation)
    * [RPM Installation](#rpm-installation)
+-->
    * [PyPi Installation](#pypi-installation)
    * [GitHub-based Installation - Clone Sources](#github-based-installation---clone-sources)
    * [MySQL setup](#mysql-setup)
@@ -49,6 +51,8 @@ In most distributions Python 3 have `pip` utility named as `pip3`, so we'll use 
 However, you may have it called differently.
 
 Datareader can be installed either from `github` repo or from `pypi` repo.
+
+<!--
 
 ## Dev Installation
 ```bash
@@ -100,6 +104,7 @@ Start service
 ```bash
 sudo service clickhouse-mysql start
 ```
+-->
 
 ## PyPi Installation
 In case you need just to use the app - this is the most convenient way to go.
