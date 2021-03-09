@@ -11,7 +11,6 @@ class Pumper(object):
     writer = None
 
     def __init__(self, reader=None, writer=None):
-
         self.reader = reader
         self.writer = writer
 
@@ -19,6 +18,8 @@ class Pumper(object):
             # subscribe on reader's event notifications
             self.reader.subscribe({
                 'WriteRowsEvent': self.write_rows_event,
+                'UpdateRowsEvent': self.update_rows_event,
+                'DeleteRowsEvent': self.delete_rows_event,
                 # 'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
                 'ReaderIdleEvent': self.reader_idle_event,
             })
@@ -45,6 +46,21 @@ class Pumper(object):
         ReaderIdleEvent handler
         """
         self.writer.flush()
+
+    def delete_rows_event(self, event=None):
+        """
+        DeleteRowsEvent handler
+        :param event:
+        """
+        self.writer.delete(event)
+
+    def update_rows_event(self, event=None):
+        """
+        UpdateRowsEvent handler
+        :param event:
+        """
+        self.writer.update(event)
+
 
 if __name__ == '__main__':
     print("pumper")

@@ -55,6 +55,28 @@ class Writer(object):
         # ]
         pass
 
+    def update(self, event_or_events=None):
+        # event_or_events = [
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        # ]
+        pass
+
+    def delete(self, event_or_events=None):
+        # event_or_events = [
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        # ]
+        pass
+
     def flush(self):
         pass
 
