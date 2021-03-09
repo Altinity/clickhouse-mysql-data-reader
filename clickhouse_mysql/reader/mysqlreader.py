@@ -12,7 +12,7 @@ from clickhouse_mysql.reader.reader import Reader
 from clickhouse_mysql.event.event import Event
 from clickhouse_mysql.tableprocessor import TableProcessor
 from clickhouse_mysql.util import Util
-#from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
+from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
 
 class MySQLReader(Reader):
@@ -56,13 +56,15 @@ class MySQLReader(Reader):
         self.server_id = server_id
         self.log_file = log_file
         self.log_pos = log_pos
-        self.schemas = None if not TableProcessor.extract_dbs(schemas, Util.join_lists(tables, tables_prefixes)) else TableProcessor.extract_dbs(schemas, Util.join_lists(tables, tables_prefixes))
+        self.schemas = None if not TableProcessor.extract_dbs(schemas, Util.join_lists(tables,
+                                                                                       tables_prefixes)) else TableProcessor.extract_dbs(
+            schemas, Util.join_lists(tables, tables_prefixes))
         self.tables = None if tables is None else TableProcessor.extract_tables(tables)
         self.tables_prefixes = None if tables_prefixes is None else TableProcessor.extract_tables(tables_prefixes)
         self.blocking = blocking
         self.resume_stream = resume_stream
         self.nice_pause = nice_pause
-        self.binlog_position_file=binlog_position_file
+        self.binlog_position_file = binlog_position_file
 
         logging.info("raw dbs list. len()=%d", 0 if schemas is None else len(schemas))
         if schemas is not None:
@@ -86,7 +88,8 @@ class MySQLReader(Reader):
         if tables_prefixes is not None:
             for table in tables_prefixes:
                 logging.info(table)
-        logging.info("normalised tables-prefixes list. len()=%d", 0 if self.tables_prefixes is None else len(self.tables_prefixes))
+        logging.info("normalised tables-prefixes list. len()=%d",
+                     0 if self.tables_prefixes is None else len(self.tables_prefixes))
         if self.tables_prefixes is not None:
             for table in self.tables_prefixes:
                 logging.info(table)
@@ -101,21 +104,21 @@ class MySQLReader(Reader):
             # we are interested in reading CH-repeatable events only
             only_events=[
                 # Possible events
-                #BeginLoadQueryEvent,
+                # BeginLoadQueryEvent,
                 DeleteRowsEvent,
-                #ExecuteLoadQueryEvent,
-                #FormatDescriptionEvent,
-                #GtidEvent,
-                #HeartbeatLogEvent,
-                #IntvarEvent
-                #NotImplementedEvent,
-                #QueryEvent,
-                #RotateEvent,
-                #StopEvent,
-                #TableMapEvent,
+                # ExecuteLoadQueryEvent,
+                # FormatDescriptionEvent,
+                # GtidEvent,
+                # HeartbeatLogEvent,
+                # IntvarEvent
+                # NotImplementedEvent,
+                # QueryEvent,
+                # RotateEvent,
+                # StopEvent,
+                # TableMapEvent,
                 UpdateRowsEvent,
                 WriteRowsEvent,
-                #XidEvent,
+                # XidEvent,
             ],
             only_schemas=self.schemas,
             # in case we have any prefixes - this means we need to listen to all tables within specified schemas
@@ -245,6 +248,9 @@ class MySQLReader(Reader):
         :param mysql_event: WriteRowsEvent instance
         :return:
         """
+
+        logging.debug("Received insert event for table: " + mysql_event.table)
+
         if self.tables_prefixes:
             # we have prefixes specified
             # need to find whether current event is produced by table in 'looking-into-tables' list
@@ -294,10 +300,81 @@ class MySQLReader(Reader):
         self.stat_write_rows_event_finalyse()
 
     def process_update_rows_event(self, mysql_event):
-        logging.info("Skip update rows")
+
+        logging.debug("Received update event for table: " + mysql_event.table + " Schema: " + mysql_event.schema)
+
+        # for row in mysql_event.rows:
+        #    for key in row['before_values']:
+        #        logging.debug("\t *%s:%s=>%s" % (key, row["before_values"][key], row["after_values"][key]))
+
+        if self.tables_prefixes:
+            # we have prefixes specified
+            # need to find whether current event is produced by table in 'looking-into-tables' list
+            if not self.is_table_listened(mysql_event.table):
+                # this table is not listened
+                # processing is over - just skip event
+                return
+
+        # statistics
+        #self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
+
+        if self.subscribers('UpdateRowsEvent'):
+            # dispatch event to subscribers
+
+            # statistics
+            #self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
+
+            # dispatch Event
+            event = Event()
+            event.schema = mysql_event.schema
+            event.table = mysql_event.table
+            event.pymysqlreplication_event = mysql_event
+
+            #self.process_first_event(event=event)
+            self.notify('UpdateRowsEvent', event=event)
+
+        # self.stat_write_rows_event_finalyse()
+
+        # logging.info("Skip update rows")
 
     def process_delete_rows_event(self, mysql_event):
-        logging.info("Skip delete rows")
+        logging.debug("Received delete event for table: " + mysql_event.table)
+
+        """
+        for row in mysql_event.rows:
+            for key in row['values']:
+                logging.debug("\t *", key, ":", row["values"][key])
+        """
+
+        if self.tables_prefixes:
+            # we have prefixes specified
+            # need to find whether current event is produced by table in 'looking-into-tables' list
+            if not self.is_table_listened(mysql_event.table):
+                # this table is not listened
+                # processing is over - just skip event
+                return
+
+        # statistics
+        #self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
+
+        if self.subscribers('DeleteRowsEvent'):
+            # dispatch event to subscribers
+
+            # statistics
+            #self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
+
+            # dispatch Event
+            event = Event()
+            event.schema = mysql_event.schema
+            event.table = mysql_event.table
+            event.pymysqlreplication_event = mysql_event
+
+            self.process_first_event(event=event)
+            self.notify('DeleteRowsEvent', event=event)
+
+        # self.stat_write_rows_event_finalyse()
+
+        # logging.info("Skip delete rows")
 
     def process_binlog_position(self, file, pos):
         if self.binlog_position_file:
@@ -321,14 +398,16 @@ class MySQLReader(Reader):
                 self.stat_init_fetch_loop()
 
                 try:
-                    logging.debug('Pre-start binlog position: ' + self.binlog_stream.log_file + ":" + str(self.binlog_stream.log_pos) if self.binlog_stream.log_pos is not None else "undef")
+                    logging.debug('Pre-start binlog position: ' + self.binlog_stream.log_file + ":" + str(
+                        self.binlog_stream.log_pos) if self.binlog_stream.log_pos is not None else "undef")
 
                     # fetch available events from MySQL
                     for mysql_event in self.binlog_stream:
                         # new event has come
                         # check what to do with it
 
-                        logging.debug('Got Event ' + self.binlog_stream.log_file + ":" + str(self.binlog_stream.log_pos))
+                        logging.debug(
+                            'Got Event ' + self.binlog_stream.log_file + ":" + str(self.binlog_stream.log_pos))
 
                         # process event based on its type
                         if isinstance(mysql_event, WriteRowsEvent):
@@ -392,6 +471,7 @@ class MySQLReader(Reader):
         logging.info('start %d', self.start_timestamp)
         logging.info('end %d', end_timestamp)
         logging.info('len %d', end_timestamp - self.start_timestamp)
+
 
 if __name__ == '__main__':
     connection_settings = {
