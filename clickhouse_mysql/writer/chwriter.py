@@ -206,7 +206,9 @@ class CHWriter(Writer):
     """
     def get_data_format(self, column, value):
         t = type(value)
-        if t == str or t is datetime.datetime:
+        if t == str:
+            return "`%s`='%s'" % (column, value.replace("'", "\\'"))
+        elif t is datetime.datetime:
             return "`%s`='%s'" % (column, value)
         else:
             # int, float
@@ -279,10 +281,11 @@ class CHWriter(Writer):
 
         sql = ''
         try:
-            sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2} where {3}'.format(
+            sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2}, `tb_upd`={3} where {4}'.format(
                 schema,
                 table,
                 ', '.join(filter(None, map(lambda column, value: "" if column == pk or value is None else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
+                "'%s'" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 ' and '.join(filter(None, map(
                     lambda column, value: "" if column != pk or value is None else self.get_data_format(column, value),
                     row['before_values'].keys(), row['before_values'].values())))
