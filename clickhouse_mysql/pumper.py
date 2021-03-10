@@ -52,7 +52,7 @@ class Pumper(object):
         DeleteRowsEvent handler
         :param event:
         """
-        self.writer.delete(event)
+        self.writer.delete_row(event)
 
     def update_rows_event(self, event=None):
         """

@@ -58,15 +58,21 @@ class Writer(object):
     def update(self, event_or_events=None):
         # event_or_events = [
         #   event: {
-        #       row: {'id': 3, 'a': 3}
+        #       row: {
+        #           'before_values': {'id': 3, 'a': 3},
+        #           'after_values': {'id': 3, 'a': 2}
+        #       }
         #   },
         #   event: {
-        #       row: {'id': 3, 'a': 3}
+        #       row: {
+        #          'before_values': {'id': 2, 'a': 3},
+        #          'after_values': {'id': 2, 'a': 2}
+        #       }
         #   },
         # ]
         pass
 
-    def delete(self, event_or_events=None):
+    def delete_row(self, event_or_events=None):
         # event_or_events = [
         #   event: {
         #       row: {'id': 3, 'a': 3}

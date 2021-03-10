@@ -113,7 +113,7 @@ class CHWriter(Writer):
 
         # all DONE
 
-    def deleteRow(self, event_or_events):
+    def delete_row(self, event_or_events):
         # event_or_events = [
         #   event: {
         #       row: {'id': 3, 'a': 3}
@@ -138,6 +138,7 @@ class CHWriter(Writer):
 
         rows = []
         event_converted = None
+        pk = None
         for event in events:
             if not event.verify:
                 logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(),
@@ -145,6 +146,7 @@ class CHWriter(Writer):
                 continue  # for event
 
             event_converted = self.convert(event)
+            pk = event_converted.pymysqlreplication_event.primary_key
             for row in event_converted:
                 for key in row.keys():
                     # we need to convert Decimal value to str value for suitable for table structure
@@ -171,13 +173,26 @@ class CHWriter(Writer):
         # and DELETE converted rows
 
         sql = ''
+        # try:
+        #    sql = 'ALTER TABLE `{0}`.`{1}` DELETE WHERE {2} = {3} '.format(
+        #        schema,
+        #        table,
+        #        ' AND '.join(map(lambda column: '`%s`' % column, event.fieldnames)),
+        #    )
+        #    self.client.execute(sql, rows)
+
+        sql = ''
         try:
-            sql = 'ALTER TABLE `{0}`.`{1}` DELETE WHERE {2} = {3} '.format(
+            sql = 'ALTER TABLE `{0}`.`{1}` DELETE WHERE {2}'.format(
                 schema,
                 table,
-                ' AND '.join(map(lambda column: '`%s`' % column, event.fieldnames)),
+                ' and '.join(filter(None, map(
+                    lambda column, value: "" if column != pk else self.get_data_format(column, value),
+                    row.keys(), row.values())))
             )
-            self.client.execute(sql, rows)
+
+            self.client.execute(sql)
+
         except Exception as ex:
             logging.critical('QUERY FAILED')
             logging.critical('ex={}'.format(ex))
@@ -200,10 +215,16 @@ class CHWriter(Writer):
     def update(self, event_or_events):
         # event_or_events = [
         #   event: {
-        #       row: {'id': 3, 'a': 3}
+        #       row: {
+        #           'before_values': {'id': 3, 'a': 3},
+        #           'after_values': {'id': 3, 'a': 2}
+        #       }
         #   },
         #   event: {
-        #       row: {'id': 3, 'a': 3}
+        #       row: {
+        #          'before_values': {'id': 2, 'a': 3},
+        #          'after_values': {'id': 2, 'a': 2}
+        #       }
         #   },
         # ]
 
