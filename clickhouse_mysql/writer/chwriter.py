@@ -10,7 +10,7 @@ from clickhouse_mysql.dbclient.chclient import CHClient
 
 from clickhouse_mysql.writer.writer import Writer
 from clickhouse_mysql.tableprocessor import TableProcessor
-from clickhouse_mysql.event.event import Event
+import datetime
 
 
 class CHWriter(Writer):
@@ -108,7 +108,8 @@ class CHWriter(Writer):
             logging.critical('QUERY FAILED')
             logging.critical('ex={}'.format(ex))
             logging.critical('sql={}'.format(sql))
-            sys.exit(0)
+            logging.critical('data={}'.format(rows))
+            # sys.exit(0)
 
         # all DONE
 
@@ -181,7 +182,7 @@ class CHWriter(Writer):
             logging.critical('QUERY FAILED')
             logging.critical('ex={}'.format(ex))
             logging.critical('sql={}'.format(sql))
-            sys.exit(0)
+            # sys.exit(0)
 
         # all DONE
 
@@ -190,7 +191,7 @@ class CHWriter(Writer):
     """
     def get_data_format(self, column, value):
         t = type(value)
-        if t == str:
+        if t == str or t is datetime.datetime:
             return "`%s`='%s'" % (column, value)
         else:
             # int, float
@@ -260,11 +261,12 @@ class CHWriter(Writer):
             sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2} where {3}'.format(
                 schema,
                 table,
-                ', '.join(filter(None, map(lambda column, value: "" if column == pk else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
-                ' and '.join(map(lambda column, value: self.get_data_format(column, value), row['before_values'].keys(), row['before_values'].values()))
+                ', '.join(filter(None, map(lambda column, value: "" if column == pk or value is None else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
+                ' and '.join(filter(None, map(
+                    lambda column, value: "" if column != pk or value is None else self.get_data_format(column, value),
+                    row['before_values'].keys(), row['before_values'].values())))
             )
 
-            # sql = "ALTER TABLE `test`.`animals` UPDATE `name`='pajaroTO', `position`=1 where `id`=1 and `name`='oso'"
             self.client.execute(sql)
         except Exception as ex:
             logging.critical('QUERY FAILED')
