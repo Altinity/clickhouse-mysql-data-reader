@@ -253,7 +253,12 @@ class CHWriter(Writer):
                 continue  # for event
 
             event_converted = self.convert(event)
-            pk = event_converted.pymysqlreplication_event.primary_key
+            pk = [event_converted.pymysqlreplication_event.primary_key]
+            if event_converted.table == 'assets':
+                pk.append('name')
+                pk.append('title_id')
+                pk.append('company_id')
+                pk.append('asset_type_enumeration_entry_id')
             for row in event_converted.pymysqlreplication_event.rows:
                 for key in row['after_values'].keys():
                     # we need to convert Decimal value to str value for suitable for table structure
@@ -284,10 +289,10 @@ class CHWriter(Writer):
             sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2}, `tb_upd`={3} where {4}'.format(
                 schema,
                 table,
-                ', '.join(filter(None, map(lambda column, value: "" if column == pk or value is None else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
+                ', '.join(filter(None, map(lambda column, value: "" if column in pk or value is None else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
                 "'%s'" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 ' and '.join(filter(None, map(
-                    lambda column, value: "" if column != pk or value is None else self.get_data_format(column, value),
+                    lambda column, value: "" if column not in pk or value is None else self.get_data_format(column, value),
                     row['before_values'].keys(), row['before_values'].values())))
             )
 
