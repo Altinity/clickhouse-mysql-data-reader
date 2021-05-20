@@ -28,6 +28,9 @@ class Event(object):
     # table name
     table = None
 
+    # primary key
+    primary_key = None
+
     # /path/to/csv/file.csv
     filename = None
 

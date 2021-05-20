@@ -37,6 +37,18 @@ class PoolWriter(Writer):
         logging.debug('class:%s insert', __class__)
         self.pool.insert(event_or_events)
 
+
+    def delete(self, event_or_events):
+        """Insert delete data into Pool"""
+        logging.debug('class:%s delete', __class__)
+        self.pool.insert(event_or_events)
+
+    def update(self, event_or_events):
+        """Insert update data into Pool"""
+        logging.debug('class:%s update', __class__)
+        self.pool.insert(event_or_events)
+
+
     def flush(self):
         self.pool.flush()
 
