@@ -283,18 +283,32 @@ class CHWriter(Writer):
                                                                                        self.dst_table))
 
         # and UPDATE converted rows
-
+        # improve performance updating just those fields which have actually changed
+        updated_values = dict(set(row['after_values'].items()).difference(set(row['before_values'].items())))
+        
         sql = ''
         try:
+            # sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2}, `tb_upd`={3} where {4}'.format(
+            #     schema,
+            #     table,
+            #     ', '.join(filter(None, map(lambda column, value: "" if column in pk or value is None else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
+            #     "'%s'" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            #     ' and '.join(filter(None, map(
+            #         lambda column, value: "" if column not in pk or value is None else self.get_data_format(column, value),
+            #         row['before_values'].keys(), row['before_values'].values())))
+            # )
+
             sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2}, `tb_upd`={3} where {4}'.format(
                 schema,
                 table,
-                ', '.join(filter(None, map(lambda column, value: "" if column in pk or value is None else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
+                ', '.join(filter(None, map(lambda column, value: "" if column in pk or value is None else self.get_data_format(column, value), updated_values.keys(), updated_values.values()))),
                 "'%s'" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
                 ' and '.join(filter(None, map(
                     lambda column, value: "" if column not in pk or value is None else self.get_data_format(column, value),
                     row['before_values'].keys(), row['before_values'].values())))
             )
+
+            logging.debug("SQL UPDATE: \n\n " + sql + "\n\n")
 
             self.client.execute(sql)
         except Exception as ex:
