@@ -6,6 +6,7 @@ import logging
 
 from clickhouse_mysql.pool.pool import Pool
 from clickhouse_mysql.objectbuilder import ObjectBuilder
+from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
 
 
 # Buckets Belts' Index Generator
@@ -149,7 +150,18 @@ class BBPool(Pool):
             # time to flush data for specified key
             #self.writer_builder.param('csv_file_path_suffix_parts', [str(int(now)), str(self.buckets_num_total)])
             writer = self.writer_builder.new()
-            writer.insert(self.belts[belt_index].pop())
+            item = self.belts[belt_index].pop()
+            # process event based on its type
+            if isinstance(item[0].pymysqlreplication_event, WriteRowsEvent):
+                writer.insert(item)
+            elif isinstance(item[0].pymysqlreplication_event, DeleteRowsEvent):
+                writer.delete(item)
+            elif isinstance(item[0].pymysqlreplication_event, UpdateRowsEvent):
+                writer.update(item)
+            else:
+                # skip other unhandled events
+                pass
+            # writer.insert(self.belts[belt_index].pop())
             writer.close()
             writer.push()
             writer.destroy()
