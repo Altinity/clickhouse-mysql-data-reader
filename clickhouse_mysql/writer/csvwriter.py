@@ -135,6 +135,18 @@ class CSVWriter(Writer):
             for row in event:
                 self.writer.writerow(self.convert(row))
 
+    def deleteRow(self, event_or_events):
+        """
+        TODO
+        """
+        logging.debug("Delete CSV Writer")
+
+    def update(self, event_or_events):
+        """
+        TODO
+        """
+        logging.debug("Update CSV Writer")
+
     def push(self):
         if not self.next_writer_builder or not self.fieldnames:
             return
