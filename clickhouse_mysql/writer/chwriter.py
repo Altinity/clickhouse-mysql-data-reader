@@ -68,15 +68,25 @@ class CHWriter(Writer):
         event_converted = None
         for event in events:
             if not event.verify:
-                logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(), __class__)
-                continue # for event
+                logging.warning(
+                    'Event verification failed. Skip one event. Event: %s Class: %s', event.meta(), __class__)
+                continue  # for event
 
             event_converted = self.convert(event)
             for row in event_converted:
+                # These columns are added to identify the last change (tb_upd) and the kind of operation performed
+                # 0 - INSERT, 1 - UPDATE, 2 - DELETE
+                row['tb_upd'] = datetime.datetime.now()
+                row['operation'] = 0
+
                 for key in row.keys():
-                    # we need to convert Decimal value to str value for suitable for table structure
-                    if type(row[key]) == Decimal:
+                    # we need to convert Decimal or timedelta value to str value for suitable for table structure
+                    if type(row[key]) == [Decimal, datetime.timedelta]:
                         row[key] = str(row[key])
+
+                # These columns are added to identify the last change (tb_upd) and when a row is deleted (1)
+                # row['tb_upd'] = datetime.datetime.now()
+                # row['operation'] = 0
                 rows.append(row)
 
         logging.debug('class:%s insert %d row(s)', __class__, len(rows))
@@ -86,13 +96,16 @@ class CHWriter(Writer):
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = None
         if self.dst_distribute:
-            table = TableProcessor.create_distributed_table_name(db=event_converted.schema, table=event_converted.table)
+            table = TableProcessor.create_distributed_table_name(
+                db=event_converted.schema, table=event_converted.table)
         else:
             table = self.dst_table if self.dst_table else event_converted.table
             if self.dst_schema:
-                table = TableProcessor.create_migrated_table_name(prefix=self.dst_table_prefix, table=table)
+                table = TableProcessor.create_migrated_table_name(
+                    prefix=self.dst_table_prefix, table=table)
 
-        logging.debug("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema, self.dst_table))
+        logging.debug("schema={} table={} self.dst_schema={} self.dst_table={}".format(
+            schema, table, self.dst_schema, self.dst_table))
 
         # and INSERT converted rows
 
@@ -103,6 +116,7 @@ class CHWriter(Writer):
                 table,
                 ', '.join(map(lambda column: '`%s`' % column, rows[0].keys()))
             )
+            logging.debug(f"CHWRITER QUERY INSERT: {sql}")
             self.client.execute(sql, rows)
         except Exception as ex:
             logging.critical('QUERY FAILED')
@@ -138,7 +152,6 @@ class CHWriter(Writer):
 
         rows = []
         event_converted = None
-        pk = None
         for event in events:
             if not event.verify:
                 logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(),
@@ -146,12 +159,20 @@ class CHWriter(Writer):
                 continue  # for event
 
             event_converted = self.convert(event)
-            pk = event_converted.pymysqlreplication_event.primary_key
             for row in event_converted:
+                # These columns are added to identify the last change (tb_upd) and the kind of operation performed
+                # 0 - INSERT, 1 - UPDATE, 2 - DELETE
+                row['tb_upd'] = datetime.datetime.now()
+                row['operation'] = 2
+
                 for key in row.keys():
-                    # we need to convert Decimal value to str value for suitable for table structure
-                    if type(row[key]) == Decimal:
+                    # we need to convert Decimal or timedelta value to str value for suitable for table structure
+                    if type(row[key]) in [Decimal, datetime.timedelta]:
                         row[key] = str(row[key])
+
+                # These columns are added to identify the last change (tb_upd) and when a row is deleted (1)
+                # row['tb_upd'] = datetime.datetime.now()
+                # row['operation'] = 2
                 rows.append(row)
 
         logging.debug('class:%s delete %d row(s)', __class__, len(rows))
@@ -161,37 +182,45 @@ class CHWriter(Writer):
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = None
         if self.dst_distribute:
-            table = TableProcessor.create_distributed_table_name(db=event_converted.schema, table=event_converted.table)
+            table = TableProcessor.create_distributed_table_name(
+                db=event_converted.schema, table=event_converted.table)
         else:
             table = self.dst_table if self.dst_table else event_converted.table
             if self.dst_schema:
-                table = TableProcessor.create_migrated_table_name(prefix=self.dst_table_prefix, table=table)
+                table = TableProcessor.create_migrated_table_name(
+                    prefix=self.dst_table_prefix, table=table)
 
         logging.debug("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema,
                                                                                        self.dst_table))
 
         # and DELETE converted rows
 
-        sql = ''
-        # try:
-        #    sql = 'ALTER TABLE `{0}`.`{1}` DELETE WHERE {2} = {3} '.format(
-        #        schema,
-        #        table,
-        #        ' AND '.join(map(lambda column: '`%s`' % column, event.fieldnames)),
-        #    )
-        #    self.client.execute(sql, rows)
+        # These columns are added to identify the last change (tb_upd) and the kind of operation performed
+        # 0 - INSERT, 1 - UPDATE, 2 - DELETE
+        rows[0]['tb_upd'] = datetime.datetime.now()
+        rows[0]['operation'] = 2
 
         sql = ''
         try:
-            sql = 'ALTER TABLE `{0}`.`{1}` DELETE WHERE {2}'.format(
+            sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
                 schema,
                 table,
-                ' and '.join(filter(None, map(
-                    lambda column, value: "" if column != pk else self.get_data_format(column, value),
-                    row.keys(), row.values())))
+                ', '.join(map(lambda column: '`%s`' % column, rows[0].keys()))
             )
+            logging.debug(f"CHWRITER QUERY DELETE: {sql}")
+            self.client.execute(sql, rows)
 
-            self.client.execute(sql)
+        # sql = ''
+        # try:
+        #     sql = 'ALTER TABLE `{0}`.`{1}` DELETE WHERE {2}'.format(
+        #         schema,
+        #         table,
+        #         ' and '.join(filter(None, map(
+        #             lambda column, value: "" if column != pk else self.get_data_format(column, value),
+        #             row.keys(), row.values())))
+        #     )
+        #
+        #     self.client.execute(sql)
 
         except Exception as ex:
             logging.critical('QUERY FAILED')
@@ -204,6 +233,7 @@ class CHWriter(Writer):
     """
         Get string format pattern for update and delete operations
     """
+
     def get_data_format(self, column, value):
         t = type(value)
         if t == str:
@@ -245,7 +275,6 @@ class CHWriter(Writer):
 
         rows = []
         event_converted = None
-        pk = None
         for event in events:
             if not event.verify:
                 logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(),
@@ -253,18 +282,18 @@ class CHWriter(Writer):
                 continue  # for event
 
             event_converted = self.convert(event)
-            pk = [event_converted.pymysqlreplication_event.primary_key]
-            if event_converted.table == 'assets':
-                pk.append('name')
-                pk.append('title_id')
-                pk.append('company_id')
-                pk.append('asset_type_enumeration_entry_id')
             for row in event_converted.pymysqlreplication_event.rows:
+
                 for key in row['after_values'].keys():
-                    # we need to convert Decimal value to str value for suitable for table structure
-                    if type(row['after_values'][key]) == Decimal:
-                        row['after_values'][key] = str(row['after_values'][key])
-                rows.append(row)
+                    # we need to convert Decimal or timedelta value to str value for suitable for table structure
+                    if type(row['after_values'][key]) in [Decimal, datetime.timedelta]:
+                        row['after_values'][key] = str(
+                            row['after_values'][key])
+
+                # These columns are added to identify the last change (tb_upd) and when a row is deleted (1)
+                row['after_values']['tb_upd'] = datetime.datetime.now()
+                row['after_values']['operation'] = 1
+                rows.append(row['after_values'])
 
         logging.debug('class:%s update %d row(s)', __class__, len(rows))
 
@@ -273,53 +302,40 @@ class CHWriter(Writer):
         schema = self.dst_schema if self.dst_schema else event_converted.schema
         table = None
         if self.dst_distribute:
-            table = TableProcessor.create_distributed_table_name(db=event_converted.schema, table=event_converted.table)
+            table = TableProcessor.create_distributed_table_name(
+                db=event_converted.schema, table=event_converted.table)
         else:
             table = self.dst_table if self.dst_table else event_converted.table
             if self.dst_schema:
-                table = TableProcessor.create_migrated_table_name(prefix=self.dst_table_prefix, table=table)
+                table = TableProcessor.create_migrated_table_name(
+                    prefix=self.dst_table_prefix, table=table)
 
         logging.debug("schema={} table={} self.dst_schema={} self.dst_table={}".format(schema, table, self.dst_schema,
                                                                                        self.dst_table))
 
         # and UPDATE converted rows
-        # improve performance updating just those fields which have actually changed
-        updated_values = dict(set(row['after_values'].items()).difference(set(row['before_values'].items())))
-        
+
+        # These columns are added to identify the last change (tb_upd) and when a row is deleted (1)
+        rows[0]['tb_upd'] = datetime.datetime.now()
+        rows[0]['operation'] = 1
+
         sql = ''
         try:
-            # sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2}, `tb_upd`={3} where {4}'.format(
-            #     schema,
-            #     table,
-            #     ', '.join(filter(None, map(lambda column, value: "" if column in pk or value is None else self.get_data_format(column, value), row['after_values'].keys(), row['after_values'].values()))),
-            #     "'%s'" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-            #     ' and '.join(filter(None, map(
-            #         lambda column, value: "" if column not in pk or value is None else self.get_data_format(column, value),
-            #         row['before_values'].keys(), row['before_values'].values())))
-            # )
-
-            sql = 'ALTER TABLE `{0}`.`{1}` UPDATE {2}, `tb_upd`={3} where {4}'.format(
+            sql = 'INSERT INTO `{0}`.`{1}` ({2}) VALUES'.format(
                 schema,
                 table,
-                ', '.join(filter(None, map(lambda column, value: "" if column in pk or value is None else self.get_data_format(column, value), updated_values.keys(), updated_values.values()))),
-                "'%s'" % datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
-                ' and '.join(filter(None, map(
-                    lambda column, value: "" if column not in pk or value is None else self.get_data_format(column, value),
-                    row['before_values'].keys(), row['before_values'].values())))
+                ', '.join(map(lambda column: '`%s`' % column, rows[0].keys()))
             )
-
-            logging.debug("SQL UPDATE: \n\n " + sql + "\n\n")
-
-            self.client.execute(sql)
+            logging.debug(f"CHWRITER QUERY UPDATE: {sql}")
+            self.client.execute(sql, rows)
         except Exception as ex:
             logging.critical('QUERY FAILED')
             logging.critical('ex={}'.format(ex))
             logging.critical('sql={}'.format(sql))
+            logging.critical('data={}'.format(rows))
             # sys.exit(0)
 
         # all DONE
-
-
 
 
 if __name__ == '__main__':

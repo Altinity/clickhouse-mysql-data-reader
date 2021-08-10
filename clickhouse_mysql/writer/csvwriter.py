@@ -11,6 +11,10 @@ import uuid
 from clickhouse_mysql.writer.writer import Writer
 from clickhouse_mysql.event.event import Event
 
+import datetime
+
+from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
+
 
 class CSVWriter(Writer):
     """Write CSV files"""
@@ -89,6 +93,7 @@ class CSVWriter(Writer):
             # open file for write-at-the-end mode
             self.file = open(self.path, 'a+')
 
+
     def insert(self, event_or_events):
         # event_or_events = [
         #   event: {
@@ -118,7 +123,14 @@ class CSVWriter(Writer):
                 logging.warning('Event verification failed. Skip insert(). Event: %s Class: %s', event.meta(), __class__)
                 return
 
-            self.fieldnames = sorted(self.convert(copy.copy(event.first_row())).keys())
+            event_converted = self.convert(event)
+            rows = event_converted.pymysqlreplication_event.rows
+            headers = list(rows[0]['values'].keys())
+            headers.append('operation')
+            headers.append('tb_upd')
+
+            # self.fieldnames = sorted(self.convert(copy.copy(event.first_row())).keys())
+            self.fieldnames = headers
             if self.dst_schema is None:
                 self.dst_schema = event.schema
             if self.dst_table is None:
@@ -132,20 +144,147 @@ class CSVWriter(Writer):
             if not event.verify:
                 logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(), __class__)
                 continue # for event
-            for row in event:
-                self.writer.writerow(self.convert(row))
+            self.generate_row(event)
 
-    def deleteRow(self, event_or_events):
-        """
-        TODO
-        """
+    def delete_row(self, event_or_events):
+
+        # event_or_events = [
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        #   event: {
+        #       row: {'id': 3, 'a': 3}
+        #   },
+        # ]
+
         logging.debug("Delete CSV Writer")
 
+        events = self.listify(event_or_events)
+        if len(events) < 1:
+            logging.warning('No events to delete. class: %s', __class__)
+            return
+
+        # assume we have at least one Event
+
+        logging.debug('class:%s delete %d events', __class__, len(events))
+
+        if not self.opened():
+            self.open()
+
+        if not self.writer:
+            # pick any event from the list
+            event = events[0]
+            if not event.verify:
+                logging.warning('Event verification failed. Skip insert(). Event: %s Class: %s', event.meta(), __class__)
+                return
+
+            event_converted = self.convert(event)
+            rows = event_converted.pymysqlreplication_event.rows
+            headers = list(rows[0]['values'].keys())
+            headers.append('operation')
+            headers.append('tb_upd')
+            
+            self.fieldnames = headers
+            if self.dst_schema is None:
+                self.dst_schema = event.schema
+            if self.dst_table is None:
+                self.dst_table = event.table
+
+            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
+            if not self.header_written:
+                self.writer.writeheader()
+
+        for event in events:
+            if not event.verify:
+                logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(), __class__)
+                continue # for event
+            self.generate_row(event)
+
+
+
     def update(self, event_or_events):
-        """
-        TODO
-        """
+        
+        # event_or_events = [
+        #   event: {
+        #       row: {
+        #           'before_values': {'id': 3, 'a': 3},
+        #           'after_values': {'id': 3, 'a': 2}
+        #       }
+        #   },
+        #   event: {
+        #       row: {
+        #          'before_values': {'id': 2, 'a': 3},
+        #          'after_values': {'id': 2, 'a': 2}
+        #       }
+        #   },
+        # ]
+
         logging.debug("Update CSV Writer")
+
+        events = self.listify(event_or_events)
+        if len(events) < 1:
+            logging.warning('No events to update. class: %s', __class__)
+            return
+
+        # assume we have at least one Event
+
+        logging.debug('class:%s updated %d events', __class__, len(events))
+
+        if not self.opened():
+            self.open()
+
+        if not self.writer:
+            # pick any event from the list
+            event = events[0]
+            if not event.verify:
+                logging.warning('Event verification failed. Skip insert(). Event: %s Class: %s', event.meta(), __class__)
+                return
+
+            event_converted = self.convert(event)
+            rows = event_converted.pymysqlreplication_event.rows
+            headers = list(rows[0]['after_values'].keys())
+            headers.append('operation')
+            headers.append('tb_upd')
+            
+            # self.fieldnames = sorted(headers)
+            self.fieldnames = headers
+            if self.dst_schema is None:
+                self.dst_schema = event.schema
+            if self.dst_table is None:
+                self.dst_table = event.table
+
+            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
+            if not self.header_written:
+                self.writer.writeheader()
+
+        for event in events:
+            if not event.verify:
+                logging.warning('Event verification failed. Skip one event. Event: %s Class: %s', event.meta(), __class__)
+                continue # for event
+            
+            event_converted = self.convert(event)
+            self.generate_row(event_converted)
+
+
+    def generate_row(self, event):
+        """ When using mempool or csvpool events are cached so you can receive different kind of events in the same list. These events should be handled in a different way """
+
+        if isinstance(event.pymysqlreplication_event, WriteRowsEvent):
+            for row in event:
+                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                row['operation'] = 0
+                self.writer.writerow(self.convert(row))
+        elif isinstance(event.pymysqlreplication_event, DeleteRowsEvent):
+            for row in event:
+                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                row['operation'] = 2
+                self.writer.writerow(self.convert(row))
+        elif isinstance(event.pymysqlreplication_event, UpdateRowsEvent):
+            for row in event.pymysqlreplication_event.rows:
+                row['after_values']['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                row['after_values']['operation'] = 1
+                self.writer.writerow(self.convert(row['after_values']))
+
 
     def push(self):
         if not self.next_writer_builder or not self.fieldnames:

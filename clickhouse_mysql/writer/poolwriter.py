@@ -38,7 +38,13 @@ class PoolWriter(Writer):
         self.pool.insert(event_or_events)
 
 
+    # TODO delete if delete_row works
     def delete(self, event_or_events):
+        """Insert delete data into Pool"""
+        logging.debug('class:%s delete', __class__)
+        self.pool.insert(event_or_events)
+
+    def delete_row(self, event_or_events):
         """Insert delete data into Pool"""
         logging.debug('class:%s delete', __class__)
         self.pool.insert(event_or_events)

@@ -6,7 +6,7 @@ from clickhouse_mysql.reader.csvreader import CSVReader
 
 from clickhouse_mysql.writer.chwriter import CHWriter
 from clickhouse_mysql.writer.csvwriter import CSVWriter
-from clickhouse_mysql.writer.chcsvwriter import CHCSVWriter
+from clickhouse_mysql.writer.tbcsvwriter import TBCSVWriter
 from clickhouse_mysql.writer.poolwriter import PoolWriter
 from clickhouse_mysql.writer.processwriter import ProcessWriter
 from clickhouse_mysql.objectbuilder import ObjectBuilder
@@ -61,6 +61,10 @@ class Config(object):
             #
             #
             #
+            'tinybird': {
+                'host': self.options['tb_host'],
+                'token': self.options['tb_token'],
+            },
             'app': {
                 'config_file': self.options['config_file'],
                 'log_file': self.options['log_file'],
@@ -359,8 +363,11 @@ class Config(object):
                 'dst_table': self.config['writer']['file']['dst_table'],
                 'dst_table_prefix': self.config['writer']['file']['dst_table_prefix'],
                 'next_writer_builder': ObjectBuilder(
-                    class_name=CHCSVWriter,
-                    constructor_params=self.config['writer']['clickhouse']
+                    class_name=TBCSVWriter,
+                    constructor_params={
+                        'tb_host': self.config['tinybird']['host'],
+                        'tb_token': self.config['tinybird']['token']
+                    }
                 ),
                 'converter_builder': self.converter_builder(CONVERTER_CSV),
             })
