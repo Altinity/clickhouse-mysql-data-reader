@@ -71,10 +71,9 @@ class TBCSVWriter(Writer):
 
         for event in events:
             #schema = self.dst_schema if self.dst_schema else event.schema
-            #table = self.dst_table if self.dst_table else event.table
-            
+            table = self.dst_table if self.dst_table else event.table
             params = {
-                'name': self.dst_table,
+                'name': table,
                 'mode': 'append'
             }
 

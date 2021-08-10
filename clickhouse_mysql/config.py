@@ -366,7 +366,8 @@ class Config(object):
                     class_name=TBCSVWriter,
                     constructor_params={
                         'tb_host': self.config['tinybird']['host'],
-                        'tb_token': self.config['tinybird']['token']
+                        'tb_token': self.config['tinybird']['token'],
+                        'dst_table': self.config['writer']['clickhouse']['dst_table']
                     }
                 ),
                 'converter_builder': self.converter_builder(CONVERTER_CSV),
