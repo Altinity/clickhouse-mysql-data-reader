@@ -316,7 +316,7 @@ class MySQLReader(Reader):
                 return
 
         # statistics
-        #self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
+        self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
 
         if self.subscribers('UpdateRowsEvent'):
             # dispatch event to subscribers
@@ -330,7 +330,7 @@ class MySQLReader(Reader):
             event.table = mysql_event.table
             event.pymysqlreplication_event = mysql_event
 
-            #self.process_first_event(event=event)
+            self.process_first_event(event=event)
             self.notify('UpdateRowsEvent', event=event)
 
         # self.stat_write_rows_event_finalyse()
