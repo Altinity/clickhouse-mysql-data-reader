@@ -2,17 +2,25 @@
 # -*- coding: utf-8 -*-
 
 
+from clickhouse_mysql.reader.reader import Reader
+from clickhouse_mysql.writer.writer import Writer
+import signal
+
+
 class Pumper(object):
     """
     Pump data - read data from reader and push into writer
     """
 
-    reader = None
-    writer = None
+    reader: Reader = None
+    writer: Writer = None
 
     def __init__(self, reader=None, writer=None):
         self.reader = reader
         self.writer = writer
+
+        signal.signal(signal.SIGINT, self.exit_gracefully)
+        signal.signal(signal.SIGTERM, self.exit_gracefully)
 
         if self.reader:
             # subscribe on reader's event notifications
@@ -60,6 +68,10 @@ class Pumper(object):
         :param event:
         """
         self.writer.update(event)
+    
+    def exit_gracefully(self):
+        self.reader.close()
+        self.writer.close()
 
 
 if __name__ == '__main__':

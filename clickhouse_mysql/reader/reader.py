@@ -33,3 +33,6 @@ class Reader(Observable):
 
     def read(self):
         pass
+
+    def close(self):
+        pass
