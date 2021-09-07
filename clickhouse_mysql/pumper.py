@@ -19,9 +19,6 @@ class Pumper(object):
         self.reader = reader
         self.writer = writer
 
-        signal.signal(signal.SIGINT, self.exit_gracefully)
-        signal.signal(signal.SIGTERM, self.exit_gracefully)
-
         if self.reader:
             # subscribe on reader's event notifications
             self.reader.subscribe({
