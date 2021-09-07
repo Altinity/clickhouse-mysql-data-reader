@@ -37,7 +37,6 @@ class PoolWriter(Writer):
         logging.debug('class:%s insert', __class__)
         self.pool.insert(event_or_events)
 
-
     # TODO delete if delete_row works
     def delete(self, event_or_events):
         """Insert delete data into Pool"""
@@ -54,9 +53,14 @@ class PoolWriter(Writer):
         logging.debug('class:%s update', __class__)
         self.pool.insert(event_or_events)
 
-
     def flush(self):
         self.pool.flush()
+
+
+    def close(self):
+        self.pool.flush()
+        logging.info("Closed PoolWriter")
+
 
 if __name__ == '__main__':
     path = 'file.csv'

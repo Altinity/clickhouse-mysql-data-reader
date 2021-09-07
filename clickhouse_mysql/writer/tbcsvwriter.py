@@ -77,24 +77,23 @@ class TBCSVWriter(Writer):
                 'mode': 'append'
             }
 
-            f = open(event.filename, 'rb')
-            m = MultipartEncoder(fields={'csv': ('csv', f, 'text/csv')})
-            
-            url = f"{self.tb_host}/v0/datasources"
+            with open(event.filename, 'rb') as f:
+                m = MultipartEncoder(fields={'csv': ('csv', f, 'text/csv')})
+                url = f"{self.tb_host}/v0/datasources"
 
-            response = requests.post(url, data=m,
-                            headers={'Authorization': 'Bearer ' + self.tb_token, 'Content-Type': m.content_type},
-                            params=params
-                        )
-            
-            # logging.debug(response.text)
-            if response.status_code == 200:
-                json_object = json.loads(response.content)
-                logging.debug(f"Import id: {json_object['import_id']}")
-                # logging.debug(f"Response: {json.dumps(json_object, indent=2)}")
+                response = requests.post(url, data=m,
+                                headers={'Authorization': 'Bearer ' + self.tb_token, 'Content-Type': m.content_type},
+                                params=params
+                            )
+                
+                # logging.debug(response.text)
+                if response.status_code == 200:
+                    json_object = json.loads(response.content)
+                    logging.debug(f"Import id: {json_object['import_id']}")
+                    # logging.debug(f"Response: {json.dumps(json_object, indent=2)}")
 
-            else:    
-                logging.debug(f"ERROR {response.text}")  
+                else:    
+                    logging.debug(f"ERROR {response.text}")
 
         pass
 

@@ -29,6 +29,7 @@ class MySQLReader(Reader):
     resume_stream = None
     binlog_stream = None
     nice_pause = 0
+    exit_gracefully = False
 
     write_rows_event_num = 0
     write_rows_event_each_row_num = 0;
@@ -389,7 +390,7 @@ class MySQLReader(Reader):
 
         # fetch events
         try:
-            while True:
+            while not self.exit_gracefully:
                 logging.debug('Check events in binlog stream')
 
                 self.init_fetch_loop()
@@ -423,10 +424,6 @@ class MySQLReader(Reader):
                         # after event processed, we need to handle current binlog position
                         self.process_binlog_position(self.binlog_stream.log_file, self.binlog_stream.log_pos)
 
-                except KeyboardInterrupt:
-                    # pass SIGINT further
-                    logging.info("SIGINT received. Pass it further.")
-                    raise
                 except Exception as ex:
                     if self.blocking:
                         # we'd like to continue waiting for data
@@ -454,8 +451,6 @@ class MySQLReader(Reader):
 
                 self.notify('ReaderIdleEvent')
 
-        except KeyboardInterrupt:
-            logging.info("SIGINT received. Time to exit.")
         except Exception as ex:
             logging.warning("Got an exception, handle it")
             logging.warning(ex)
@@ -471,6 +466,18 @@ class MySQLReader(Reader):
         logging.info('start %d', self.start_timestamp)
         logging.info('end %d', end_timestamp)
         logging.info('len %d', end_timestamp - self.start_timestamp)
+
+
+    def close(self):
+        self.exit_gracefully = True
+        try:
+            self.binlog_stream.close()
+        except Exception as ex:
+            logging.warning("Unable to close binlog stream correctly")
+            logging.warning(ex)
+
+        logging.info("MySQL reader closed")
+        
 
 
 if __name__ == '__main__':
