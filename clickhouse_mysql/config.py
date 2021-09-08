@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import logging
+import os
 from clickhouse_mysql.reader.mysqlreader import MySQLReader
 from clickhouse_mysql.reader.csvreader import CSVReader
 
@@ -40,7 +41,7 @@ class Config(object):
 
         log_file = None
         log_pos = None
-        if self.options['binlog_position_file'] and self.options.get_bool('src_resume'):
+        if self.options['binlog_position_file'] and self.options.get_bool('src_resume') and os.path.exists(self.options['binlog_position_file']):
             try:
                 with open(self.options['binlog_position_file'], 'r') as f:
                     position = f.read()
@@ -52,9 +53,9 @@ class Config(object):
                         log_pos
                     ))
             except Exception as e:
-                logging.exception(e)
                 log_file = None
                 log_pos = None
+                logging.exception(e)
                 logging.info("can't read binlog position from file {}".format(
                     self.options['binlog_position_file'],
                 ))
