@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
 from clickhouse_mysql.reader.mysqlreader import MySQLReader
 from clickhouse_mysql.reader.csvreader import CSVReader
 
@@ -50,10 +51,11 @@ class Config(object):
                         log_file,
                         log_pos
                     ))
-            except:
+            except Exception as e:
+                logging.exception(e)
                 log_file = None
                 log_pos = None
-                print("can't read binlog position from file {}".format(
+                logging.info("can't read binlog position from file {}".format(
                     self.options['binlog_position_file'],
                 ))
         # build application config out of aggregated options
