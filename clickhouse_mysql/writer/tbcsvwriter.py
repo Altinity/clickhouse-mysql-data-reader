@@ -52,7 +52,8 @@ class TBCSVWriter(Writer):
         self.dst_distribute = dst_distribute
 
 
-    def uploadCSV(self, table, filename):
+    def uploadCSV(self, table, filename, tries=1):
+        limit_of_retries=3
         params = {
             'name': table,
             'mode': 'append'
@@ -68,19 +69,23 @@ class TBCSVWriter(Writer):
                         )
             
             # logging.debug(response.text)
+            logging.info(response.json())
             if response.status_code == 200:
                 json_object = json.loads(response.content)
                 logging.debug(f"Import id: {json_object['import_id']}")
             elif response.status_code == 429:
-                logging.error(f"Too many requests retrying in {response.headers['Retry-After']} seconds", response)
-                time.sleep(int(response.headers['Retry-After']))
-                self.uploadCSV(table, filename)
-                
-            else:    
-                logging.error(response.text)
-
-
-        
+                retry_after = int(response.headers['Retry-After']) + tries
+                logging.error(f"Too many requests retrying in {retry_after} seconds to upload {filename } to {table}")
+                time.sleep(retry_after)
+                self.uploadCSV(table, filename, tries+1)
+            else:
+                # In case of error let's retry only 
+                logging.exception(response.json())
+                time.sleep(tries)
+                logging.info(f"Retrying { tries } of { limit_of_retries }")
+                if tries > limit_of_retries:
+                    return
+                self.uploadCSV(self, table, filename, tries + 1)
 
     def insert(self, event_or_events=None):
         # event_or_events = [
