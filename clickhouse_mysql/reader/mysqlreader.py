@@ -470,6 +470,7 @@ class MySQLReader(Reader):
 
     def close(self):
         self.exit_gracefully = True
+        self.nice_pause = 0
         logging.info("MySQL should stop in the next loop")
         
 
