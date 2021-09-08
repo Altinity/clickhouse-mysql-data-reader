@@ -73,7 +73,7 @@ class TBCSVWriter(Writer):
                 logging.debug(f"Import id: {json_object['import_id']}")
             elif response.status_code == 429:
                 logging.error(f"Too many requests retrying in {response.headers['Retry-After']} seconds", response)
-                time.sleep(response.headers['Retry-After'])
+                time.sleep(int(response.headers['Retry-After']))
                 self.uploadCSV(table, filename)
                 
             else:    
