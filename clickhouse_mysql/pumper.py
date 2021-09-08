@@ -66,7 +66,7 @@ class Pumper(object):
         """
         self.writer.update(event)
     
-    def exit_gracefully(self):
+    def exit_gracefully(self, sig, frame):
         self.reader.close()
         self.writer.close()
 

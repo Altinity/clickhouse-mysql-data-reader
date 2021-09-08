@@ -429,11 +429,11 @@ class MySQLReader(Reader):
                         # we'd like to continue waiting for data
                         # report and continue cycle
                         logging.warning("Got an exception, skip it in blocking mode")
-                        logging.warning(ex)
+                        logging.exception(ex)
                     else:
                         # do not continue, report error and exit
                         logging.critical("Got an exception, abort it in non-blocking mode")
-                        logging.critical(ex)
+                        logging.exception(ex)
                         sys.exit(1)
 
                 # all events fetched (or none of them available)
@@ -450,16 +450,16 @@ class MySQLReader(Reader):
                     time.sleep(self.nice_pause)
 
                 self.notify('ReaderIdleEvent')
-
         except Exception as ex:
             logging.warning("Got an exception, handle it")
-            logging.warning(ex)
+            logging.exception(ex)
 
         try:
             self.binlog_stream.close()
+            logging.info("Stop reading from MySQL")
         except Exception as ex:
             logging.warning("Unable to close binlog stream correctly")
-            logging.warning(ex)
+            logging.exception(ex)
 
         end_timestamp = int(time.time())
 
@@ -470,13 +470,7 @@ class MySQLReader(Reader):
 
     def close(self):
         self.exit_gracefully = True
-        try:
-            self.binlog_stream.close()
-        except Exception as ex:
-            logging.warning("Unable to close binlog stream correctly")
-            logging.warning(ex)
-
-        logging.info("MySQL reader closed")
+        logging.info("MySQL should stop in the next loop")
         
 
 
