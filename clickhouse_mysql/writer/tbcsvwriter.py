@@ -4,6 +4,7 @@
 import os
 import logging
 import shlex
+import time
 
 from clickhouse_mysql.writer.writer import Writer
 from clickhouse_mysql.tableprocessor import TableProcessor
@@ -50,6 +51,37 @@ class TBCSVWriter(Writer):
         self.dst_table_prefix = dst_table_prefix
         self.dst_distribute = dst_distribute
 
+
+    def uploadCSV(self, table, filename):
+        params = {
+            'name': table,
+            'mode': 'append'
+        }
+
+        with open(filename, 'rb') as f:
+            m = MultipartEncoder(fields={'csv': ('csv', f, 'text/csv')})
+            url = f"{self.tb_host}/v0/datasources"
+
+            response = requests.post(url, data=m,
+                            headers={'Authorization': 'Bearer ' + self.tb_token, 'Content-Type': m.content_type},
+                            params=params
+                        )
+            
+            # logging.debug(response.text)
+            if response.status_code == 200:
+                json_object = json.loads(response.content)
+                logging.debug(f"Import id: {json_object['import_id']}")
+            elif response.status_code == 429:
+                logging.error(f"Too many requests retrying in {response.headers['Retry-After']} seconds", response)
+                time.sleep(response.headers['Retry-After'])
+                self.uploadCSV(table, filename)
+                
+            else:    
+                logging.error(response.text)
+
+
+        
+
     def insert(self, event_or_events=None):
         # event_or_events = [
         #   event: {
@@ -72,28 +104,7 @@ class TBCSVWriter(Writer):
         for event in events:
             #schema = self.dst_schema if self.dst_schema else event.schema
             table = self.dst_table if self.dst_table else event.table
-            params = {
-                'name': table,
-                'mode': 'append'
-            }
-
-            with open(event.filename, 'rb') as f:
-                m = MultipartEncoder(fields={'csv': ('csv', f, 'text/csv')})
-                url = f"{self.tb_host}/v0/datasources"
-
-                response = requests.post(url, data=m,
-                                headers={'Authorization': 'Bearer ' + self.tb_token, 'Content-Type': m.content_type},
-                                params=params
-                            )
-                
-                # logging.debug(response.text)
-                if response.status_code == 200:
-                    json_object = json.loads(response.content)
-                    logging.debug(f"Import id: {json_object['import_id']}")
-                    # logging.debug(f"Response: {json.dumps(json_object, indent=2)}")
-
-                else:    
-                    logging.debug(f"ERROR {response.text}")
+            self.uploadCSV(table, event.filename)
 
         pass
 
