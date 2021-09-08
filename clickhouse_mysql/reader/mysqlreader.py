@@ -404,8 +404,9 @@ class MySQLReader(Reader):
 
                     # fetch available events from MySQL
                     for mysql_event in self.binlog_stream:
-                        # new event has come
-                        # check what to do with it
+
+                        if self.exit_gracefully:
+                            break
 
                         logging.debug(
                             'Got Event ' + self.binlog_stream.log_file + ":" + str(self.binlog_stream.log_pos))
