@@ -57,11 +57,6 @@ class PoolWriter(Writer):
         self.pool.flush()
 
 
-    def close(self):
-        self.pool.flush()
-        logging.info("Closed PoolWriter")
-
-
 if __name__ == '__main__':
     path = 'file.csv'
 

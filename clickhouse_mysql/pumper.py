@@ -68,7 +68,6 @@ class Pumper(object):
     
     def exit_gracefully(self, sig, frame):
         self.reader.close()
-        self.writer.close()
 
 
 if __name__ == '__main__':
