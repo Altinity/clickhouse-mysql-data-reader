@@ -1,17 +1,15 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-import os
 import logging
-import shlex
 import time
 
 from clickhouse_mysql.writer.writer import Writer
-from clickhouse_mysql.tableprocessor import TableProcessor
 
 import requests
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 import json
+
 
 class TBCSVWriter(Writer):
     """Write into Tinybird via CSV file"""
@@ -43,7 +41,8 @@ class TBCSVWriter(Writer):
         self.tb_token = tb_token
 
         if self.tb_host is None or self.tb_token is None:
-            logging.critical(f" Host: {self.tb_host} or token {self.tb_token} is missing")
+            logging.critical(
+                f" Host: {self.tb_host} or token {self.tb_token} is missing")
             return None
 
         self.dst_schema = dst_schema
@@ -51,41 +50,54 @@ class TBCSVWriter(Writer):
         self.dst_table_prefix = dst_table_prefix
         self.dst_distribute = dst_distribute
 
-
     def uploadCSV(self, table, filename, tries=1):
-        limit_of_retries=3
+        limit_of_retries = 3
         params = {
             'name': table,
             'mode': 'append'
         }
 
-        with open(filename, 'rb') as f:
-            m = MultipartEncoder(fields={'csv': ('csv', f, 'text/csv')})
-            url = f"{self.tb_host}/v0/datasources"
+        try:
+            with open(filename, 'rb') as f:
+                m = MultipartEncoder(fields={'csv': ('csv', f, 'text/csv')})
+                url = f"{self.tb_host}/v0/datasources"
 
-            response = requests.post(url, data=m,
-                            headers={'Authorization': 'Bearer ' + self.tb_token, 'Content-Type': m.content_type},
-                            params=params
-                        )
-            
-            # logging.debug(response.text)
-            logging.info(response.json())
-            if response.status_code == 200:
-                json_object = json.loads(response.content)
-                logging.debug(f"Import id: {json_object['import_id']}")
-            elif response.status_code == 429:
-                retry_after = int(response.headers['Retry-After']) + tries
-                logging.error(f"Too many requests retrying in {retry_after} seconds to upload {filename } to {table}")
-                time.sleep(retry_after)
-                self.uploadCSV(table, filename, tries+1)
-            else:
-                # In case of error let's retry only 
-                logging.exception(response.json())
-                time.sleep(tries)
-                logging.info(f"Retrying { tries } of { limit_of_retries }")
-                if tries > limit_of_retries:
-                    return
-                self.uploadCSV(self, table, filename, tries + 1)
+                response = requests.post(
+                    url,
+                    data=m,
+                    headers={
+                        'Authorization': 'Bearer ' + self.tb_token,
+                        'Content-Type': m.content_type
+                    },
+                    params=params)
+
+                # logging.debug(response.text)
+                logging.info(response.json())
+                if response.status_code == 200:
+                    json_object = json.loads(response.content)
+                    logging.debug(f"Import id: {json_object['import_id']}")
+                elif response.status_code == 429:
+                    retry_after = int(response.headers['Retry-After']) + tries
+                    logging.error(
+                        f"Too many requests retrying in {retry_after} seconds to upload {filename } to {table}")
+                    time.sleep(retry_after)
+                    self.uploadCSV(table, filename, tries+1)
+                else:
+                    # In case of error let's retry only
+                    logging.exception(response.json())
+                    time.sleep(tries)
+                    logging.info(f"Retrying { tries } of { limit_of_retries }")
+                    if tries > limit_of_retries:
+                        return
+                    self.uploadCSV(table, filename, tries + 1)
+        except Exception as e:
+            logging.exception(e)
+            # We wait tries^2 sec to try again
+            time.sleep(tries * tries)
+            logging.info(f"Retrying { tries } of { limit_of_retries }")
+            if tries > limit_of_retries:
+                return
+            self.uploadCSV(table, filename, tries + 1)
 
     def insert(self, event_or_events=None):
         # event_or_events = [
@@ -166,7 +178,7 @@ class TBCSVWriter(Writer):
         #     logging.info('starting clickhouse-client process for delete operation')
         #     logging.debug('starting %s', bash)
         #     os.system(bash)
-        
+
         logging.debug("CHCSVWriter: delete row")
         pass
 
