@@ -4,7 +4,6 @@
 import csv
 import os.path
 import logging
-import copy
 import time
 import uuid
 
@@ -136,9 +135,9 @@ class CSVWriter(Writer):
             if self.dst_table is None:
                 self.dst_table = event.table
 
-            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
+            self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
             if not self.header_written:
-                self.writer.writeheader()
+                self.writer.writerow(self.fieldnames)
 
         for event in events:
             if not event.verify:
@@ -190,9 +189,9 @@ class CSVWriter(Writer):
             if self.dst_table is None:
                 self.dst_table = event.table
 
-            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
+            self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
             if not self.header_written:
-                self.writer.writeheader()
+                self.writer.writerow(self.fieldnames)
 
         for event in events:
             if not event.verify:
@@ -253,9 +252,9 @@ class CSVWriter(Writer):
             if self.dst_table is None:
                 self.dst_table = event.table
 
-            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames)
+            self.writer = csv.writer(self.file, quoting=csv.QUOTE_ALL)
             if not self.header_written:
-                self.writer.writeheader()
+                self.writer.writerow(self.fieldnames)
 
         for event in events:
             if not event.verify:
