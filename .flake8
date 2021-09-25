@@ -1,0 +1,13 @@
+[flake8]
+ignore =
+	; except
+	E722,
+	; inline regex
+	W605,
+	; long lines
+	E501,
+	; too complex
+	C901
+max-complexity = 10
+max-line-length = 120
+application-import-names = flake8

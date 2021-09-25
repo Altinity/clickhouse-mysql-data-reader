@@ -26,7 +26,7 @@ class Pumper(object):
                 'UpdateRowsEvent': self.update_rows_event,
                 'DeleteRowsEvent': self.delete_rows_event,
                 # 'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
-                'ReaderIdleEvent': self.reader_idle_event,
+                # 'ReaderIdleEvent': self.reader_idle_event,
             })
 
     def run(self):
@@ -65,7 +65,7 @@ class Pumper(object):
         :param event:
         """
         self.writer.update(event)
-    
+
     def exit_gracefully(self, sig, frame):
         self.reader.close()
 
