@@ -12,7 +12,6 @@ from clickhouse_mysql.reader.reader import Reader
 from clickhouse_mysql.event.event import Event
 from clickhouse_mysql.tableprocessor import TableProcessor
 from clickhouse_mysql.util import Util
-from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
 
 class MySQLReader(Reader):
@@ -32,7 +31,7 @@ class MySQLReader(Reader):
     exit_gracefully = False
 
     write_rows_event_num = 0
-    write_rows_event_each_row_num = 0;
+    write_rows_event_each_row_num = 0
 
     binlog_position_file = None
 
@@ -323,7 +322,7 @@ class MySQLReader(Reader):
             # dispatch event to subscribers
 
             # statistics
-            #self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
+            # self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
 
             # dispatch Event
             event = Event()
@@ -356,13 +355,13 @@ class MySQLReader(Reader):
                 return
 
         # statistics
-        #self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
+        # self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
 
         if self.subscribers('DeleteRowsEvent'):
             # dispatch event to subscribers
 
             # statistics
-            #self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
+            # self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
 
             # dispatch Event
             event = Event()
@@ -422,8 +421,8 @@ class MySQLReader(Reader):
                             # skip other unhandled events
                             pass
 
-                        # after event processed, we need to handle current binlog position
-                        self.process_binlog_position(self.binlog_stream.log_file, self.binlog_stream.log_pos)
+                    # after event processed, we need to handle current binlog position
+                    self.process_binlog_position(self.binlog_stream.log_file, self.binlog_stream.log_pos)
 
                 except Exception as ex:
                     if self.blocking:
@@ -468,12 +467,10 @@ class MySQLReader(Reader):
         logging.info('end %d', end_timestamp)
         logging.info('len %d', end_timestamp - self.start_timestamp)
 
-
     def close(self):
         self.exit_gracefully = True
         self.nice_pause = 0
         logging.info("MySQL should stop in the next loop")
-        
 
 
 if __name__ == '__main__':
