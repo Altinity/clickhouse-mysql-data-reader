@@ -69,7 +69,8 @@ class TBCSVWriter(Writer):
                         'Authorization': 'Bearer ' + self.tb_token,
                         'Content-Type': m.content_type
                     },
-                    params=params)
+                    params=params,
+                    verify=False)
 
                 # logging.debug(response.text)
                 logging.info(response.json())
@@ -81,7 +82,7 @@ class TBCSVWriter(Writer):
                     logging.error(
                         f"Too many requests retrying in {retry_after} seconds to upload {filename } to {table}")
                     time.sleep(retry_after)
-                    self.uploadCSV(table, filename, tries+1)
+                    self.uploadCSV(table, filename, tries + 1)
                 else:
                     # In case of error let's retry only
                     logging.exception(response.json())
