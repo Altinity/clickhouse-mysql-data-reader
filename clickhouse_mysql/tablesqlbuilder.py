@@ -204,7 +204,7 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
                 'clickhouse_type': self.map_type(mysql_type=_type),
                 'clickhouse_type_nullable': self.map_type_nullable(mysql_type=_type, nullable=self.is_field_nullable(_null)),
                 'nullable': self.is_field_nullable(_null),
-                'key': _key,
+                'key': _key if _key == "PRI" else None,
                 'default': _default,
                 'extra': _extra,
             })
