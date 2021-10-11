@@ -455,7 +455,7 @@ class CLIOptions(Options):
         argparser.add_argument(
             '--dst-use-src-primary-key',
             action='store_true',
-            default=self.default_options['dst_src_primary_key'],
+            default=self.default_options['dst_use_src_primary_key'],
             help='Whether the destination primary key should match the source primary key. '
                  'This flag will exclude columns that are used by MySQL indexes from being '
                  'used in the ClickHouse primary key. Only columns that are part of the primary '
