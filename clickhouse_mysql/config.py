@@ -292,6 +292,7 @@ class Config(object):
             dst_schema=self.config['table_migrator']['clickhouse']['dst_schema'],
             dst_table=self.config['table_builder']['clickhouse']['dst_table'],
             dst_table_prefix=self.config['table_builder']['clickhouse']['dst_table_prefix'],
+            use_src_primary_key=self.config['table_builder']['clickhouse']['dst_use_src_primary_key'],
             distribute=self.config['table_migrator']['clickhouse']['dst_distribute'],
             cluster=self.config['table_migrator']['clickhouse']['dst_cluster'],
             tables=self.config['table_migrator']['mysql']['tables'],
