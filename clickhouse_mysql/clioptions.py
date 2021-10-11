@@ -148,6 +148,7 @@ class CLIOptions(Options):
         'dst_table': None,
         'dst_table_prefix': None,
         'dst_create_table': False,
+        'dst_use_src_primary_key': False,
 
         #
         # converters section
@@ -452,6 +453,15 @@ class CLIOptions(Options):
             help='Cluster to be used when writing to dst. Ex.: cluster1'
         )
         argparser.add_argument(
+            '--dst-use-src-primary-key',
+            action='store_true',
+            default=self.default_options['dst_src_primary_key'],
+            help='Whether the destination primary key should match the source primary key. '
+                 'This flag will exclude columns that are used by MySQL indexes from being '
+                 'used in the ClickHouse primary key. Only columns that are part of the primary '
+                 'key in the MySQL table will be included in the ClickHouse table primary key.'
+        )
+        argparser.add_argument(
             '--dst-table',
             type=str,
             default=self.default_options['dst_table'],
@@ -560,6 +570,7 @@ class CLIOptions(Options):
             'dst_schema': args.dst_schema,
             'dst_distribute': args.dst_distribute,
             'dst_cluster': args.dst_cluster,
+            'dst_use_src_primary_key': args.dst_use_src_primary_key,
             'dst_table': args.dst_table,
             'dst_table_prefix': args.dst_table_prefix,
             'dst_create_table': args.dst_create_table,

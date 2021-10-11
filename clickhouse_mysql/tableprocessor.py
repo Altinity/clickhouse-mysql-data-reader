@@ -33,6 +33,7 @@ class TableProcessor(object):
             tables=None,
             tables_prefixes=None,
             column_skip=[],
+            use_src_primary_key=False,
     ):
         """
         :param host: string MySQL host
@@ -57,6 +58,7 @@ class TableProcessor(object):
         self.dst_table_prefix = dst_table_prefix
         self.cluster = cluster
         self.distribute = distribute
+        self.use_src_primary_key = use_src_primary_key
         self.column_skip = column_skip
 
     def dbs_tables_lists(self):
