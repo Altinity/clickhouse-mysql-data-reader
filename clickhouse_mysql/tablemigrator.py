@@ -43,6 +43,7 @@ class TableMigrator(TableSQLBuilder):
             dst_table_prefix=None,
             distribute=None,
             cluster=None,
+            use_src_primary_key=None,
             tables=None,
             tables_prefixes=None,
             tables_where_clauses=None,
@@ -59,6 +60,7 @@ class TableMigrator(TableSQLBuilder):
             dst_table_prefix=dst_table_prefix,
             distribute=distribute,
             cluster=cluster,
+            use_src_primary_key=use_src_primary_key,
             tables=tables,
             tables_prefixes=tables_prefixes,
             column_skip=column_skip
