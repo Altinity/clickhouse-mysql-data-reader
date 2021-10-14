@@ -85,6 +85,37 @@ class Options(object):
 
         return logging.NOTSET
 
+    @staticmethod
+    def string_split_dict_values(dictionary_to_split, separator=','):
+        """
+        Takes string values from a dictionary and splits by the
+        separator and replaces the value with the resulting list
+
+        :param dictionary_to_split: is a dictionary with possibly string values
+        {'key_1: 'val_1,val_2', 'key_2':0, 'key_3': 'val'}
+
+        :param separator: is the separator to be used to split the string values
+
+        :return: None or dictionary
+        {'key_1: ['val_1', 'val_2'], 'key_2': 0, 'key_3': ['val']}
+
+        """
+
+        # dictionary_to_split must be a dict
+        if not isinstance(dictionary_to_split, dict):
+            return None
+
+        res = {}
+
+        for key, value in dictionary_to_split.items():
+            res[key] = value.split(separator) if isinstance(value, str) else value 
+
+        # return with sanity check
+        if len(res) > 0:
+            return res
+        else:
+            return None
+
 
 class CLIOptions(Options):
     """Options extracted from command line"""
@@ -149,6 +180,8 @@ class CLIOptions(Options):
         'dst_table_prefix': None,
         'dst_create_table': False,
         'dst_use_src_primary_key': False,
+        'dst_primary_key': None,
+        'dst_primary_date_field': None,
 
         #
         # converters section
@@ -462,6 +495,28 @@ class CLIOptions(Options):
                  'key in the MySQL table will be included in the ClickHouse table primary key.'
         )
         argparser.add_argument(
+            '--dst-primary-key',
+            type=str,
+            nargs='*',
+            action='append',
+            default=self.default_options['dst_primary_key'],
+            help='Set of key=value1,value2 pairs indicating which fields should make '
+                 'up the primary key for each table in ClickHouse '
+                 'Ex.: db1.t1=c1 db2.t2=c2,c3 specifies c1 as the primary key of t1 '
+                 'and (c2,c3) as the primary key of t2 '
+        )
+        argparser.add_argument(
+            '--dst-primary-date-field',
+            type=str,
+            nargs='*',
+            action='append',
+            default=self.default_options['dst_primary_date_field'],
+            help='Set of key=value pairs indicating which date field should be '
+                 'used for each table to partition the data in ClickHouse '
+                 'Ex.: db1.t1=c1 db2.t2=c2 where c1 and c2 are '
+                 ' date / datetime / timestamp columns in MySQL.'
+        )
+        argparser.add_argument(
             '--dst-table',
             type=str,
             default=self.default_options['dst_table'],
@@ -571,6 +626,8 @@ class CLIOptions(Options):
             'dst_distribute': args.dst_distribute,
             'dst_cluster': args.dst_cluster,
             'dst_use_src_primary_key': args.dst_use_src_primary_key,
+            'dst_primary_key': CLIOptions.string_split_dict_values(CLIOptions.join_lists_into_dict(args.dst_primary_key)),
+            'dst_primary_date_field': CLIOptions.join_lists_into_dict(args.dst_primary_date_field),
             'dst_table': args.dst_table,
             'dst_table_prefix': args.dst_table_prefix,
             'dst_create_table': args.dst_create_table,

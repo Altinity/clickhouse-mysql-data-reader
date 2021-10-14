@@ -28,6 +28,8 @@ class TableProcessor(object):
             dst_schema=None,
             dst_table=None,
             dst_table_prefix=None,
+            dst_primary_key=None,
+            dst_primary_date_field=None,
             distribute=None,
             cluster=None,
             tables=None,
@@ -56,6 +58,8 @@ class TableProcessor(object):
         self.dst_schema = dst_schema
         self.dst_table = dst_table
         self.dst_table_prefix = dst_table_prefix
+        self.dst_primary_key = dict() if dst_primary_key is None else dst_primary_key
+        self.dst_primary_date_field = dict() if dst_primary_date_field is None else dst_primary_date_field
         self.cluster = cluster
         self.distribute = distribute
         self.column_skip = column_skip
