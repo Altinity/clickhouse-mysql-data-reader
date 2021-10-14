@@ -18,23 +18,23 @@ class CHClient(Client):
     def verify_connection_settings(self, connection_settings):
         if not connection_settings:
             logging.critical("Need CH connection settings")
-            sys.exit(0)
+            sys.exit(1)
 
         if 'host' not in connection_settings:
             logging.critical("Need CH host in connection settings")
-            sys.exit(0)
+            sys.exit(1)
 
         if not connection_settings['host']:
             logging.critical("Need CH host in connection settings")
-            sys.exit(0)
+            sys.exit(1)
 
         if 'port' not in connection_settings:
             logging.critical("Need CH port in connection settings")
-            sys.exit(0)
+            sys.exit(1)
 
         if not connection_settings['port']:
             logging.critical("Need CH port in connection settings")
-            sys.exit(0)
+            sys.exit(1)
 
 #self.client = CHClient(connection_settings)
 #self.client.execute(sql, rows)
