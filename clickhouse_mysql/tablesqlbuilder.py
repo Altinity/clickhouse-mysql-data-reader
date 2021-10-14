@@ -121,8 +121,8 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
 
         ch_columns = []
 
-        primary_date_field = self.fetch_primary_date_field(columns_description)
-        primary_key_fields = self.fetch_primary_key_fields(columns_description)
+        primary_date_field = self.fetch_primary_date_field(columns_description, db, table)
+        primary_key_fields = self.fetch_primary_key_fields(columns_description, db, table)
 
         # if primary_date_field is None:
         #     # No primary date field found. Make one
@@ -211,12 +211,28 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
 
         return columns_description
 
-    def fetch_primary_date_field(self, columns_description):
+    def fetch_primary_date_field(self, columns_description, db, table):
         """
         Fetch first Date column name
         :param columns_description:
         :return: string|None
         """
+
+        full_table_name = db + "." + table
+        primary_date_field = self.dst_primary_date_field.get(full_table_name)
+
+        if primary_date_field is None:
+            primary_date_field = self.dst_primary_date_field.get(table)
+
+        if primary_date_field:
+            if primary_date_field in [column_description['field'] for column_description in columns_description]:
+                return primary_date_field
+            else:
+                raise Exception("Specified primary date field {} for table {} can not be found".format(
+                    primary_date_field,
+                    full_table_name
+                ))
+
         for column_description in columns_description:
             if column_description['clickhouse_type'] == 'Date':
                 return column_description['field']
@@ -225,12 +241,31 @@ ENGINE = MergeTree(<PRIMARY_DATE_FIELD>, (<COMMA_SEPARATED_INDEX_FIELDS_LIST>), 
 
         return None
 
-    def fetch_primary_key_fields(self, columns_description):
+    def fetch_primary_key_fields(self, columns_description, db, table):
         """
         Fetch list of primary keys columns names
         :param columns_description:
         :return: list | None
         """
+
+        full_table_name = db + "." + table
+        primary_key_fields = self.dst_primary_key.get(full_table_name)
+
+        if primary_key_fields is None:
+            primary_key_fields = self.dst_primary_key.get(table)
+
+        if primary_key_fields:
+            table_fields = [column_description['field'] for column_description in columns_description]
+
+            for field in primary_key_fields:
+                if field not in table_fields:
+                    raise Exception("Specified primary key field {} for table {} can not be found".format(
+                        field,
+                        full_table_name
+                    ))
+
+            return primary_key_fields
+
         primary_key_fields = []
         for column_description in columns_description:
             if self.is_field_primary_key(column_description['key']):
