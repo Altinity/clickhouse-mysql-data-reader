@@ -64,7 +64,11 @@ class Event(object):
 
         if self.pymysqlreplication_event is not None:
             # in native replication event actual data are in row['values'] dict item
-            return item['values']
+            if 'after_values' in item:
+                return item['after_values']
+            else:
+                return item['values']
+            
         else:
             # local-kept data
             return item

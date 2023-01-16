@@ -40,22 +40,22 @@ class ProcessWriter(Writer):
 
         logging.debug('class:%s process()', __class__)
         writer = self.next_writer_builder.get()
-        writer.deleteRow(event_or_events)
+        writer.delete_row(event_or_events)
         writer.close()
         writer.push()
         writer.destroy()
-        logging.debug('class:%s process() done', __class__)
+        logging.debug('class:%s processDelete() done', __class__)
 
     def processUpdate(self, event_or_events=None):
         """Separate process body to be run"""
 
         logging.debug('class:%s process()', __class__)
         writer = self.next_writer_builder.get()
-        writer.delete(event_or_events)
+        writer.update(event_or_events)
         writer.close()
         writer.push()
         writer.destroy()
-        logging.debug('class:%s process() done', __class__)
+        logging.debug('class:%s processUpdate() done', __class__)
 
     def insert(self, event_or_events=None):
         # event_or_events = [

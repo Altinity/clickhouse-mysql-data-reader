@@ -93,6 +93,10 @@ class CLIOptions(Options):
         #
         # general app section
         #
+
+        'tb_host': 'https://ui.tinybird.co',
+        'tb_token': None,
+
         'config_file': '/etc/clickhouse-mysql/clickhouse-mysql.conf',
         'log_file': None,
         'log_level': None,
@@ -171,6 +175,20 @@ class CLIOptions(Options):
         #
         # general app section
         #
+        argparser.add_argument(
+            '--tb-host',
+            type=str,
+            default=self.default_options['tb_host'],
+            help='Tinybird host'
+        )
+
+        argparser.add_argument(
+            '--tb-token',
+            type=str,
+            default=self.default_options['tb_token'],
+            help='Tinybird host'
+        )
+
         argparser.add_argument(
             '--config-file',
             type=str,
@@ -508,6 +526,11 @@ class CLIOptions(Options):
             #
             # general app section
             #
+
+            'tb_host': args.tb_host,
+            'tb_token': args.tb_token,
+
+
             'config_file': args.config_file,
             'log_file': args.log_file,
             'log_level': args.log_level,

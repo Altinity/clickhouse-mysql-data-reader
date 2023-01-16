@@ -12,7 +12,6 @@ from clickhouse_mysql.reader.reader import Reader
 from clickhouse_mysql.event.event import Event
 from clickhouse_mysql.tableprocessor import TableProcessor
 from clickhouse_mysql.util import Util
-from pymysqlreplication.event import QueryEvent, RotateEvent, FormatDescriptionEvent
 
 
 class MySQLReader(Reader):
@@ -29,9 +28,10 @@ class MySQLReader(Reader):
     resume_stream = None
     binlog_stream = None
     nice_pause = 0
+    exit_gracefully = False
 
     write_rows_event_num = 0
-    write_rows_event_each_row_num = 0;
+    write_rows_event_each_row_num = 0
 
     binlog_position_file = None
 
@@ -316,13 +316,13 @@ class MySQLReader(Reader):
                 return
 
         # statistics
-        #self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
+        self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
 
         if self.subscribers('UpdateRowsEvent'):
             # dispatch event to subscribers
 
             # statistics
-            #self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
+            # self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
 
             # dispatch Event
             event = Event()
@@ -330,7 +330,7 @@ class MySQLReader(Reader):
             event.table = mysql_event.table
             event.pymysqlreplication_event = mysql_event
 
-            #self.process_first_event(event=event)
+            self.process_first_event(event=event)
             self.notify('UpdateRowsEvent', event=event)
 
         # self.stat_write_rows_event_finalyse()
@@ -355,13 +355,13 @@ class MySQLReader(Reader):
                 return
 
         # statistics
-        #self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
+        # self.stat_write_rows_event_calc_rows_num_min_max(rows_num_per_event=len(mysql_event.rows))
 
         if self.subscribers('DeleteRowsEvent'):
             # dispatch event to subscribers
 
             # statistics
-            #self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
+            # self.stat_write_rows_event_all_rows(mysql_event=mysql_event)
 
             # dispatch Event
             event = Event()
@@ -389,7 +389,7 @@ class MySQLReader(Reader):
 
         # fetch events
         try:
-            while True:
+            while not self.exit_gracefully:
                 logging.debug('Check events in binlog stream')
 
                 self.init_fetch_loop()
@@ -403,8 +403,9 @@ class MySQLReader(Reader):
 
                     # fetch available events from MySQL
                     for mysql_event in self.binlog_stream:
-                        # new event has come
-                        # check what to do with it
+
+                        if self.exit_gracefully:
+                            break
 
                         logging.debug(
                             'Got Event ' + self.binlog_stream.log_file + ":" + str(self.binlog_stream.log_pos))
@@ -420,23 +421,19 @@ class MySQLReader(Reader):
                             # skip other unhandled events
                             pass
 
-                        # after event processed, we need to handle current binlog position
-                        self.process_binlog_position(self.binlog_stream.log_file, self.binlog_stream.log_pos)
+                    # after event processed, we need to handle current binlog position
+                    self.process_binlog_position(self.binlog_stream.log_file, self.binlog_stream.log_pos)
 
-                except KeyboardInterrupt:
-                    # pass SIGINT further
-                    logging.info("SIGINT received. Pass it further.")
-                    raise
                 except Exception as ex:
                     if self.blocking:
                         # we'd like to continue waiting for data
                         # report and continue cycle
                         logging.warning("Got an exception, skip it in blocking mode")
-                        logging.warning(ex)
+                        logging.exception(ex)
                     else:
                         # do not continue, report error and exit
                         logging.critical("Got an exception, abort it in non-blocking mode")
-                        logging.critical(ex)
+                        logging.exception(ex)
                         sys.exit(1)
 
                 # all events fetched (or none of them available)
@@ -453,24 +450,27 @@ class MySQLReader(Reader):
                     time.sleep(self.nice_pause)
 
                 self.notify('ReaderIdleEvent')
-
-        except KeyboardInterrupt:
-            logging.info("SIGINT received. Time to exit.")
         except Exception as ex:
             logging.warning("Got an exception, handle it")
-            logging.warning(ex)
+            logging.exception(ex)
 
         try:
             self.binlog_stream.close()
+            logging.info("Stop reading from MySQL")
         except Exception as ex:
             logging.warning("Unable to close binlog stream correctly")
-            logging.warning(ex)
+            logging.exception(ex)
 
         end_timestamp = int(time.time())
 
         logging.info('start %d', self.start_timestamp)
         logging.info('end %d', end_timestamp)
         logging.info('len %d', end_timestamp - self.start_timestamp)
+
+    def close(self):
+        self.exit_gracefully = True
+        self.nice_pause = 0
+        logging.info("MySQL should stop in the next loop")
 
 
 if __name__ == '__main__':

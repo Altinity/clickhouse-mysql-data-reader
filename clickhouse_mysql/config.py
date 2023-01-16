@@ -1,12 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import logging
+import os
 from clickhouse_mysql.reader.mysqlreader import MySQLReader
 from clickhouse_mysql.reader.csvreader import CSVReader
 
 from clickhouse_mysql.writer.chwriter import CHWriter
 from clickhouse_mysql.writer.csvwriter import CSVWriter
-from clickhouse_mysql.writer.chcsvwriter import CHCSVWriter
+from clickhouse_mysql.writer.tbcsvwriter import TBCSVWriter
 from clickhouse_mysql.writer.poolwriter import PoolWriter
 from clickhouse_mysql.writer.processwriter import ProcessWriter
 from clickhouse_mysql.objectbuilder import ObjectBuilder
@@ -39,7 +41,7 @@ class Config(object):
 
         log_file = None
         log_pos = None
-        if self.options['binlog_position_file'] and self.options.get_bool('src_resume'):
+        if self.options['binlog_position_file'] and self.options.get_bool('src_resume') and os.path.exists(self.options['binlog_position_file']):
             try:
                 with open(self.options['binlog_position_file'], 'r') as f:
                     position = f.read()
@@ -50,10 +52,11 @@ class Config(object):
                         log_file,
                         log_pos
                     ))
-            except:
+            except Exception as e:
                 log_file = None
                 log_pos = None
-                print("can't read binlog position from file {}".format(
+                logging.exception(e)
+                logging.info("can't read binlog position from file {}".format(
                     self.options['binlog_position_file'],
                 ))
         # build application config out of aggregated options
@@ -61,6 +64,10 @@ class Config(object):
             #
             #
             #
+            'tinybird': {
+                'host': self.options['tb_host'],
+                'token': self.options['tb_token'],
+            },
             'app': {
                 'config_file': self.options['config_file'],
                 'log_file': self.options['log_file'],
@@ -359,8 +366,12 @@ class Config(object):
                 'dst_table': self.config['writer']['file']['dst_table'],
                 'dst_table_prefix': self.config['writer']['file']['dst_table_prefix'],
                 'next_writer_builder': ObjectBuilder(
-                    class_name=CHCSVWriter,
-                    constructor_params=self.config['writer']['clickhouse']
+                    class_name=TBCSVWriter,
+                    constructor_params={
+                        'tb_host': self.config['tinybird']['host'],
+                        'tb_token': self.config['tinybird']['token'],
+                        'dst_table': self.config['writer']['clickhouse']['dst_table']
+                    }
                 ),
                 'converter_builder': self.converter_builder(CONVERTER_CSV),
             })

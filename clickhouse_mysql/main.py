@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import signal
 import sys
 import multiprocessing as mp
 import logging
@@ -145,6 +146,10 @@ class Main(Daemon):
                     reader=self.config.reader(),
                     writer=self.config.writer(),
                 )
+
+                signal.signal(signal.SIGINT, pumper.exit_gracefully)
+                signal.signal(signal.SIGTERM, pumper.exit_gracefully)
+
                 pumper.run()
 
         except Exception as ex:
