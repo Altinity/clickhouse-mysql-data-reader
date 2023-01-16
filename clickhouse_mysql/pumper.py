@@ -2,13 +2,18 @@
 # -*- coding: utf-8 -*-
 
 
+from clickhouse_mysql.reader.reader import Reader
+from clickhouse_mysql.writer.writer import Writer
+import signal
+
+
 class Pumper(object):
     """
     Pump data - read data from reader and push into writer
     """
 
-    reader = None
-    writer = None
+    reader: Reader = None
+    writer: Writer = None
 
     def __init__(self, reader=None, writer=None):
         self.reader = reader
@@ -21,7 +26,7 @@ class Pumper(object):
                 'UpdateRowsEvent': self.update_rows_event,
                 'DeleteRowsEvent': self.delete_rows_event,
                 # 'WriteRowsEvent.EachRow': self.write_rows_event_each_row,
-                'ReaderIdleEvent': self.reader_idle_event,
+                # 'ReaderIdleEvent': self.reader_idle_event,
             })
 
     def run(self):
@@ -60,6 +65,9 @@ class Pumper(object):
         :param event:
         """
         self.writer.update(event)
+
+    def exit_gracefully(self, sig, frame):
+        self.reader.close()
 
 
 if __name__ == '__main__':

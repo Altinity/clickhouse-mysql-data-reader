@@ -79,6 +79,8 @@ setup(
         'clickhouse-driver',
         'configobj',
         'setuptools',
+        'requests_toolbelt',
+        'requests'
     ],
 
     # cross-platform support for pip to create the appropriate form of executable
