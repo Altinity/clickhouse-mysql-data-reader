@@ -136,7 +136,7 @@ class CSVWriter(Writer):
             if self.dst_table is None:
                 self.dst_table = event.table
 
-            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.QUOTE_ALL)
+            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.QUOTE_MINIMAL)
             if not self.header_written:
                 self.writer.writeheader()
 
