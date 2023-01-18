@@ -271,17 +271,17 @@ class CSVWriter(Writer):
 
         if isinstance(event.pymysqlreplication_event, WriteRowsEvent):
             for row in event:
-                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                 row['operation'] = 0
                 self.writer.writerow(self.convert(row))
         elif isinstance(event.pymysqlreplication_event, DeleteRowsEvent):
             for row in event:
-                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                 row['operation'] = 2
                 self.writer.writerow(self.convert(row))
         elif isinstance(event.pymysqlreplication_event, UpdateRowsEvent):
             for row in event.pymysqlreplication_event.rows:
-                row['after_values']['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                row['after_values']['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
                 row['after_values']['operation'] = 1
                 self.writer.writerow(self.convert(row['after_values']))
 
