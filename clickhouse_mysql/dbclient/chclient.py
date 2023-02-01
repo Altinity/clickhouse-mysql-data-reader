@@ -35,6 +35,3 @@ class CHClient(Client):
         if not connection_settings['port']:
             logging.critical("Need CH port in connection settings")
             sys.exit(0)
-
-#self.client = CHClient(connection_settings)
-#self.client.execute(sql, rows)

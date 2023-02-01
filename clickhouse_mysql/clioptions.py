@@ -148,6 +148,7 @@ class CLIOptions(Options):
         'dst_table': None,
         'dst_table_prefix': None,
         'dst_create_table': False,
+        'dst_secure_connection': False,
 
         #
         # converters section
@@ -468,6 +469,11 @@ class CLIOptions(Options):
             action='store_true',
             help='Prepare and run CREATE TABLE SQL statement(s).'
         )
+        argparser.add_argument(
+            '--dst-secure-connection',
+            action='store_true',
+            help='Establish secure connection.'
+        )
 
         #
         # converters section
@@ -563,6 +569,7 @@ class CLIOptions(Options):
             'dst_table': args.dst_table,
             'dst_table_prefix': args.dst_table_prefix,
             'dst_create_table': args.dst_create_table,
+            'dst_secure_connection': args.dst_secure_connection,
 
             #
             # converters section

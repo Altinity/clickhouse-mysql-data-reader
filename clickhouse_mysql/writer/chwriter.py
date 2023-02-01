@@ -118,7 +118,8 @@ if __name__ == '__main__':
         'host': '192.168.74.230',
         'port': 9000,
         'user': 'default',
-        'passwd': '',
+        'password': '',
+        'secure': False,
     }
 
     writer = CHWriter(connection_settings=connection_settings)
