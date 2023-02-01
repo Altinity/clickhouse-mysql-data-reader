@@ -341,6 +341,7 @@ $PYTHON clickhouse-mysql ${*:1} \
     --src-host=127.0.0.1 \
     --src-user=root \
     --dst-host=127.0.0.1 \
+    --dst-secure-connection \
     --csvpool \
     --csvpool-file-path-prefix=qwe_ \
     --mempool-max-flush-interval=60 \
@@ -357,6 +358,7 @@ Options description
   * `--src-host=127.0.0.1` - MySQL source host
   * `--src-user=root` - MySQL source user (remember about PRIVILEGES for this user)
   * `--dst-host=127.0.0.1` - ClickHouse host
+  * `--dst-secure-connection` - establish secure connection with clickhouse
   * `--csvpool` - make pool of csv files (assumes `--mempool` also)
   * `--csvpool-file-path-prefix=qwe_` - put these CSV files having `qwe_` prefix in `CWD`
   * `--mempool-max-flush-interval=60` - flush mempool at least every 60 seconds
