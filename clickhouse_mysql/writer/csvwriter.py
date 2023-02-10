@@ -11,7 +11,7 @@ import uuid
 from clickhouse_mysql.writer.writer import Writer
 from clickhouse_mysql.event.event import Event
 
-import datetime
+from datetime import datetime
 
 from pymysqlreplication.row_event import WriteRowsEvent, UpdateRowsEvent, DeleteRowsEvent
 
@@ -271,17 +271,17 @@ class CSVWriter(Writer):
 
         if isinstance(event.pymysqlreplication_event, WriteRowsEvent):
             for row in event:
-                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                row['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['operation'] = 0
                 self.writer.writerow(self.convert(row))
         elif isinstance(event.pymysqlreplication_event, DeleteRowsEvent):
             for row in event:
-                row['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                row['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['operation'] = 2
                 self.writer.writerow(self.convert(row))
         elif isinstance(event.pymysqlreplication_event, UpdateRowsEvent):
             for row in event.pymysqlreplication_event.rows:
-                row['after_values']['tb_upd'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+                row['after_values']['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['after_values']['operation'] = 1
                 self.writer.writerow(self.convert(row['after_values']))
 
