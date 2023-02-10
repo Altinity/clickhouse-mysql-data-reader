@@ -5,7 +5,10 @@
 class Event(object):
 
     # main payload - one or multiple rows
-
+    
+    # Timestamp to know when the event arrive.
+    ts = None
+    
     # native mysql replication event
     # one of from pymysqlreplication.row_event import
     # contains rows internally

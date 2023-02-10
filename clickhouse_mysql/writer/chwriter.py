@@ -76,7 +76,7 @@ class CHWriter(Writer):
             for row in event_converted:
                 # These columns are added to identify the last change (tb_upd) and the kind of operation performed
                 # 0 - INSERT, 1 - UPDATE, 2 - DELETE
-                row['tb_upd'] = datetime.datetime.now()
+                row['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['operation'] = 0
 
                 for key in row.keys():
@@ -84,9 +84,6 @@ class CHWriter(Writer):
                     if type(row[key]) == [Decimal, datetime.timedelta]:
                         row[key] = str(row[key])
 
-                # These columns are added to identify the last change (tb_upd) and when a row is deleted (1)
-                # row['tb_upd'] = datetime.datetime.now()
-                # row['operation'] = 0
                 rows.append(row)
 
         logging.debug('class:%s insert %d row(s)', __class__, len(rows))
@@ -162,7 +159,7 @@ class CHWriter(Writer):
             for row in event_converted:
                 # These columns are added to identify the last change (tb_upd) and the kind of operation performed
                 # 0 - INSERT, 1 - UPDATE, 2 - DELETE
-                row['tb_upd'] = datetime.datetime.now()
+                row['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['operation'] = 2
 
                 for key in row.keys():
@@ -170,9 +167,6 @@ class CHWriter(Writer):
                     if type(row[key]) in [Decimal, datetime.timedelta]:
                         row[key] = str(row[key])
 
-                # These columns are added to identify the last change (tb_upd) and when a row is deleted (1)
-                # row['tb_upd'] = datetime.datetime.now()
-                # row['operation'] = 2
                 rows.append(row)
 
         logging.debug('class:%s delete %d row(s)', __class__, len(rows))
@@ -194,11 +188,6 @@ class CHWriter(Writer):
                                                                                        self.dst_table))
 
         # and DELETE converted rows
-
-        # These columns are added to identify the last change (tb_upd) and the kind of operation performed
-        # 0 - INSERT, 1 - UPDATE, 2 - DELETE
-        rows[0]['tb_upd'] = datetime.datetime.now()
-        rows[0]['operation'] = 2
 
         sql = ''
         try:

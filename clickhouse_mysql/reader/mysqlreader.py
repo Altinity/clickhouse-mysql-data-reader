@@ -13,6 +13,7 @@ from clickhouse_mysql.event.event import Event
 from clickhouse_mysql.tableprocessor import TableProcessor
 from clickhouse_mysql.util import Util
 
+from datetime import datetime
 
 class MySQLReader(Reader):
     """Read data from MySQL as replication ls"""
@@ -290,6 +291,7 @@ class MySQLReader(Reader):
 
                 # dispatch Event
                 event = Event()
+                event.ts = datetime.utcnow()
                 event.schema = mysql_event.schema
                 event.table = mysql_event.table
                 event.row = row['values']
@@ -326,6 +328,7 @@ class MySQLReader(Reader):
 
             # dispatch Event
             event = Event()
+            event.ts = datetime.utcnow()
             event.schema = mysql_event.schema
             event.table = mysql_event.table
             event.pymysqlreplication_event = mysql_event
@@ -365,6 +368,7 @@ class MySQLReader(Reader):
 
             # dispatch Event
             event = Event()
+            event.ts = datetime.utcnow()
             event.schema = mysql_event.schema
             event.table = mysql_event.table
             event.pymysqlreplication_event = mysql_event
