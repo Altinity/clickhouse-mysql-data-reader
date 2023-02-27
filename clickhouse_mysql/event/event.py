@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
+from datetime import datetime
 
 class Event(object):
 
     # main payload - one or multiple rows
     
     # Timestamp to know when the event arrive.
-    ts = None
+    ts = datetime.utcnow()
     
     # native mysql replication event
     # one of from pymysqlreplication.row_event import
