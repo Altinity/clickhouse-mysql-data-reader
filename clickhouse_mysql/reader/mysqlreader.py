@@ -271,6 +271,7 @@ class MySQLReader(Reader):
 
             # dispatch Event
             event = Event()
+            event.ts = datetime.utcnow()
             event.schema = mysql_event.schema
             event.table = mysql_event.table
             event.pymysqlreplication_event = mysql_event
@@ -291,7 +292,7 @@ class MySQLReader(Reader):
 
                 # dispatch Event
                 event = Event()
-                #event.ts = datetime.utcnow()
+                event.ts = datetime.utcnow()
                 event.schema = mysql_event.schema
                 event.table = mysql_event.table
                 event.row = row['values']
@@ -328,7 +329,7 @@ class MySQLReader(Reader):
 
             # dispatch Event
             event = Event()
-            #event.ts = datetime.utcnow()
+            event.ts = datetime.utcnow()
             event.schema = mysql_event.schema
             event.table = mysql_event.table
             event.pymysqlreplication_event = mysql_event
@@ -368,7 +369,7 @@ class MySQLReader(Reader):
 
             # dispatch Event
             event = Event()
-            #event.ts = datetime.utcnow()
+            event.ts = datetime.utcnow()
             event.schema = mysql_event.schema
             event.table = mysql_event.table
             event.pymysqlreplication_event = mysql_event
