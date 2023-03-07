@@ -310,7 +310,7 @@ class CSVWriter(Writer):
     def destroy(self):
         if self.delete and os.path.isfile(self.path):
             self.close()
-            # os.remove(self.path)
+            os.remove(self.path)
 
 if __name__ == '__main__':
     path = 'file.csv'
