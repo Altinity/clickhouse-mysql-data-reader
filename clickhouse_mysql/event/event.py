@@ -7,7 +7,7 @@ class Event(object):
     # main payload - one or multiple rows
     
     # Timestamp to know when the event arrive.
-    ts = datetime.utcnow()
+    ts = None
     
     # native mysql replication event
     # one of from pymysqlreplication.row_event import
