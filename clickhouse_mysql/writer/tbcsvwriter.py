@@ -3,6 +3,7 @@
 
 import logging
 import time
+import subprocess
 
 from clickhouse_mysql.writer.writer import Writer
 
@@ -50,6 +51,21 @@ class TBCSVWriter(Writer):
         self.dst_table_prefix = dst_table_prefix
         self.dst_distribute = dst_distribute
 
+
+    def format_null_values(self, csv_file):
+        """ We need to replace NULL values by \\N (CH null value) and do not quote this field. 
+        It is the only way to distinguish between NULL and empty strings. With this we will have: 
+          - xx,\\N,yy --> For null values
+          - xx,'',yy --> For empty strings  """
+        
+        with open(csv_file, 'r') as file:
+            data = file.read()
+            data = data.replace('"NULL"', '\\N')    
+        
+        with open(csv_file, 'w') as file:
+            file.write(data)
+
+
     def uploadCSV(self, table, filename, tries=1):
         limit_of_retries = 3
         params = {
@@ -58,6 +74,9 @@ class TBCSVWriter(Writer):
         }
 
         try:
+            # Add replace NULL values by \N
+            self.format_null_values(filename)
+
             with open(filename, 'rb') as f:
                 m = MultipartEncoder(fields={'csv': ('csv', f, 'text/csv')})
                 url = f"{self.tb_host}/v0/datasources"

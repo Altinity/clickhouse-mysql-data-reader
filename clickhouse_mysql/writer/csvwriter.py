@@ -136,7 +136,7 @@ class CSVWriter(Writer):
             if self.dst_table is None:
                 self.dst_table = event.table
 
-            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.QUOTE_ALL)
+            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.QUOTE_NONNUMERIC)
             if not self.header_written:
                 self.writer.writeheader()
 
@@ -190,7 +190,7 @@ class CSVWriter(Writer):
             if self.dst_table is None:
                 self.dst_table = event.table
 
-            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.QUOTE_ALL)
+            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.QUOTE_NONNUMERIC)
             if not self.header_written:
                 self.writer.writeheader()
 
@@ -253,7 +253,7 @@ class CSVWriter(Writer):
             if self.dst_table is None:
                 self.dst_table = event.table
 
-            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.csv.QUOTE_ALL)
+            self.writer = csv.DictWriter(self.file, fieldnames=self.fieldnames, quoting=csv.QUOTE_NONNUMERIC)
             if not self.header_written:
                 self.writer.writeheader()
 
@@ -266,28 +266,34 @@ class CSVWriter(Writer):
             self.generate_row(event_converted)
 
 
+    def convert_null_values(self, row):
+        """ We need to mark those fields that are null to be able to distinguish between NULL and empty strings """
+        for key in list(row.keys()):
+            if row[key] is None:
+                row[key] = "NULL"
+
     def generate_row(self, event):
         """ When using mempool or csvpool events are cached so you can receive different kind of events in the same list. These events should be handled in a different way """
 
         if isinstance(event.pymysqlreplication_event, WriteRowsEvent):
             for row in event:
-                # row['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['tb_upd'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
                 row['operation'] = 0
+                self.convert_null_values(row)
                 self.writer.writerow(self.convert(row))
         elif isinstance(event.pymysqlreplication_event, DeleteRowsEvent):
             for row in event:
-                # row['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['tb_upd'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
                 row['operation'] = 2
+                self.convert_null_values(row)
                 self.writer.writerow(self.convert(row))
         elif isinstance(event.pymysqlreplication_event, UpdateRowsEvent):
             for row in event.pymysqlreplication_event.rows:
-                # row['after_values']['tb_upd'] = event.ts.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]
                 row['after_values']['tb_upd'] = datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S.%f')
                 row['after_values']['operation'] = 1
+                self.convert_null_values(row['after_values'])
                 self.writer.writerow(self.convert(row['after_values']))
-
+    
 
     def push(self):
         if not self.next_writer_builder or not self.fieldnames:
