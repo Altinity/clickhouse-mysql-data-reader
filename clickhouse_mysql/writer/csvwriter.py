@@ -126,8 +126,8 @@ class CSVWriter(Writer):
             event_converted = self.convert(event)
             rows = event_converted.pymysqlreplication_event.rows
             headers = list(rows[0]['values'].keys())
-            headers.append('operation')
-            headers.append('tb_upd')
+            headers.insert(0, 'operation')
+            headers.insert(1, 'tb_upd')
 
             # self.fieldnames = sorted(self.convert(copy.copy(event.first_row())).keys())
             self.fieldnames = headers
@@ -181,8 +181,8 @@ class CSVWriter(Writer):
             event_converted = self.convert(event)
             rows = event_converted.pymysqlreplication_event.rows
             headers = list(rows[0]['values'].keys())
-            headers.append('operation')
-            headers.append('tb_upd')
+            headers.insert(0, 'operation')
+            headers.insert(1, 'tb_upd')
             
             self.fieldnames = headers
             if self.dst_schema is None:
@@ -243,8 +243,8 @@ class CSVWriter(Writer):
             event_converted = self.convert(event)
             rows = event_converted.pymysqlreplication_event.rows
             headers = list(rows[0]['after_values'].keys())
-            headers.append('operation')
-            headers.append('tb_upd')
+            headers.insert(0, 'operation')
+            headers.insert(1, 'tb_upd')
             
             # self.fieldnames = sorted(headers)
             self.fieldnames = headers
